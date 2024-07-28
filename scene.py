@@ -1,11 +1,14 @@
 from model import *
-from random import random
+import glm
+
 
 class Scene:
     def __init__(self, app):
         self.app = app
         self.objects = []
         self.load()
+        # skybox
+        self.skybox = AdvancedSkyBox(app)
 
     def add_object(self, obj):
         self.objects.append(obj)
@@ -31,3 +34,4 @@ class Scene:
     def render(self):
         for obj in self.objects:
             obj.render()
+        self.skybox.render()
