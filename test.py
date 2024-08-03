@@ -1,23 +1,35 @@
-import cv2
+import cv2 as cv
 import numpy as np
 
 # Load the image
-image = cv2.imread('test3.png', cv2.IMREAD_COLOR)
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
+image = cv.imread('test3.png', cv.IMREAD_COLOR)
+gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+blue_channel, green_channel, red_channel = cv.split(image)
 # Apply GaussianBlur to reduce noise and improve contour detection
-blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 
-# Detect edges using Canny edge detector
-edges = cv2.Canny(blurred, 5, 10)
+def get_edges_image(image, blur = (5, 5),thresh1 = 5, thresh2 = 10):
+    blurred = cv.GaussianBlur(image, blur, 0)
+    return cv.Canny(blurred, thresh1, thresh2)
 
-# Find contours
-contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+blue_new = get_edges_image(blue_channel)
+green_new = get_edges_image(green_channel)
+red_new = get_edges_image(red_channel)
 
-# Draw contours on the original image
-cv2.drawContours(image, contours, -1, (0, 255, 0), 2)
+lines = cv.HoughLines(cv.cvtColor(cv.merge([blue_new,red_new,green_new]), cv.COLOR_BGR2GRAY), 1, np.pi / 180, 150, None, 0, 0)
+print(lines)
+if lines is not None:
+    for i in range(0, len(lines)):
+        rho = lines[i][0][0]
+        theta = lines[i][0][1]
+        a = np.cos(theta)
+        b = np.sin(theta)
+        x0 = a * rho
+        y0 = b * rho
+        pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
+        pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
+        cv.line(image, pt1, pt2, (0,0,255), 3, cv.LINE_AA)
 
 # Display the result
-cv2.imshow('Contours', image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+cv.imshow('Contours', image)
+cv.waitKey(0)
+cv.destroyAllWindows()
