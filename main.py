@@ -6,6 +6,7 @@ from camera import Camera
 from light import Light
 from mesh import Mesh
 from scene import Scene
+from opencv import opencv_process
 
 
 class GraphicsEngine:
@@ -55,6 +56,14 @@ class GraphicsEngine:
         # swap buffers
         pg.display.flip()
 
+    def render_opencv(self):
+        print(self.ctx.screen.size,self.ctx.screen.bits,)
+        buffer = self.ctx.screen.read(components=3,dtype="f4")
+        raw = np.frombuffer(buffer,dtype="f4")
+        raw_bgr = raw.reshape((self.ctx.screen.height,self.ctx.screen.width,3))[::-1,:,::-1]
+        opencv_process(raw_bgr)
+
+
     def get_time(self):
         self.time = pg.time.get_ticks() * 0.001
 
@@ -64,6 +73,7 @@ class GraphicsEngine:
             self.check_events()
             self.camera.update()
             self.render()
+            self.render_opencv()
             self.delta_time = self.clock.tick(60)
 
 

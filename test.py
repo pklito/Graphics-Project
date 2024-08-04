@@ -13,7 +13,7 @@ def get_edges_image(image, blur = (5, 5),thresh1 = 5, thresh2 = 10):
 
 canny_split = cv.cvtColor(cv.merge([get_edges_image(blue_channel),get_edges_image(red_channel),get_edges_image(green_channel)]),cv.COLOR_BGR2GRAY)
 canny = get_edges_image(gray)
-image = cv.merge([get_edges_image(blue_channel),get_edges_image(red_channel),get_edges_image(green_channel)])
+#image = cv.merge([get_edges_image(blue_channel),get_edges_image(red_channel),get_edges_image(green_channel)])
 lines = cv.HoughLinesP(canny_split, 1, np.pi/180, threshold=60, minLineLength=50, maxLineGap=10)
 
 print(lines)
