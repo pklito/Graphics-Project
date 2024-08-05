@@ -57,7 +57,7 @@ class GraphicsEngine:
         pg.display.flip()
 
     def render_opencv(self):
-        opencv_process(self.ctx)
+        opencv_process(self)
 
 
     def get_time(self):

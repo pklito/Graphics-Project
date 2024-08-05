@@ -2,12 +2,15 @@ import cv2 as cv
 import numpy as np
 import moderngl as mgl
 
-def opencv_process(ctx):
+def opencv_process(app):
+    ctx = app.ctx
+
     # Get the screen as a buffer
     buffer = ctx.screen.read(components=3,dtype="f4")
     raw = np.frombuffer(buffer,dtype="f4")
     image = raw.reshape((ctx.screen.height,ctx.screen.width,3))[::-1,:,::-1]
-
+    
+    ### CALCULATIONS ###
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     blue_channel, green_channel, red_channel = cv.split(image)
     # Apply GaussianBlur to reduce noise and improve contour detection
@@ -21,8 +24,17 @@ def opencv_process(ctx):
     #image = cv.merge([get_edges_image(blue_channel),get_edges_image(red_channel),get_edges_image(green_channel)])
     lines = cv.HoughLinesP(canny, 1, np.pi/180, threshold=60, minLineLength=50, maxLineGap=10)
 
-    overlay = np.zeros_like(image)
+    ### OVERLAY DRAW ###
+    overlay = np.zeros((ctx.screen.height,ctx.screen.width,4),dtype=np.uint8)
     if lines is not None:
         for line in lines:
             x1, y1, x2, y2 = line[0]
-            cv.line(overlay, (x1, y1), (x2, y2), (0, 0, 255), 2)
+            cv.line(overlay, (x1, y1), (x2, y2), (0, 0, 255,255), 2)
+
+    ### DRAW ON SCREEN ###
+    buffer = overlay.tobytes()
+    app.mesh.textures['opencv'].write(buffer)
+    ctx.enable_only(ctx.BLEND)
+    app.mesh.textures['opencv'].use()
+    app.mesh.vaos['opencv'].render()
+    

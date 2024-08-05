@@ -77,6 +77,7 @@ class Mesh:
         self.textures[2] = get_texture(ctx, path='textures/img_2.png')
         self.textures['cat'] = get_texture(ctx, path='objects/bunny/UVMap.png')
         self.textures['skybox'] = get_texture_cube(ctx, dir_path='textures/skybox1/', ext='png')
+        self.textures['opencv'] = ctx.texture((ctx.screen.width,ctx.screen.height),4)
     
     def gen_vbos(self,ctx):
         self.vbos['cube'] = CubeVBO(ctx)
@@ -88,6 +89,7 @@ class Mesh:
         self.programs['default'] = get_program(ctx, 'default')
         self.programs['skybox'] = get_program(ctx, 'skybox')
         self.programs['advanced_skybox'] = get_program(ctx, 'advanced_skybox')
+        self.programs['opencv'] = get_program(ctx, 'screen')    #draw texture on screen for opencv.
 
     def gen_vaos(self, ctx):
         # cube vao
@@ -109,6 +111,9 @@ class Mesh:
         self.vaos['advanced_skybox'] = get_vao(ctx, 
             program=self.programs['advanced_skybox'],
             vbo=self.vbos['advanced_skybox'])
+        
+        self.vaos['opencv'] = ctx.vertex_array(self.programs['opencv'], [])
+        self.vaos['opencv'].vertices = 3
 
     def destroy(self):
         [vbo.destroy() for vbo in self.vbos.values()]
