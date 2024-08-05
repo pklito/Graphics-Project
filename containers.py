@@ -16,6 +16,7 @@ def clamp(val, low, high):
 # VAO: holds VBO container, shaderprograms, turns them into vaos
 # ShaderProgram: holds programs
 # VBO: holds different vbos of objects
+# Light: holds color values
 
 # basically:     ,- Texture
 #    Main - Mesh            ,- ShaderProgram
@@ -137,3 +138,13 @@ class Mesh:
     def destroy(self):
         self.vao.destroy()
         self.texture.destroy()
+
+
+class Light:
+    def __init__(self, position=(30, 30, 10), color=(1, 1, 1)):
+        self.position = glm.vec3(position)
+        self.color = glm.vec3(color)
+        # intensities
+        self.Ia = 0.06 * self.color  # ambient
+        self.Id = 0.8 * self.color  # diffuse
+        self.Is = 1.0 * self.color  # specular

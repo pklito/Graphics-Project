@@ -3,7 +3,6 @@ import moderngl as mgl
 import sys
 from model import *
 from camera import Camera
-from light import Light
 from containers import *
 from opencv import opencv_process
 
