@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy as np
 import moderngl as mgl
 
+fps = 0.0
 def opencv_process(app):
     ctx = app.ctx
 
@@ -23,14 +24,16 @@ def opencv_process(app):
     canny = get_edges_image(gray)
     #image = cv.merge([get_edges_image(blue_channel),get_edges_image(red_channel),get_edges_image(green_channel)])
     lines = cv.HoughLinesP(canny, 1, np.pi/180, threshold=60, minLineLength=50, maxLineGap=10)
-
+    lines = None
     ### OVERLAY DRAW ###
     overlay = np.zeros((ctx.screen.height,ctx.screen.width,4),dtype=np.uint8)
     if lines is not None:
         for line in lines:
             x1, y1, x2, y2 = line[0]
             cv.line(overlay, (x1, y1), (x2, y2), (0, 0, 255,255), 2)
-    cv.circle(overlay, (300,300), 100, (0,255,255,255), thickness=10)
+    global fps
+    fps = app.clock.get_fps()
+    cv.putText(overlay,"fps: " + str(round(fps,2)),(0,50),cv.FONT_HERSHEY_PLAIN,1,(0,0,0,255),2)
     ### DRAW ON SCREEN ###
     buffer = overlay.tobytes()
     app.mesh.textures['opencv'].write(buffer)
