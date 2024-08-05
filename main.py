@@ -26,10 +26,16 @@ class GraphicsEngine:
         self.ctx = mgl.create_context()
         # self.ctx.front_face = 'cw'
         self.ctx.enable(flags=mgl.DEPTH_TEST | mgl.CULL_FACE)
+        # increase line width
+        self.ctx.line_width = 3.0
         # create an object to help track time
         self.clock = pg.time.Clock()
         self.time = 0
         self.delta_time = 0
+
+        # configs
+        self.SHOW_HOUGH = True
+
         # light
         self.light = Light()
         # camera
@@ -45,6 +51,9 @@ class GraphicsEngine:
                 self.mesh.destroy()
                 pg.quit()
                 sys.exit()
+            if event.type == pg.KEYDOWN:
+                if event.key == pg.K_r:
+                    self.SHOW_HOUGH = not self.SHOW_HOUGH
 
     def render(self):
         # clear framebuffer

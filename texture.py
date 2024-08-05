@@ -47,6 +47,6 @@ def get_program(ctx, shader_program_name):
         return program
 
 
-def get_vao(ctx, program, vbo):
+def get_vao(ctx : mgl.Context, program, vbo):
         vao = ctx.vertex_array(program, [(vbo.vbo, vbo.format, *vbo.attribs)])
         return vao
