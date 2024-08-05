@@ -11,7 +11,7 @@ class BaseModel:
         self.scale = scale
         self.m_model = self.get_model_matrix()
         self.tex_id = tex_id
-        self.vao = app.mesh.vao.vaos[vao_name]
+        self.vao = app.mesh.vaos[vao_name]
         self.program = self.vao.program
         self.camera = self.app.camera
 
@@ -47,7 +47,7 @@ class ExtendedBaseModel(BaseModel):
 
     def on_init(self):
         # texture
-        self.texture = self.app.mesh.texture.textures[self.tex_id]
+        self.texture = self.app.mesh.textures[self.tex_id]
         self.program['u_texture_0'] = 0
         self.texture.use()
         # mvp
@@ -83,7 +83,7 @@ class SkyBox(BaseModel):
 
     def on_init(self):
         # texture
-        self.texture = self.app.mesh.texture.textures[self.tex_id]
+        self.texture = self.app.mesh.textures[self.tex_id]
         self.program['u_texture_skybox'] = 0
         self.texture.use(location=0)
         # mvp
@@ -103,7 +103,7 @@ class AdvancedSkyBox(BaseModel):
 
     def on_init(self):
         # texture
-        self.texture = self.app.mesh.texture.textures[self.tex_id]
+        self.texture = self.app.mesh.textures[self.tex_id]
         self.program['u_texture_skybox'] = 0
         self.texture.use(location=0)
 

@@ -35,7 +35,7 @@ class GraphicsEngine:
         # camera
         self.camera = Camera(self)
         # mesh
-        self.mesh = Mesh(self)
+        self.mesh = Mesh(self.ctx)
         # scene
         self.scene = Scene(self)
 

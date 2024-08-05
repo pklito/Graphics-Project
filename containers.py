@@ -56,88 +56,64 @@ class Scene:
             obj.render()
         self.skybox.render()
 
-
-class VAO:
+class Mesh:
+    # Load all the files and generate buffers for the openGL context.
     def __init__(self, ctx):
         self.ctx = ctx
-        self.vbo = VBO(ctx)
-        self.program = ShaderProgram(ctx)
-        self.vaos = {}
-
-        # cube vao
-        self.vaos['cube'] = get_vao(ctx, 
-            program=self.program.programs['default'],
-            vbo = self.vbo.vbos['cube'])
-
-        # cat vao
-        self.vaos['cat'] = get_vao(ctx, 
-            program=self.program.programs['default'],
-            vbo=self.vbo.vbos['cat'])
-
-        # skybox vao
-        self.vaos['skybox'] = get_vao(ctx, 
-            program=self.program.programs['skybox'],
-            vbo=self.vbo.vbos['skybox'])
-
-        # advanced_skybox vao
-        self.vaos['advanced_skybox'] = get_vao(ctx, 
-            program=self.program.programs['advanced_skybox'],
-            vbo=self.vbo.vbos['advanced_skybox'])
-
-
-    def destroy(self):
-        self.vbo.destroy()
-        self.program.destroy()
-
-
-class ShaderProgram:
-    def __init__(self, ctx):
-        self.ctx = ctx
-        self.programs = {}
-        self.programs['default'] = get_program(ctx, 'default')
-        self.programs['skybox'] = get_program(ctx, 'skybox')
-        self.programs['advanced_skybox'] = get_program(ctx, 'advanced_skybox')
-
-    def destroy(self):
-        [program.release() for program in self.programs.values()]
-
-
-class VBO:
-    def __init__(self, ctx):
+        
         self.vbos = {}
-        self.vbos['cube'] = CubeVBO(ctx)
-        self.vbos['cat'] = FileVBO(ctx, 'objects/bunny/bunny.obj')
-        self.vbos['skybox'] = SkyBoxVBO(ctx)
-        self.vbos['advanced_skybox'] = AdvancedSkyBoxVBO(ctx)
-
-    def destroy(self):
-        [vbo.destroy() for vbo in self.vbos.values()]
-
-
-class Texture:
-    def __init__(self, ctx):
-        self.ctx = ctx
+        self.programs = {}
+        self.vaos = {}
         self.textures = {}
+
+        self.gen_textures(ctx)
+        self.gen_vbos(ctx)
+        self.gen_programs(ctx)
+        self.gen_vaos(ctx)
+
+    def gen_textures(self, ctx):
         self.textures[0] = get_texture(ctx, path='textures/img.png')
         self.textures[1] = get_texture(ctx, path='textures/img_1.png')
         self.textures[2] = get_texture(ctx, path='textures/img_2.png')
         self.textures['cat'] = get_texture(ctx, path='objects/bunny/UVMap.png')
         self.textures['skybox'] = get_texture_cube(ctx, dir_path='textures/skybox1/', ext='png')
     
+    def gen_vbos(self,ctx):
+        self.vbos['cube'] = CubeVBO(ctx)
+        self.vbos['cat'] = FileVBO(ctx, 'objects/bunny/bunny.obj')
+        self.vbos['skybox'] = SkyBoxVBO(ctx)
+        self.vbos['advanced_skybox'] = AdvancedSkyBoxVBO(ctx)
+    
+    def gen_programs(self, ctx):
+        self.programs['default'] = get_program(ctx, 'default')
+        self.programs['skybox'] = get_program(ctx, 'skybox')
+        self.programs['advanced_skybox'] = get_program(ctx, 'advanced_skybox')
+
+    def gen_vaos(self, ctx):
+        # cube vao
+        self.vaos['cube'] = get_vao(ctx, 
+            program=self.programs['default'],
+            vbo = self.vbos['cube'])
+
+        # cat vao
+        self.vaos['cat'] = get_vao(ctx, 
+            program=self.programs['default'],
+            vbo=self.vbos['cat'])
+
+        # skybox vao
+        self.vaos['skybox'] = get_vao(ctx, 
+            program=self.programs['skybox'],
+            vbo=self.vbos['skybox'])
+
+        # advanced_skybox vao
+        self.vaos['advanced_skybox'] = get_vao(ctx, 
+            program=self.programs['advanced_skybox'],
+            vbo=self.vbos['advanced_skybox'])
 
     def destroy(self):
+        [vbo.destroy() for vbo in self.vbos.values()]
         [tex.release() for tex in self.textures.values()]
-
-
-class Mesh:
-    def __init__(self, app):
-        self.app = app
-        self.vao = VAO(app.ctx)
-        self.texture = Texture(app.ctx)
-
-    def destroy(self):
-        self.vao.destroy()
-        self.texture.destroy()
+        [program.release() for program in self.programs.values()]
 
 
 class Light:
