@@ -16,24 +16,26 @@ def opencv_process(app):
     #blue_channel, green_channel, red_channel = cv.split(image)
     # Apply GaussianBlur to reduce noise and improve contour detection
 
-    def get_edges_image(image, blur = (5, 5),thresh1 = 5, thresh2 = 10):
+    def get_edges_image(image, blur = (5, 5),thresh_soft = 5, thresh_hard = 10):
         blurred = cv.GaussianBlur(image, blur, 0)
-        return cv.Canny(blurred.astype(np.uint8), thresh1, thresh2)
+        return cv.Canny(cv.normalize(blurred, None, 0, 255, cv.NORM_MINMAX).astype(np.uint8), thresh_soft, thresh_hard)
 
     #canny_split = cv.cvtColor(cv.merge([get_edges_image(blue_channel),get_edges_image(red_channel),get_edges_image(green_channel)]),cv.COLOR_BGR2GRAY)
     canny = get_edges_image(gray)
     #image = cv.merge([get_edges_image(blue_channel),get_edges_image(red_channel),get_edges_image(green_channel)])
     lines = cv.HoughLinesP(canny, 1, np.pi/180, threshold=60, minLineLength=50, maxLineGap=10)
-    lines = None
+
     ### OVERLAY DRAW ###
     overlay = np.zeros((ctx.screen.height,ctx.screen.width,4),dtype=np.uint8)
     if lines is not None:
         for line in lines:
             x1, y1, x2, y2 = line[0]
             cv.line(overlay, (x1, y1), (x2, y2), (0, 0, 255,255), 2)
+    
     global fps
     fps = app.clock.get_fps()
     cv.putText(overlay,"fps: " + str(round(fps,2)),(0,50),cv.FONT_HERSHEY_PLAIN,1,(0,0,0,255),2)
+
     ### DRAW ON SCREEN ###
     buffer = overlay.tobytes()
     app.mesh.textures['opencv'].write(buffer)
