@@ -31,6 +31,7 @@ class BaseModel:
 
     def render(self):
         self.update()
+        self.app.ctx.enable(flags=mgl.DEPTH_TEST | mgl.CULL_FACE)
         self.vao.render()
 
 

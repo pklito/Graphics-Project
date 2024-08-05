@@ -12,7 +12,7 @@ def opencv_process(app):
     
     ### CALCULATIONS ###
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-    blue_channel, green_channel, red_channel = cv.split(image)
+    #blue_channel, green_channel, red_channel = cv.split(image)
     # Apply GaussianBlur to reduce noise and improve contour detection
 
     def get_edges_image(image, blur = (5, 5),thresh1 = 5, thresh2 = 10):
@@ -30,7 +30,7 @@ def opencv_process(app):
         for line in lines:
             x1, y1, x2, y2 = line[0]
             cv.line(overlay, (x1, y1), (x2, y2), (0, 0, 255,255), 2)
-
+    cv.circle(overlay, (300,300), 100, (0,255,255,255), thickness=10)
     ### DRAW ON SCREEN ###
     buffer = overlay.tobytes()
     app.mesh.textures['opencv'].write(buffer)
