@@ -3,18 +3,6 @@ import moderngl as mgl
 import pywavefront
 
 
-class VBO:
-    def __init__(self, ctx):
-        self.vbos = {}
-        self.vbos['cube'] = CubeVBO(ctx)
-        self.vbos['cat'] = FileVBO(ctx, 'objects/bunny/bunny.obj')
-        self.vbos['skybox'] = SkyBoxVBO(ctx)
-        self.vbos['advanced_skybox'] = AdvancedSkyBoxVBO(ctx)
-
-    def destroy(self):
-        [vbo.destroy() for vbo in self.vbos.values()]
-
-
 class BaseVBO:
     def __init__(self, ctx):
         self.ctx = ctx
@@ -79,14 +67,14 @@ class CubeVBO(BaseVBO):
 
 
 class FileVBO(BaseVBO):
-    def __init__(self, app, dir):
+    def __init__(self, app, file):
+        self.file = file
         super().__init__(app)
-        self.dir = dir
         self.format = '2f 3f 3f'
         self.attribs = ['in_texcoord_0', 'in_normal', 'in_position']
 
     def get_vertex_data(self):
-        objs = pywavefront.Wavefront(self.dir, cache=True, parse=True)
+        objs = pywavefront.Wavefront(self.file, cache=True, parse=True)
         obj = objs.materials.popitem()[1]
         vertex_data = obj.vertices
         vertex_data = np.array(vertex_data, dtype='f4')
