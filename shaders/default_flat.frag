@@ -42,7 +42,7 @@ vec3 getLight(vec3 color) {
 void main() {
     float gamma = 2.2;
     vec2 uv_jump = uv_0;
-    float band = 0.05;
+    float band = 0.01;
     if(uv_jump.x < 1-band && uv_jump.x > band && uv_jump.y < 1-band && uv_jump.y > band){
         uv_jump = vec2(0.5,0.5);
     }
