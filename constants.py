@@ -1,31 +1,32 @@
 import json
 from types import SimpleNamespace
 
-# Iterating through the json
-# list
+def iterativeNamespaceFromDict(data):
+    def iterate(holder, key, subdata):
+        if type(subdata) == type({}):
+            holder[key] = SimpleNamespace()
+            for dk, dv in subdata.items():
+                iterate(holder[key].__dict__, dk, dv)
+        elif type(subdata) == type([]):
+            holder[key] = list(range(len(subdata)))
+            for dk, dv in enumerate(subdata):
+                iterate(holder[key], dk, dv)
+        else:
+            holder[key] = subdata
+    
+    package = {0: None}
+    iterate(package, 0, data)
+    return package[0]
 
-GLOBAL_CONSTANTS = SimpleNamespace()
 
+GLOBAL_CONSTANTS = None
 def loadConstants(file="constants.json"):
     f = open('constants.json')
     data = json.load(f)
     f.close()
 
-    global GLOBAL_CONSTANTS
-
-    def iterate(subdict, subdata):
-        for key, val in subdata.items():
-            if type(val) == type({}):
-                subdict[key] = SimpleNamespace()
-                iterate(subdict[key].__dict__, val)
-            else:
-                subdict[key] = val
-            
-
-    iterate(GLOBAL_CONSTANTS.__dict__, data)
+    global GLOBAL_CONSTANTS   
+    GLOBAL_CONSTANTS = iterativeNamespaceFromDict(data)
 
 
 loadConstants()
-
-print(GLOBAL_CONSTANTS)
-print(GLOBAL_CONSTANTS.opencv.HOUGH_PROB_LINE_WIDTH)
