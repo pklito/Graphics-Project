@@ -19,14 +19,16 @@ def iterativeNamespaceFromDict(data):
     return package[0]
 
 
-GLOBAL_CONSTANTS = None
+GLOBAL_CONSTANTS = SimpleNamespace()
 def loadConstants(file="constants.json"):
     f = open('constants.json')
     data = json.load(f)
     f.close()
-
-    global GLOBAL_CONSTANTS   
-    GLOBAL_CONSTANTS = iterativeNamespaceFromDict(data)
-
+    global GLOBAL_CONSTANTS  
+    #GLOBAL_CONSTANTS = iterativeNameSpaceFromDict(data)   this rewrites the reference, meaning other files importing it don't update... 
+    GLOBAL_CONSTANTS.__dict__.clear()
+    simple = iterativeNamespaceFromDict(data)
+    for key, value in simple.__dict__.items():
+        GLOBAL_CONSTANTS.__dict__[key] = value
 
 loadConstants()

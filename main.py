@@ -5,7 +5,7 @@ from model import *
 from camera import Camera
 from containers import *
 from opencv import opencv_process
-
+from constants import loadConstants
 
 class GraphicsEngine:
     def __init__(self, win_size=(1200, 800)):
@@ -45,6 +45,12 @@ class GraphicsEngine:
         # scene
         self.scene = Scene(self)
 
+    def key_down(self, event):
+        if event.key == pg.K_v:
+            self.SHOW_HOUGH = not self.SHOW_HOUGH
+        if event.key == pg.K_r:
+            loadConstants()
+
     def check_events(self):
         for event in pg.event.get():
             if event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
@@ -52,8 +58,7 @@ class GraphicsEngine:
                 pg.quit()
                 sys.exit()
             if event.type == pg.KEYDOWN:
-                if event.key == pg.K_r:
-                    self.SHOW_HOUGH = not self.SHOW_HOUGH
+                self.key_down(event)
 
     def render(self):
         # clear framebuffer

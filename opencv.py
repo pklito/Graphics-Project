@@ -4,6 +4,7 @@ import moderngl as mgl
 from logger import LoggerGenerator
 import matplotlib.pyplot as plt
 import sys
+from constants import GLOBAL_CONSTANTS as constants
 
 def genCannyFromContext(ctx : mgl.Context):
      # Get the screen as a buffer
@@ -27,7 +28,7 @@ def drawHoughEdges(overlay, canny):
     if lines is not None:
         for line in lines:
             x1, y1, x2, y2 = line[0]
-            cv.line(overlay, (x1, y1), (x2, y2), (255, 0, 0,255), 1)
+            cv.line(overlay, (x1, y1), (x2, y2), (255, 0, 0,255), constants.opencv.HOUGH_PROB_LINE_WIDTH)
 
 def drawHoughBuckets(overlay, canny):
     lines = cv.HoughLines(canny, 1, np.pi / 180, 150, None, 0, 0)
@@ -43,7 +44,7 @@ def drawHoughBuckets(overlay, canny):
             y0 = b * rho
             pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
             pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
-            cv.line(overlay, pt1, pt2, (0,0,255,255), 3, cv.LINE_AA)
+            cv.line(overlay, pt1, pt2, (0,0,255,255), constants.opencv.HOUGH_LINE_WIDTH, cv.LINE_AA)
     
 
 fps = 0.0
@@ -59,7 +60,7 @@ def opencv_process(app):
 
     global fps
     fps = app.clock.get_fps()
-    cv.putText(overlay,"fps: " + str(round(fps,2)),(0,50),cv.FONT_HERSHEY_PLAIN,1,(0,0,0,255),2)
+    cv.putText(overlay,"fps: " + str(round(fps,2)),(0,50),cv.FONT_HERSHEY_PLAIN,1,(0,0,0,255), 2)
 
     ### DRAW ON SCREEN ###
     buffer = overlay.tobytes()
