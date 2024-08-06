@@ -1,0 +1,5 @@
+{
+    "opencv": {
+        "HOUGH_PROB_LINE_WIDTH" : 5
+    }
+}
