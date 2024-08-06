@@ -1,7 +1,7 @@
 import logging
 import time
 
-def LoggerGenerator(logfile = f"game_{time.time()}.log", loggername = "LogGenerator", consoleLevel = logging.WARNING):
+def LoggerGenerator(logfile = f"game_{time.time()}.log", loggername = "LogGenerator", consoleLevel = logging.WARNING) -> logging.Logger:
         logger = logging.getLogger(loggername)
         logger.setLevel(logging.DEBUG)
         textformatter = logging.Formatter('%(asctime)s %(levelname)s %(filename)s: %(message)s')
