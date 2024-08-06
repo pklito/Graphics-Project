@@ -22,6 +22,8 @@ def genCannyFromContext(ctx : mgl.Context):
     return get_edges_image(gray, thresh_soft=constants.opencv.CANNY_THRESH_SOFT, thresh_hard=constants.opencv.CANNY_THRESH_HARD)
 
 def drawHoughEdges(overlay, canny):
+    if(constants.opencv.HOUGH_PROB_LINE_WIDTH <= 0):
+        return
     #image = cv.merge([get_edges_image(blue_channel),get_edges_image(red_channel),get_edges_image(green_channel)])
     lines = cv.HoughLinesP(canny, 1, np.pi/180, threshold=constants.opencv.HOUGH_PROB_THRESH,
                             minLineLength=constants.opencv.HOUGH_PROB_LINE_MIN_LENGTH,
@@ -33,6 +35,8 @@ def drawHoughEdges(overlay, canny):
             cv.line(overlay, (x1, y1), (x2, y2), (255, 0, 0,255), constants.opencv.HOUGH_PROB_LINE_WIDTH)
 
 def drawHoughBuckets(overlay, canny):
+    if(constants.opencv.HOUGH_LINE_WIDTH <= 0):
+        return
     lines = cv.HoughLines(canny, 1, np.pi / 180, constants.opencv.HOUGH_THRESH, None, 0, 0)
     
     np.set_printoptions(threshold=sys.maxsize)
