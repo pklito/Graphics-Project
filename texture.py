@@ -36,11 +36,13 @@ def get_texture(ctx, path):
         return texture
 
 
-def get_program(ctx, shader_program_name):
+def get_program(ctx: mgl.Context, shader_program_name, shader_frag_name = None):
+        if shader_frag_name is None:
+              shader_frag_name = shader_program_name
         with open(f'shaders/{shader_program_name}.vert') as file:
             vertex_shader = file.read()
 
-        with open(f'shaders/{shader_program_name}.frag') as file:
+        with open(f'shaders/{shader_frag_name}.frag') as file:
             fragment_shader = file.read()
 
         program = ctx.program(vertex_shader=vertex_shader, fragment_shader=fragment_shader)

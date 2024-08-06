@@ -29,7 +29,7 @@ class Scene:
         self.objects = []
         self.load()
         # skybox
-        self.skybox = AdvancedSkyBox(app)
+        #self.skybox = AdvancedSkyBox(app)
 
     def add_object(self, obj):
         self.objects.append(obj)
@@ -54,7 +54,7 @@ class Scene:
     def render(self):
         for obj in self.objects:
             obj.render()
-        self.skybox.render()
+        #self.skybox.render()
 
 class Mesh:
     # Load all the files and generate buffers for the openGL context.
@@ -87,6 +87,7 @@ class Mesh:
     
     def gen_programs(self, ctx):
         self.programs['default'] = get_program(ctx, 'default')
+        self.programs['flat'] = get_program(ctx, 'default', 'default_flat')
         self.programs['skybox'] = get_program(ctx, 'skybox')
         self.programs['advanced_skybox'] = get_program(ctx, 'advanced_skybox')
         self.programs['opencv'] = get_program(ctx, 'screen')    #draw texture on screen for opencv.
@@ -94,7 +95,7 @@ class Mesh:
     def gen_vaos(self, ctx):
         # cube vao
         self.vaos['cube'] = get_vao(ctx, 
-            program=self.programs['default'],
+            program=self.programs['flat'],
             vbo = self.vbos['cube'])
 
         # cat vao
