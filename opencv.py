@@ -42,8 +42,8 @@ def drawHoughBuckets(overlay, canny):
             b = np.sin(theta)
             x0 = a * rho
             y0 = b * rho
-            pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
-            pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
+            pt1 = (int(x0 + 1800*(-b)), int(y0 + 1800*(a)))
+            pt2 = (int(x0 - 1800*(-b)), int(y0 - 1800*(a)))
             cv.line(overlay, pt1, pt2, (0,0,255,255), constants.opencv.HOUGH_LINE_WIDTH, cv.LINE_AA)
     
 
