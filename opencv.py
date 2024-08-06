@@ -19,11 +19,13 @@ def genCannyFromContext(ctx : mgl.Context):
         blurred = cv.GaussianBlur(image, blur, 0)
         return cv.Canny(cv.normalize(blurred, None, 0, 255, cv.NORM_MINMAX).astype(np.uint8), thresh_soft, thresh_hard)
 
-    return get_edges_image(gray, thresh_soft=10, thresh_hard=30)
+    return get_edges_image(gray, thresh_soft=constants.opencv.CANNY_THRESH_SOFT, thresh_hard=constants.opencv.CANNY_THRESH_HARD)
 
 def drawHoughEdges(overlay, canny):
     #image = cv.merge([get_edges_image(blue_channel),get_edges_image(red_channel),get_edges_image(green_channel)])
-    lines = cv.HoughLinesP(canny, 1, np.pi/180, threshold=60, minLineLength=50, maxLineGap=10)
+    lines = cv.HoughLinesP(canny, 1, np.pi/180, threshold=constants.opencv.HOUGH_PROB_THRESH,
+                            minLineLength=constants.opencv.HOUGH_PROB_LINE_MIN_LENGTH,
+                            maxLineGap=constants.opencv.HOUGH_PROB_LINE_MAX_GAP)
     
     if lines is not None:
         for line in lines:
@@ -31,7 +33,7 @@ def drawHoughEdges(overlay, canny):
             cv.line(overlay, (x1, y1), (x2, y2), (255, 0, 0,255), constants.opencv.HOUGH_PROB_LINE_WIDTH)
 
 def drawHoughBuckets(overlay, canny):
-    lines = cv.HoughLines(canny, 1, np.pi / 180, 150, None, 0, 0)
+    lines = cv.HoughLines(canny, 1, np.pi / 180, constants.opencv.HOUGH_THRESH, None, 0, 0)
     
     np.set_printoptions(threshold=sys.maxsize)
     if lines is not None:
