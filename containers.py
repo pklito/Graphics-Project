@@ -38,7 +38,7 @@ class Scene:
         app = self.app
         add = self.add_object
 
-        n, s = 3, 1
+        n, s = 10, 1
         height = 0
         for x in range(-n, n, s):
             for z in range(-n, n, s):
@@ -46,7 +46,7 @@ class Scene:
                     height += 1
                 if random() < 0.3:
                     height -= 1
-                height = clamp(height, 0, 3)
+                height = clamp(height, 0, 2)
                 add(Cube(app, tex_id=int(0.8+1.4*random()),pos=(2*x, 2*height -s, 2*z)))
 
         add(Cat(app, pos=(0, -2, -10)))

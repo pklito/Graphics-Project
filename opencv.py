@@ -46,18 +46,20 @@ def drawHoughBuckets(overlay, canny):
             if max == min:
                 return (v-min)*(newmax-newmin) + newmin
             return (v - min)*(newmax - newmin)/(max-min)+newmin
-        max_rho, min_rho, max_theta, min_theta = max(lines[:,0,0]),min(lines[:,0,0]),max(lines[:,0,1]),min(lines[:,0,1])
+        max_rho, min_rho, max_theta, min_theta = np.sqrt(600*600+400*400), -np.sqrt(600*600+400*400), np.pi, 0
         for i in range(0, len(lines)):
             rho = lines[i][0][0]
             theta = lines[i][0][1]
+            if rho < min_rho or rho > max_rho or theta < min_theta or theta > max_theta:
+                print("out of bounds: ", rho, theta)
             a = np.cos(theta)
             b = np.sin(theta)
             x0 = a * rho
             y0 = b * rho
             pt1 = (int(x0 + 1800*(-b)), int(y0 + 1800*(a)))
             pt2 = (int(x0 - 1800*(-b)), int(y0 - 1800*(a)))
-            cv.line(overlay, pt1, pt2, (0,0,255,255), constants.opencv.HOUGH_LINE_WIDTH, cv.LINE_AA)
-            cv.circle(overlay,(int(toRange(theta,0,np.pi,0,600)), int(toRange(rho,min_rho,max_rho,0,400))), 2, (255,255,0,255))
+            cv.line(overlay, pt1, pt2, (0,0,255,50), constants.opencv.HOUGH_LINE_WIDTH, cv.LINE_AA)
+            cv.circle(overlay,(int(toRange(theta,min_theta,max_theta,0,600)), int(toRange(rho,min_rho,max_rho,0,400))), 2, (255,255,0,255))
     
 
 fps = 0.0
