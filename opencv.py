@@ -82,5 +82,5 @@ def opencv_process(app):
     app.buffers.opencv_tex.write(buffer)
     ctx.enable_only(ctx.BLEND)
     app.buffers.opencv_tex.use()
-    app.mesh.vaos['opencv'].render()
+    app.mesh.vaos['np2fbo'].render()
     
