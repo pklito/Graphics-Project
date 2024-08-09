@@ -126,9 +126,16 @@ class Mesh:
 
     def gen_buffers(self, ctx: mgl.Context):
         self.buffers.screen = ctx.screen
-        self.buffers.fb1_tex = ctx.texture((ctx.screen.size),4)
-        self.buffers.fb1_tex_depth = ctx.depth_renderbuffer(ctx.screen.size)
-        self.buffers.fb1 = ctx.framebuffer(color_attachments=self.buffers.fb1_tex,depth_attachment=self.buffers.fb1_tex_depth)
+        self.buffers.fb_render_tex = ctx.texture((ctx.screen.size),4)
+        self.buffers.fb_render_tex_depth = ctx.depth_renderbuffer(ctx.screen.size)
+        self.buffers.fb_render = ctx.framebuffer(color_attachments=self.buffers.fb_render_tex,depth_attachment=self.buffers.fb_render_tex_depth)
+        
+        self.buffers.fb_aux_tex = ctx.texture((ctx.screen.size),4)
+        self.buffers.fb_aux = ctx.framebuffer(color_attachments=self.buffers.fb_aux_tex)
+        
+        self.buffers.fb_binary_tex = ctx.texture((ctx.screen.size),1)
+        self.buffers.fb_binary = ctx.framebuffer(color_attachments=self.buffers.fb_binary_tex)
+
         self.buffers.opencv_tex = ctx.texture((ctx.screen.width,ctx.screen.height),4)
 
     def destroy(self):

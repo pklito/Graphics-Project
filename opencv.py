@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 import sys
 from constants import GLOBAL_CONSTANTS as constants
 
-def genCannyFromContext(ctx : mgl.Context):
+def genCannyFromFrameBuffer(fbo : mgl.Framebuffer):
      # Get the screen as a buffer
-    buffer = ctx.screen.read(components=3,dtype="f4")
+    buffer = fbo.read(components=3,dtype="f4")
     raw = np.frombuffer(buffer,dtype="f4")
-    image = raw.reshape((ctx.screen.height,ctx.screen.width,3))[::-1,:,::-1]
+    image = raw.reshape((fbo.height,fbo.width,3))[::-1,:,::-1]
     
     ### CALCULATIONS ###
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
@@ -35,7 +35,7 @@ def drawHoughEdges(overlay, canny):
             cv.line(overlay, (x1, y1), (x2, y2), (255, 0, 0,255), constants.opencv.HOUGH_PROB_LINE_WIDTH)
 
 def drawHoughBuckets(overlay, canny):
-    if(constants.opencv.HOUGH_LINE_WIDTH <= 0):
+    if(constants.opencv.HOUGH_LINE_WIDTH <= 0 and not constants.opencv.HOUGH_SHOW_COORDINATES):
         return
     lines = cv.HoughLines(canny, 1, np.pi / 180, constants.opencv.HOUGH_THRESH, None, 0, 0)
     
@@ -58,18 +58,26 @@ def drawHoughBuckets(overlay, canny):
             y0 = b * rho
             pt1 = (int(x0 + 1800*(-b)), int(y0 + 1800*(a)))
             pt2 = (int(x0 - 1800*(-b)), int(y0 - 1800*(a)))
-            cv.line(overlay, pt1, pt2, (0,0,255,50), constants.opencv.HOUGH_LINE_WIDTH, cv.LINE_AA)
-            cv.circle(overlay,(int(toRange(theta,min_theta,max_theta,0,600)), int(toRange(rho,min_rho,max_rho,0,400))), 2, (255,255,0,255))
+            if constants.opencv.HOUGH_LINE_WIDTH > 0:
+                cv.line(overlay, pt1, pt2, (0,0,255,50), constants.opencv.HOUGH_LINE_WIDTH, cv.LINE_AA)
+            if constants.opencv.HOUGH_SHOW_COORDINATES:
+                cv.circle(overlay,(int(toRange(theta,min_theta,max_theta,0,600)), int(toRange(rho,min_rho,max_rho,0,400))), 2, (255,255,0,255))
     
 
 fps = 0.0
-def opencv_process(app):
+def opencv_process_fbo(app, data_fbo = None):
+    if data_fbo is None:
+        data_fbo = app.ctx.screen
+    canny = genCannyFromFrameBuffer(data_fbo)
+    opencv_draw_canny(app, canny)
+
+def opencv_draw_canny(app, canny):
     ctx = app.ctx
+   
     lines = None
-    overlay = np.zeros((ctx.screen.height,ctx.screen.width,4),dtype=np.uint8)
+    overlay = np.zeros((canny.shape[0],canny.shape[1],4),dtype=np.uint8)
 
     if app.SHOW_HOUGH:
-       canny = genCannyFromContext(ctx)
        drawHoughEdges(overlay, canny)
        drawHoughBuckets(overlay, canny)
 

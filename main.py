@@ -4,7 +4,7 @@ import sys
 from model import *
 from camera import Camera
 from containers import *
-from opencv import opencv_process
+from opencv import opencv_process_fbo
 from constants import loadConstants
 
 class GraphicsEngine:
@@ -63,28 +63,42 @@ class GraphicsEngine:
                 self.key_down(event)
 
     def render(self):
-        # clear framebuffer
-        self.ctx.clear(color=(0.08, 0.16, 0.18))
-        self.buffers.fb1.clear(color=(0.1,0.1,0.2))
+        # clear framebuffers
+        self.ctx.clear()
+        self.buffers.fb_render.clear(color=(0.1,0.1,0.2))
+        self.buffers.fb_aux.clear()
+        self.buffers.fb_binary.clear()
 
         # Render world
-        self.buffers.fb1.use()
+        self.buffers.fb_render.use()
         self.ctx.enable(flags=mgl.DEPTH_TEST | mgl.CULL_FACE)
         self.scene.render()
 
-        # blit to screen       
-        self.ctx.screen.use()
-        self.buffers.fb1_tex.use()
-        self.mesh.vaos['sobel'].render()
+        # Do gaussian blur:
+        # self.buffers.fb_aux.use()
+        # self.buffers.fb_render_tex.use()
+        # self.mesh.vaos['gaussian_x'].render()
 
+        # self.buffers.fb_render.use()
+        # self.buffers.fb_aux_tex.use()
+        # self.mesh.vaos['gaussian_y'].render()
 
-        # do openCV calc and render
-        #self.render_opencv()
+        # do sobel      
+        # self.ctx.screen.use()
+        # self.buffers.fb1_render_tex.use()
+        # self.mesh.vaos['sobel'].render()
+
+        # blit
+        self.buffers.screen.use()
+        self.buffers.fb_render_tex.use()
+        self.ctx.copy_framebuffer(self.buffers.screen,self.buffers.fb_render)
+
+        # do overlay
+        self.buffers.screen.use()
+        opencv_process_fbo(self, self.buffers.fb_render)
         # swap buffers
         pg.display.flip()
 
-    def render_opencv(self):
-        opencv_process(self)
 
 
     def get_time(self):
