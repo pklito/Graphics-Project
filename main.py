@@ -42,6 +42,8 @@ class GraphicsEngine:
         self.camera = Camera(self)
         # mesh
         self.mesh = Mesh(self.ctx)
+        # buffers
+        self.buffers = self.mesh.buffers
         # scene
         self.scene = Scene(self)
 
@@ -63,10 +65,21 @@ class GraphicsEngine:
     def render(self):
         # clear framebuffer
         self.ctx.clear(color=(0.08, 0.16, 0.18))
-        # render scene
+        self.buffers.fb1.clear(color=(0.1,0.1,0.2))
+
+        # Render world
+        self.buffers.fb1.use()
+        self.ctx.enable(flags=mgl.DEPTH_TEST | mgl.CULL_FACE)
         self.scene.render()
+
+        # blit to screen       
+        self.ctx.screen.use()
+        self.buffers.fb1_tex.use()
+        self.ctx.copy_framebuffer(self.buffers.screen, self.buffers.fb1)
+
+
         # do openCV calc and render
-        self.render_opencv()
+        #self.render_opencv()
         # swap buffers
         pg.display.flip()
 

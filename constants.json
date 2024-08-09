@@ -3,10 +3,10 @@
         "CANNY_THRESH_SOFT" : 30,
         "CANNY_THRESH_HARD" : 50,
 
-        "HOUGH_LINE_WIDTH" : 0,
+        "HOUGH_LINE_WIDTH" : 2,
         "HOUGH_THRESH" : 70,
 
-        "HOUGH_PROB_LINE_WIDTH" : 0,
+        "HOUGH_PROB_LINE_WIDTH" : 1,
         "HOUGH_PROB_THRESH" : 30,
         "HOUGH_PROB_LINE_MIN_LENGTH" : 20,
         "HOUGH_PROB_LINE_MAX_GAP" : 3

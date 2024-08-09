@@ -79,8 +79,8 @@ def opencv_process(app):
 
     ### DRAW ON SCREEN ###
     buffer = overlay.tobytes()
-    app.mesh.textures['opencv'].write(buffer)
+    app.buffers.opencv_tex.write(buffer)
     ctx.enable_only(ctx.BLEND)
-    app.mesh.textures['opencv'].use()
+    app.buffers.opencv_tex.use()
     app.mesh.vaos['opencv'].render()
     

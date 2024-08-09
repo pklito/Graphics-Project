@@ -3,6 +3,7 @@ import glm
 from random import random
 from vbo import *
 from texture import get_program, get_texture, get_texture_cube, get_vao
+from types import SimpleNamespace
 
 def clamp(val, low, high):
     return max(low, min(high,val))
@@ -56,43 +57,45 @@ class Scene:
             obj.render()
         #self.skybox.render()
 
+
 class Mesh:
     # Load all the files and generate buffers for the openGL context.
-    def __init__(self, ctx):
+    def __init__(self, ctx: mgl.Context):
         self.ctx = ctx
         
         self.vbos = {}
         self.programs = {}
         self.vaos = {}
         self.textures = {}
+        self.buffers = SimpleNamespace()
 
         self.gen_textures(ctx)
         self.gen_vbos(ctx)
         self.gen_programs(ctx)
         self.gen_vaos(ctx)
+        self.gen_buffers(ctx)
 
-    def gen_textures(self, ctx):
+    def gen_textures(self, ctx: mgl.Context):
         self.textures[0] = get_texture(ctx, path='textures/img.png')
         self.textures[1] = get_texture(ctx, path='textures/img_1.png')
         self.textures[2] = get_texture(ctx, path='textures/img_2.png')
         self.textures['cat'] = get_texture(ctx, path='objects/bunny/UVMap.png')
         self.textures['skybox'] = get_texture_cube(ctx, dir_path='textures/skybox1/', ext='png')
-        self.textures['opencv'] = ctx.texture((ctx.screen.width,ctx.screen.height),4)
     
-    def gen_vbos(self,ctx):
+    def gen_vbos(self, ctx: mgl.Context):
         self.vbos['cube'] = CubeVBO(ctx)
         self.vbos['cat'] = FileVBO(ctx, 'objects/bunny/bunny.obj')
         self.vbos['skybox'] = SkyBoxVBO(ctx)
         self.vbos['advanced_skybox'] = AdvancedSkyBoxVBO(ctx)
     
-    def gen_programs(self, ctx):
+    def gen_programs(self, ctx: mgl.Context):
         self.programs['default'] = get_program(ctx, 'default')
         self.programs['flat'] = get_program(ctx, 'default', 'default_flat')
         self.programs['skybox'] = get_program(ctx, 'skybox')
         self.programs['advanced_skybox'] = get_program(ctx, 'advanced_skybox')
         self.programs['opencv'] = get_program(ctx, 'screen')    #draw texture on screen for opencv.
 
-    def gen_vaos(self, ctx):
+    def gen_vaos(self, ctx: mgl.Context):
         # cube vao
         self.vaos['cube'] = get_vao(ctx, 
             program=self.programs['flat'],
@@ -116,6 +119,13 @@ class Mesh:
         self.vaos['opencv'] = ctx.vertex_array(self.programs['opencv'], [])
         self.vaos['opencv'].vertices = 3
 
+    def gen_buffers(self, ctx: mgl.Context):
+        self.buffers.screen = ctx.screen
+        self.buffers.fb1_tex = ctx.texture((ctx.screen.size),4)
+        self.buffers.fb1_tex_depth = ctx.depth_renderbuffer(ctx.screen.size)
+        self.buffers.fb1 = ctx.framebuffer(color_attachments=self.buffers.fb1_tex,depth_attachment=self.buffers.fb1_tex_depth)
+        self.buffers.opencv_tex = ctx.texture((ctx.screen.width,ctx.screen.height),4)
+
     def destroy(self):
         [vbo.destroy() for vbo in self.vbos.values()]
         [tex.release() for tex in self.textures.values()]
@@ -129,4 +139,4 @@ class Light:
         # intensities
         self.Ia = 0.06 * self.color  # ambient
         self.Id = 0.8 * self.color  # diffuse
-        self.Is = 1.0 * self.color  # specular
+        self.Is = 0 * self.color  # specular
