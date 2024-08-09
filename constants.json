@@ -11,5 +11,9 @@
         "HOUGH_PROB_LINE_MIN_LENGTH" : 20,
         "HOUGH_PROB_LINE_MAX_GAP" : 3
         
+    },
+    "light": {  "_K_AMBIENT" : 0.06,
+                "_K_DIFFUSE" : 0.8,
+                "_K_SPECULAR" : 0
     }
 }

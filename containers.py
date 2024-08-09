@@ -4,6 +4,7 @@ from random import random
 from vbo import *
 from texture import get_program, get_texture, get_texture_cube, get_vao
 from types import SimpleNamespace
+from constants import GLOBAL_CONSTANTS
 
 def clamp(val, low, high):
     return max(low, min(high,val))
@@ -94,6 +95,7 @@ class Mesh:
         self.programs['skybox'] = get_program(ctx, 'skybox')
         self.programs['advanced_skybox'] = get_program(ctx, 'advanced_skybox')
         self.programs['np2fbo'] = get_program(ctx, 'screen')    #draw texture on screen for opencv.
+        self.programs['canny'] = get_program(ctx, 'processing/canny')
 
     def gen_vaos(self, ctx: mgl.Context):
         # cube vao
@@ -119,6 +121,9 @@ class Mesh:
         self.vaos['np2fbo'] = ctx.vertex_array(self.programs['np2fbo'], [])
         self.vaos['np2fbo'].vertices = 3
 
+        self.vaos['canny'] = ctx.vertex_array(self.programs['canny'], [])
+        self.vaos['canny'].vertices = 3
+
     def gen_buffers(self, ctx: mgl.Context):
         self.buffers.screen = ctx.screen
         self.buffers.fb1_tex = ctx.texture((ctx.screen.size),4)
@@ -137,6 +142,6 @@ class Light:
         self.position = glm.vec3(position)
         self.color = glm.vec3(color)
         # intensities
-        self.Ia = 0.06 * self.color  # ambient
-        self.Id = 0.8 * self.color  # diffuse
-        self.Is = 0 * self.color  # specular
+        self.Ia = GLOBAL_CONSTANTS.light._K_AMBIENT * self.color  # ambient
+        self.Id = GLOBAL_CONSTANTS.light._K_DIFFUSE * self.color  # diffuse
+        self.Is = GLOBAL_CONSTANTS.light._K_SPECULAR * self.color  # specular
