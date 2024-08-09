@@ -95,7 +95,7 @@ class Mesh:
         self.programs['skybox'] = get_program(ctx, 'skybox')
         self.programs['advanced_skybox'] = get_program(ctx, 'advanced_skybox')
         self.programs['np2fbo'] = get_program(ctx, 'screen')    #draw texture on screen for opencv.
-        self.programs['canny'] = get_program(ctx, 'processing/canny')
+        self.programs['sobel'] = get_program(ctx, 'screen', 'processing/sobel')
 
     def gen_vaos(self, ctx: mgl.Context):
         # cube vao
@@ -121,8 +121,8 @@ class Mesh:
         self.vaos['np2fbo'] = ctx.vertex_array(self.programs['np2fbo'], [])
         self.vaos['np2fbo'].vertices = 3
 
-        self.vaos['canny'] = ctx.vertex_array(self.programs['canny'], [])
-        self.vaos['canny'].vertices = 3
+        self.vaos['sobel'] = ctx.vertex_array(self.programs['sobel'], [])
+        self.vaos['sobel'].vertices = 3
 
     def gen_buffers(self, ctx: mgl.Context):
         self.buffers.screen = ctx.screen

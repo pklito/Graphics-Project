@@ -75,7 +75,7 @@ class GraphicsEngine:
         # blit to screen       
         self.ctx.screen.use()
         self.buffers.fb1_tex.use()
-        self.mesh.vaos['canny'].render()
+        self.mesh.vaos['sobel'].render()
 
 
         # do openCV calc and render
