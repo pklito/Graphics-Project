@@ -96,6 +96,7 @@ class Mesh:
         self.programs['advanced_skybox'] = get_program(ctx, 'advanced_skybox')
         self.programs['np2fbo'] = get_program(ctx, 'screen')    #draw texture on screen for opencv.
         self.programs['sobel'] = get_program(ctx, 'screen', 'processing/sobel')
+        self.programs['1d_gaussian'] = get_program(ctx, 'screen', 'processing/1d_gaussian')
 
     def gen_vaos(self, ctx: mgl.Context):
         # cube vao
@@ -124,6 +125,9 @@ class Mesh:
         self.vaos['sobel'] = ctx.vertex_array(self.programs['sobel'], [])
         self.vaos['sobel'].vertices = 3
 
+        self.vaos['1d_gaussian'] = ctx.vertex_array(self.programs['1d_gaussian'], [])
+        self.vaos['1d_gaussian'].vertices = 3
+
     def gen_buffers(self, ctx: mgl.Context):
         self.buffers.screen = ctx.screen
         self.buffers.fb_render_tex = ctx.texture((ctx.screen.size),4)
@@ -132,7 +136,7 @@ class Mesh:
         
         self.buffers.fb_aux_tex = ctx.texture((ctx.screen.size),4)
         self.buffers.fb_aux = ctx.framebuffer(color_attachments=self.buffers.fb_aux_tex)
-        
+
         self.buffers.fb_binary_tex = ctx.texture((ctx.screen.size),1)
         self.buffers.fb_binary = ctx.framebuffer(color_attachments=self.buffers.fb_binary_tex)
 
@@ -142,6 +146,7 @@ class Mesh:
         [vbo.destroy() for vbo in self.vbos.values()]
         [tex.release() for tex in self.textures.values()]
         [program.release() for program in self.programs.values()]
+        [texorfbo.release() for texorfbo in self.buffers.__dict__.values()]
 
 
 class Light:

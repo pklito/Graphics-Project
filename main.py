@@ -6,6 +6,7 @@ from camera import Camera
 from containers import *
 from opencv import opencv_process_fbo
 from constants import loadConstants
+from texture import do_pass
 
 class GraphicsEngine:
     def __init__(self, win_size=(600, 400)):
@@ -75,27 +76,20 @@ class GraphicsEngine:
         self.scene.render()
 
         # Do gaussian blur:
-        # self.buffers.fb_aux.use()
-        # self.buffers.fb_render_tex.use()
-        # self.mesh.vaos['gaussian_x'].render()
+        do_pass(self.buffers.fb_aux, self.buffers.fb_render, self.mesh.vaos['1d_gaussian'], {"is_x" : 1})
+        do_pass(self.buffers.fb_render, self.buffers.fb_aux, self.mesh.vaos['1d_gaussian'], {"is_x" : 0})
 
-        # self.buffers.fb_render.use()
-        # self.buffers.fb_aux_tex.use()
-        # self.mesh.vaos['gaussian_y'].render()
-
-        # do sobel      
-        # self.ctx.screen.use()
-        # self.buffers.fb1_render_tex.use()
-        # self.mesh.vaos['sobel'].render()
+        do_pass(self.buffers.fb_binary, self.buffers.fb_render, self.mesh.vaos['sobel'])
+        do_pass(self.ctx.screen, self.buffers.fb_binary, self.mesh.vaos['np2fbo'])
 
         # blit
-        self.buffers.screen.use()
-        self.buffers.fb_render_tex.use()
-        self.ctx.copy_framebuffer(self.buffers.screen,self.buffers.fb_render)
+        # self.buffers.screen.use()
+        # self.buffers.fb_render_tex.use()
+        # self.ctx.copy_framebuffer(self.buffers.screen,self.buffers.fb_render)
 
         # do overlay
-        self.buffers.screen.use()
-        opencv_process_fbo(self, self.buffers.fb_render)
+        #self.buffers.screen.use()
+        #opencv_process_fbo(self, self.buffers.fb_render)
         # swap buffers
         pg.display.flip()
 

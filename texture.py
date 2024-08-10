@@ -1,5 +1,6 @@
 import pygame as pg
 import moderngl as mgl
+import struct
 
 def get_texture_cube(ctx, dir_path, ext='png'):
         faces = ['right', 'left', 'top', 'bottom'] + ['front', 'back'][::-1]
@@ -52,3 +53,12 @@ def get_program(ctx: mgl.Context, shader_program_name, shader_frag_name = None):
 def get_vao(ctx : mgl.Context, program, vbo):
         vao = ctx.vertex_array(program, [(vbo.vbo, vbo.format, *vbo.attribs)])
         return vao
+
+def do_pass(fb_dest : mgl.Framebuffer, fb_prev: mgl.Framebuffer, vao : mgl.VertexArray, uniforms : dict = None):
+    fb_dest.use()
+    fb_prev.color_attachments[0].use()
+    if uniforms is not None:
+        for name, value in uniforms.items():
+            vao.program[name].write(struct.pack('i', value))
+    vao.render()
+      
