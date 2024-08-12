@@ -90,5 +90,5 @@ def opencv_draw_canny(app, canny):
     app.buffers.opencv_tex.write(buffer)
     ctx.enable_only(ctx.BLEND)
     app.buffers.opencv_tex.use()
-    app.mesh.vaos['np2fbo'].render()
+    app.mesh.vaos['blit'].render()
     

@@ -75,21 +75,20 @@ class GraphicsEngine:
         self.ctx.enable(flags=mgl.DEPTH_TEST | mgl.CULL_FACE)
         self.scene.render()
 
+        #blit
+        do_pass(self.buffers.fb_screen_mix, self.buffers.fb_render, self.mesh.vaos['blit'])
+
         # Do gaussian blur:
         do_pass(self.buffers.fb_aux, self.buffers.fb_render, self.mesh.vaos['1d_gaussian'], {"is_x" : 1})
         do_pass(self.buffers.fb_render, self.buffers.fb_aux, self.mesh.vaos['1d_gaussian'], {"is_x" : 0})
 
         do_pass(self.buffers.fb_binary, self.buffers.fb_render, self.mesh.vaos['sobel'])
-        do_pass(self.ctx.screen, self.buffers.fb_binary, self.mesh.vaos['np2fbo'])
+        do_pass(self.buffers.fb_screen_mix, self.buffers.fb_binary, self.mesh.vaos['draw_over'])
 
-        # blit
-        # self.buffers.screen.use()
-        # self.buffers.fb_render_tex.use()
-        # self.ctx.copy_framebuffer(self.buffers.screen,self.buffers.fb_render)
-
+        do_pass(self.ctx.screen, self.buffers.fb_screen_mix, self.mesh.vaos['blit'])
         # do overlay
         #self.buffers.screen.use()
-        #opencv_process_fbo(self, self.buffers.fb_render)
+        #opencv_process_fbo(self, self.buffers.fb_binary)
         # swap buffers
         pg.display.flip()
 

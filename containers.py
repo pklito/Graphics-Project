@@ -94,9 +94,10 @@ class Mesh:
         self.programs['flat'] = get_program(ctx, 'default', 'default_flat')
         self.programs['skybox'] = get_program(ctx, 'skybox')
         self.programs['advanced_skybox'] = get_program(ctx, 'advanced_skybox')
-        self.programs['np2fbo'] = get_program(ctx, 'screen')    #draw texture on screen for opencv.
+        self.programs['blit'] = get_program(ctx, 'screen')    #draw texture on screen for opencv.
         self.programs['sobel'] = get_program(ctx, 'screen', 'processing/sobel')
         self.programs['1d_gaussian'] = get_program(ctx, 'screen', 'processing/1d_gaussian')
+        self.programs['draw_over'] = get_program(ctx, 'screen', 'draw_over')
 
     def gen_vaos(self, ctx: mgl.Context):
         # cube vao
@@ -119,14 +120,17 @@ class Mesh:
             program=self.programs['advanced_skybox'],
             vbo=self.vbos['advanced_skybox'])
         
-        self.vaos['np2fbo'] = ctx.vertex_array(self.programs['np2fbo'], [])
-        self.vaos['np2fbo'].vertices = 3
+        self.vaos['blit'] = ctx.vertex_array(self.programs['blit'], [])
+        self.vaos['blit'].vertices = 3
 
         self.vaos['sobel'] = ctx.vertex_array(self.programs['sobel'], [])
         self.vaos['sobel'].vertices = 3
 
         self.vaos['1d_gaussian'] = ctx.vertex_array(self.programs['1d_gaussian'], [])
         self.vaos['1d_gaussian'].vertices = 3
+
+        self.vaos['draw_over'] = ctx.vertex_array(self.programs['draw_over'], [])
+        self.vaos['draw_over'].vertices = 3
 
     def gen_buffers(self, ctx: mgl.Context):
         self.buffers.screen = ctx.screen
@@ -139,6 +143,9 @@ class Mesh:
 
         self.buffers.fb_binary_tex = ctx.texture((ctx.screen.size),1)
         self.buffers.fb_binary = ctx.framebuffer(color_attachments=self.buffers.fb_binary_tex)
+
+        self.buffers.fb_screen_mix_tex = ctx.texture((ctx.screen.size),4)
+        self.buffers.fb_screen_mix = ctx.framebuffer(color_attachments=self.buffers.fb_aux_tex)
 
         self.buffers.opencv_tex = ctx.texture((ctx.screen.width,ctx.screen.height),4)
 
