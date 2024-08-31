@@ -9,7 +9,7 @@ SENSITIVITY = 0.04
 
 
 class Camera:
-    def __init__(self, app, position=(0, 0, 4), yaw=-90, pitch=0):
+    def __init__(self, app, position=(0, 0, 4), yaw=30, pitch=0):
         self.app = app
         self.aspect_ratio = app.WIN_SIZE[0] / app.WIN_SIZE[1]
         self.position = glm.vec3(position)
@@ -37,17 +37,26 @@ class Camera:
         self.forward.y = glm.sin(pitch)
         self.forward.z = glm.sin(yaw) * glm.cos(pitch)
 
+        self.right.x = glm.cos(yaw + glm.pi() / 2)
+        self.right.y = 0
+        self.right.z = glm.sin(yaw + glm.pi() / 2)
+
+        self.up.x = -glm.cos(yaw) * glm.sin(pitch)
+        self.up.y = glm.cos(pitch)
+        self.up.z = -glm.sin(yaw) * glm.sin(pitch)
+
         self.forward_level = glm.vec3(glm.cos(yaw),0,glm.sin(yaw))
 
-        self.forward = glm.normalize(self.forward)
-        self.right = glm.normalize(glm.cross(self.forward, glm.vec3(0, 1, 0)))
-        self.up = glm.normalize(glm.cross(self.right, self.forward))
+        # self.forward = glm.normalize(self.forward)
+        # self.right = glm.normalize(glm.cross(self.forward, glm.vec3(0, 1, 0)))
+        # self.up = glm.normalize(glm.cross(self.right, self.forward))
 
     def update(self):
         self.move()
         self.rotate()
         self.update_camera_vectors()
         self.m_view = self.get_view_matrix()
+        
 
     def move(self):
         velocity = SPEED * self.app.delta_time
