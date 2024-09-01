@@ -1,12 +1,15 @@
 import glm
 import pygame as pg
+import json
 
-FOV = 80  # deg
+FOV = 90  # deg
 NEAR = 0.1
 FAR = 100
 SPEED = 0.008
 SENSITIVITY = 0.04
 
+def jsonprint(key, thing, comma = True):
+    print(f'"{key}": {json.dumps(str(thing))}' + ("," if comma else ""))
 
 class Camera:
     def __init__(self, app, position=(0, 0, 4), yaw=30, pitch=0):
@@ -56,6 +59,16 @@ class Camera:
         self.rotate()
         self.update_camera_vectors()
         self.m_view = self.get_view_matrix()
+        print("{")
+        jsonprint("yaw", self.yaw)
+        jsonprint("pitch", self.pitch)
+        jsonprint("m_view", self.m_view)
+        jsonprint("up", self.up)
+        jsonprint("right", self.right)
+        jsonprint("forward", self.forward)
+        jsonprint("x inf ", self.m_view*glm.vec4(10000,0,0,1))
+        jsonprint("proj", self.m_proj, False)
+        print("},")
         
 
     def move(self):
