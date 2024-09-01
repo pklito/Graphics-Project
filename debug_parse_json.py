@@ -13,14 +13,14 @@ def parse_vec4(vec_str):
     values = vec_str.replace('vec4(', '').replace(')', '').split(',')
     return glm.vec4(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
 
-def parse_m_view(m_view_str):
+def parse_mat4(m_view_str):
     # Split the string by lines and then by spaces to get the matrix values
     rows = m_view_str.split('\n')
     matrix = []
     for row in rows:
         values = row.replace('[', '').replace(']', '').split()
         matrix.append([float(v) for v in values])
-    return glm.mat4(*matrix)
+    return glm.transpose(glm.mat4(*matrix))
 
 # Open the JSON file
 with open('debug2.json', 'r+', encoding='utf-16') as file:
@@ -47,12 +47,12 @@ entry = data_value[100]
 print(entry)
 yaw = float(entry['yaw'])
 pitch = float(entry['pitch'])
-m_view = parse_m_view(entry['m_view'])
+m_view = parse_mat4(entry['m_view'])
 up = parse_vec3(entry['up'])
 right = parse_vec3(entry['right'])
 forward = parse_vec3(entry['forward'])
 x_inf = parse_vec4(entry['x inf '])
-proj = parse_m_view(entry['proj'])
+proj = parse_mat4(entry['proj'])
 
 # Print the converted values
 print(f"Yaw: {yaw}")
