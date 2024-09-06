@@ -50,6 +50,14 @@ class Scene:
                     height -= 1
                 height = clamp(height, 0, 2)
                 add(Cube(app, tex_id=int(0.8+1.4*random()),pos=(2*x, 2*height -s, 2*z)))
+            
+                
+        for x in range(n):
+            add(Cube(app, tex_id=1,pos=(x**3+50, 0, 0)))
+            add(Cube(app, tex_id=1,pos=(0, 0, x**3+50)))
+            add(Cube(app, tex_id=1,pos=(0, -x**3-50, 0)))
+
+
 
         add(Cat(app, pos=(0, -2, -10)))
 

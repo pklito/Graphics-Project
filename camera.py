@@ -4,13 +4,15 @@ import json
 
 FOV = 90  # deg
 NEAR = 0.1
-FAR = 100
+FAR = 10000
 SPEED = 0.008
 SENSITIVITY = 0.04
 
 def jsonprint(key, thing, comma = True):
     print(f'"{key}": {json.dumps(str(thing))}' + ("," if comma else ""))
 
+def toEuclidian(vec4):
+    return vec4/vec4.w
 class Camera:
     def __init__(self, app, position=(0, 0, 4), yaw=30, pitch=0):
         self.app = app
@@ -66,7 +68,9 @@ class Camera:
         jsonprint("up", self.up)
         jsonprint("right", self.right)
         jsonprint("forward", self.forward)
-        jsonprint("x inf ", self.m_view*glm.vec4(10000,0,0,1))
+        jsonprint("x_inf", toEuclidian(self.m_proj*self.m_view*glm.vec4(100000,0,0,1)))
+        jsonprint("y_inf", toEuclidian(self.m_proj*self.m_view*glm.vec4(0,100000,0,1)))
+        jsonprint("z_inf", toEuclidian(self.m_proj*self.m_view*glm.vec4(0,0,100000,1)))
         jsonprint("proj", self.m_proj, False)
         print("},")
         
