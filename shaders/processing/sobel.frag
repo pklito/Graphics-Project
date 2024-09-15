@@ -30,6 +30,6 @@ void main() {
         }
     }
 
-    float gradient_magnitude = length(gx + gy);
+    float gradient_magnitude = length(gx) + length(gy); //should be sqrt(gx^2 + gy^2 cdot (1,1,1))
     out_color = gradient_magnitude;
 }
