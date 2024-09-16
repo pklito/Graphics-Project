@@ -36,6 +36,7 @@ class GraphicsEngine:
 
         # configs
         self.SHOW_HOUGH = True
+        self.PAUSED = False
 
         # light
         self.light = Light()
@@ -53,6 +54,9 @@ class GraphicsEngine:
             self.SHOW_HOUGH = not self.SHOW_HOUGH
         if event.key == pg.K_r:
             loadConstants()
+        if event.key == pg.K_p:
+            self.PAUSED = not self.PAUSED
+            self.render()
 
     def check_events(self):
         for event in pg.event.get():
@@ -101,8 +105,9 @@ class GraphicsEngine:
         while True:
             self.get_time()
             self.check_events()
-            self.camera.update()
-            self.render()
+            if not self.PAUSED:
+                self.camera.update()
+                self.render()
             self.delta_time = self.clock.tick(60)
 
 
