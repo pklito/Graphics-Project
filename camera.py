@@ -8,6 +8,7 @@ FAR = 10000
 SPEED = 0.008
 SENSITIVITY = 0.04
 
+CAMERA_PRINTS = False
 def jsonprint(key, thing, comma = True):
     print(f'"{key}": {json.dumps(str(thing))}' + ("," if comma else ""))
 
@@ -61,18 +62,20 @@ class Camera:
         self.rotate()
         self.update_camera_vectors()
         self.m_view = self.get_view_matrix()
-        print("{")
-        jsonprint("yaw", self.yaw)
-        jsonprint("pitch", self.pitch)
-        jsonprint("m_view", self.m_view)
-        jsonprint("up", self.up)
-        jsonprint("right", self.right)
-        jsonprint("forward", self.forward)
-        jsonprint("x_inf", toEuclidian(self.m_proj*self.m_view*glm.vec4(100000,0,0,1)))
-        jsonprint("y_inf", toEuclidian(self.m_proj*self.m_view*glm.vec4(0,100000,0,1)))
-        jsonprint("z_inf", toEuclidian(self.m_proj*self.m_view*glm.vec4(0,0,100000,1)))
-        jsonprint("proj", self.m_proj, False)
-        print("},")
+        if CAMERA_PRINTS:
+            print("{")
+            jsonprint("yaw", self.yaw)
+            jsonprint("pitch", self.pitch)
+            jsonprint("m_view", self.m_view)
+            jsonprint("up", self.up)
+            jsonprint("right", self.right)
+            jsonprint("forward", self.forward)
+            jsonprint("x_inf", toEuclidian(self.m_proj*self.m_view*glm.vec4(100000,0,0,1)))
+            jsonprint("y_inf", toEuclidian(self.m_proj*self.m_view*glm.vec4(0,100000,0,1)))
+            jsonprint("z_inf", toEuclidian(self.m_proj*self.m_view*glm.vec4(0,0,100000,1)))
+            jsonprint("proj", self.m_proj, False)
+            print("},")
+        
         
 
     def move(self):
