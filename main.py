@@ -67,20 +67,27 @@ class GraphicsEngine:
             if event.type == pg.KEYDOWN:
                 self.key_down(event)
 
-    def render(self):
+    def clear_buffers(self):
         # clear framebuffers
         self.ctx.clear()
         self.buffers.fb_render.clear(color=(0.1,0.1,0.2))
         self.buffers.fb_aux.clear()
         self.buffers.fb_binary.clear()
 
+    def render(self):
         # Render world
         self.buffers.fb_render.use()
         self.ctx.enable(flags=mgl.DEPTH_TEST | mgl.CULL_FACE)
         self.scene.render()
 
+    def render_shaders(self, source = None, target = None):
+        if(source is None):
+            source = self.buffers.fb_render
+        if(target is None):
+            target = self.ctx.screen
+        
         #blit
-        do_pass(self.buffers.fb_screen_mix, self.buffers.fb_render, self.mesh.vaos['blit'])
+        do_pass(self.buffers.fb_screen_mix, source, self.mesh.vaos['blit'])
 
         # Do gaussian blur:
         do_pass(self.buffers.fb_aux, self.buffers.fb_render, self.mesh.vaos['1d_gaussian'], {"is_x" : 1})
@@ -89,12 +96,29 @@ class GraphicsEngine:
         do_pass(self.buffers.fb_binary, self.buffers.fb_render, self.mesh.vaos['sobel'])
         do_pass(self.buffers.fb_screen_mix, self.buffers.fb_binary, self.mesh.vaos['draw_over'])
 
-        do_pass(self.ctx.screen, self.buffers.fb_screen_mix, self.mesh.vaos['blit'])
-        # do overlay
-        #self.buffers.screen.use()
-        #opencv_process_fbo(self, self.buffers.fb_binary)
+        do_pass(target, self.buffers.fb_screen_mix, self.mesh.vaos['blit'])
+
+    def render_pipeline(self):
+        self.clear_buffers()
+        self.render()
+        self.render_shaders()
         # swap buffers
         pg.display.flip()
+
+    def opencv_pipeline(self):
+        self.clear_buffers()
+        self.render()
+        self.do_overlay()
+        pg.display.flip()
+
+    def do_overlay(self, target = None, source = None):
+        if source is None:
+            source = self.buffers.fb_binary
+        if target is None:
+            target = self.buffers.screen
+                # do overlay
+        opencv_process_fbo(self, source)
+        do_pass(target, self.buffers.opencv_tex, self.mesh.vaos['blit'])
 
 
 
@@ -107,7 +131,7 @@ class GraphicsEngine:
             self.check_events()
             if not self.PAUSED:
                 self.camera.update()
-                self.render()
+                self.render_pipeline()
             self.delta_time = self.clock.tick(60)
 
 
