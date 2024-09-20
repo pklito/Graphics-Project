@@ -63,7 +63,7 @@ def drawHoughBuckets(overlay, canny):
 
 
 fps = 0.0
-def drawCanny(app, canny):
+def drawOverlays(app, canny):
     ctx = app.ctx
    
     lines = None
@@ -98,7 +98,7 @@ def postProcessFbo(app, data_fbo = None):
         data_fbo = app.ctx.screen
     image = _fboToImage(data_fbo)
     canny = genCannyFromFrameBuffer(image)
-    drawCanny(app, canny)
+    drawOverlays(app, canny)
 
 def posProcessImagee(file):
     image = cv.imread(file)
@@ -107,6 +107,6 @@ def posProcessImagee(file):
 
 
 if __name__ == "__main__":
-    posProcessImagee("test3.png")
+    posProcessImagee("sc.png")
     cv.waitKey(0)
     cv.destroyAllWindows()
