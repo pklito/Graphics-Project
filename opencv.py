@@ -100,13 +100,13 @@ def postProcessFbo(app, data_fbo = None):
     canny = genCannyFromFrameBuffer(image)
     drawOverlays(app, canny)
 
-def posProcessImagee(file):
+def postProcessImage(file):
     image = cv.imread(file)
     canny = genCannyFromFrameBuffer(image)
     cv.imshow("canny", canny)
 
 
 if __name__ == "__main__":
-    posProcessImagee("sc.png")
+    postProcessImage("sc.png")
     cv.waitKey(0)
     cv.destroyAllWindows()

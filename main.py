@@ -120,7 +120,7 @@ class GraphicsEngine:
             target = self.buffers.screen
                 # do overlay
         postProcessFbo(self, source)
-        do_pass(target, self.buffers.opencv, self.mesh.vaos['blit'])
+        do_pass(target, self.buffers.opencv, self.mesh.vaos['blit'], {"flip_y": 1})
 
 
 
@@ -133,7 +133,7 @@ class GraphicsEngine:
             self.check_events()
             if not self.PAUSED:
                 self.camera.update()
-                self.render_pipeline()
+                self.opencv_pipeline()
             self.delta_time = self.clock.tick(60)
 
 
