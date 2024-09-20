@@ -11,6 +11,7 @@ def genCannyFromFrameBuffer(fbo : mgl.Framebuffer):
     buffer = fbo.read(components=3,dtype="f4")
     raw = np.frombuffer(buffer,dtype="f4")
     image = raw.reshape((fbo.height,fbo.width,3))[::-1,:,::-1]
+    # cv.imshow("text", image)
     
     ### CALCULATIONS ###
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)

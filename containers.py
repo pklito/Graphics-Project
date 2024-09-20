@@ -156,6 +156,8 @@ class Mesh:
         self.buffers.fb_screen_mix = ctx.framebuffer(color_attachments=self.buffers.fb_aux_tex)
 
         self.buffers.opencv_tex = ctx.texture((ctx.screen.width,ctx.screen.height),4)
+        self.buffers.opencv = ctx.framebuffer(color_attachments=self.buffers.opencv_tex)
+
 
     def destroy(self):
         [vbo.destroy() for vbo in self.vbos.values()]

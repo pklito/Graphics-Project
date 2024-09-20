@@ -75,8 +75,7 @@ class Camera:
             jsonprint("z_inf", toEuclidian(self.m_proj*self.m_view*glm.vec4(0,0,100000,1)))
             jsonprint("proj", self.m_proj, False)
             print("},")
-        
-        
+
 
     def move(self):
         velocity = SPEED * self.app.delta_time

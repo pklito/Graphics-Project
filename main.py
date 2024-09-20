@@ -56,7 +56,7 @@ class GraphicsEngine:
             loadConstants()
         if event.key == pg.K_p:
             self.PAUSED = not self.PAUSED
-            self.render()
+            self.opencv_pipeline()
 
     def check_events(self):
         for event in pg.event.get():
@@ -108,17 +108,17 @@ class GraphicsEngine:
     def opencv_pipeline(self):
         self.clear_buffers()
         self.render()
-        self.do_overlay()
+        self.do_overlay(source=self.buffers.fb_render)
         pg.display.flip()
 
     def do_overlay(self, target = None, source = None):
         if source is None:
-            source = self.buffers.fb_binary
+            source = self.buffers.screen
         if target is None:
             target = self.buffers.screen
                 # do overlay
         opencv_process_fbo(self, source)
-        do_pass(target, self.buffers.opencv_tex, self.mesh.vaos['blit'])
+        do_pass(target, self.buffers.opencv, self.mesh.vaos['blit'])
 
 
 
