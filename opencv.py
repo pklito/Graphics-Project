@@ -99,3 +99,14 @@ def postProcessFbo(app, data_fbo = None):
     image = _fboToImage(data_fbo)
     canny = genCannyFromFrameBuffer(image)
     drawCanny(app, canny)
+
+def posProcessImagee(file):
+    image = cv.imread(file)
+    canny = genCannyFromFrameBuffer(image)
+    cv.imshow("canny", canny)
+
+
+if __name__ == "__main__":
+    posProcessImagee("test3.png")
+    cv.waitKey(0)
+    cv.destroyAllWindows()

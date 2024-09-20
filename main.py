@@ -69,14 +69,16 @@ class GraphicsEngine:
 
     def clear_buffers(self):
         # clear framebuffers
-        self.ctx.clear()
+        self.ctx.clear(red=0.1, green=0.1, blue=0.2)
         self.buffers.fb_render.clear(color=(0.1,0.1,0.2))
         self.buffers.fb_aux.clear()
         self.buffers.fb_binary.clear()
 
-    def render(self):
+    def render(self, target = None):
+        if target is None:
+            target = self.buffers.fb_render
         # Render world
-        self.buffers.fb_render.use()
+        target.use()
         self.ctx.enable(flags=mgl.DEPTH_TEST | mgl.CULL_FACE)
         self.scene.render()
 
@@ -100,8 +102,8 @@ class GraphicsEngine:
 
     def render_pipeline(self):
         self.clear_buffers()
-        self.render()
-        self.render_shaders()
+        self.render(target=self.buffers.screen)
+        #self.render_shaders(source=self.buffers.fb_render, target=self.buffers.screen)
         # swap buffers
         pg.display.flip()
 
