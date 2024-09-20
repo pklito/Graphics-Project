@@ -6,11 +6,8 @@ import matplotlib.pyplot as plt
 import sys
 from constants import GLOBAL_CONSTANTS as constants
 
-def genCannyFromFrameBuffer(fbo : mgl.Framebuffer):
-     # Get the screen as a buffer
-    buffer = fbo.read(components=3,dtype="f4")
-    raw = np.frombuffer(buffer,dtype="f4")
-    image = raw.reshape((fbo.height,fbo.width,3))[::-1,:,::-1]
+def genCannyFromFrameBuffer(image):
+
     # cv.imshow("text", image)
     
     ### CALCULATIONS ###
@@ -63,16 +60,10 @@ def drawHoughBuckets(overlay, canny):
                 cv.line(overlay, pt1, pt2, (0,0,255,50), constants.opencv.HOUGH_LINE_WIDTH, cv.LINE_AA)
             if constants.opencv.HOUGH_SHOW_COORDINATES:
                 cv.circle(overlay,(int(toRange(theta,min_theta,max_theta,0,600)), int(toRange(rho,min_rho,max_rho,0,400))), 2, (255,255,0,255))
-    
+
 
 fps = 0.0
-def opencv_process_fbo(app, data_fbo = None):
-    if data_fbo is None:
-        data_fbo = app.ctx.screen
-    canny = genCannyFromFrameBuffer(data_fbo)
-    opencv_draw_canny(app, canny)
-
-def opencv_draw_canny(app, canny):
+def drawCanny(app, canny):
     ctx = app.ctx
    
     lines = None
@@ -92,4 +83,19 @@ def opencv_draw_canny(app, canny):
     ctx.enable_only(ctx.BLEND)
     app.buffers.opencv_tex.use()
     app.mesh.vaos['blit'].render()
-    
+
+def _fboToImage(fbo : mgl.Framebuffer):
+    """
+    Reads the image data from a modernGL framebuffer
+    """
+    buffer = fbo.read(components=3,dtype="f4")
+    raw = np.frombuffer(buffer,dtype="f4")
+    image = raw.reshape((fbo.height,fbo.width,3))[::-1,:,::-1] # Shape properly and reverse the order
+    return image
+
+def postProcessFbo(app, data_fbo = None):
+    if data_fbo is None:
+        data_fbo = app.ctx.screen
+    image = _fboToImage(data_fbo)
+    canny = genCannyFromFrameBuffer(image)
+    drawCanny(app, canny)

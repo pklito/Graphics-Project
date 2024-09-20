@@ -4,7 +4,7 @@ import sys
 from model import *
 from camera import Camera
 from containers import *
-from opencv import opencv_process_fbo
+from opencv import postProcessFbo
 from constants import loadConstants
 from texture import do_pass
 
@@ -117,7 +117,7 @@ class GraphicsEngine:
         if target is None:
             target = self.buffers.screen
                 # do overlay
-        opencv_process_fbo(self, source)
+        postProcessFbo(self, source)
         do_pass(target, self.buffers.opencv, self.mesh.vaos['blit'])
 
 
