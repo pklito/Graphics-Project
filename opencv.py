@@ -63,16 +63,8 @@ def drawHoughBuckets(overlay, canny):
 
 
 fps = 0.0
-def drawOverlays(app, canny):
+def drawOverlays(app, overlay):
     ctx = app.ctx
-   
-    lines = None
-    overlay = np.zeros((canny.shape[0],canny.shape[1],4),dtype=np.uint8)
-
-    if app.SHOW_HOUGH:
-       drawHoughEdges(overlay, canny)
-       drawHoughBuckets(overlay, canny)
-
     global fps
     fps = app.clock.get_fps()
     cv.putText(overlay,"fps: " + str(round(fps,2)),(0,50),cv.FONT_HERSHEY_PLAIN,1,(0,0,0,255), 2)
@@ -98,12 +90,22 @@ def postProcessFbo(app, data_fbo = None):
         data_fbo = app.ctx.screen
     image = _fboToImage(data_fbo)
     canny = genCannyFromFrameBuffer(image)
-    drawOverlays(app, canny)
+
+    overlay = np.zeros((canny.shape[0],canny.shape[1],4),dtype=np.uint8)
+    if app.SHOW_HOUGH:
+       drawHoughEdges(overlay, canny)
+       drawHoughBuckets(overlay, canny)
+    else:
+        overlay = canny
+
+    drawOverlays(app, overlay)
 
 def postProcessImage(file):
     image = cv.imread(file)
     canny = genCannyFromFrameBuffer(image)
-    cv.imshow("canny", canny)
+    overlay = np.zeros((canny.shape[0],canny.shape[1],4),dtype=np.uint8)
+    drawHoughEdges(overlay, canny)
+    cv.imshow("canny", overlay)
 
 
 if __name__ == "__main__":
