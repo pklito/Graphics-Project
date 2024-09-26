@@ -133,7 +133,10 @@ class GraphicsEngine:
             self.check_events()
             if not self.PAUSED:
                 self.camera.update()
-                self.opencv_pipeline()
+                if GLOBAL_CONSTANTS.opencv.DO_POST_PROCESS:
+                    self.opencv_pipeline()
+                else:
+                    self.render_pipeline()
             self.delta_time = self.clock.tick(60)
 
 

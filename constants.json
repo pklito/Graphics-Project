@@ -1,5 +1,7 @@
 {
     "opencv": {
+        "DO_POST_PROCESS" : false,
+
         "CANNY_THRESH_SOFT" : 30,
         "CANNY_THRESH_HARD" : 50,
 
