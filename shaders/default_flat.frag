@@ -45,7 +45,7 @@ void main() {
     float band = 0.01;
     if(uv_jump.x < 1-band && uv_jump.x > band && uv_jump.y < 1-band && uv_jump.y > band){
         uv_jump = vec2(0.5,0.5);
-    }
+    
     vec3 color = texture(u_texture_0, uv_jump).rgb;
     color = pow(color, vec3(gamma));
 
@@ -53,6 +53,11 @@ void main() {
 
     color = pow(color, 1 / vec3(gamma));
     fragColor = vec4(0.5*color, 1.0);
+    }
+
+    else{
+        fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    }
 }
 
 

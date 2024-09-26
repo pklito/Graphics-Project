@@ -69,8 +69,8 @@ class GraphicsEngine:
 
     def clear_buffers(self):
         # clear framebuffers
-        self.ctx.clear(red=0.1, green=0.1, blue=0.2)
-        self.buffers.fb_render.clear(color=(0.1,0.1,0.2))
+        self.ctx.clear(red=0.5, green=0.6, blue=0.95)
+        self.buffers.fb_render.clear(color=(1,1,1))
         self.buffers.fb_aux.clear()
         self.buffers.fb_binary.clear()
 
