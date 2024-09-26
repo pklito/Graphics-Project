@@ -4,7 +4,7 @@ import sys
 from model import *
 from camera import Camera
 from containers import *
-from opencv import postProcessFbo
+from opencv import postProcessFbo, exportFbo
 from constants import loadConstants
 from texture import do_pass
 
@@ -37,6 +37,7 @@ class GraphicsEngine:
         # configs
         self.SHOW_HOUGH = True
         self.PAUSED = False
+        self.EXPORT = False
 
         # light
         self.light = Light()
@@ -54,6 +55,8 @@ class GraphicsEngine:
             self.SHOW_HOUGH = not self.SHOW_HOUGH
         if event.key == pg.K_r:
             loadConstants()
+        if event.key == pg.K_t:
+            self.EXPORT = True
         if event.key == pg.K_p:
             self.PAUSED = not self.PAUSED
             self.opencv_pipeline()
@@ -100,18 +103,25 @@ class GraphicsEngine:
 
         do_pass(target, self.buffers.fb_screen_mix, self.mesh.vaos['blit'])
 
+    def flip_buffers(self):
+        """Flip the buffers, useful if you want to do something before the flip (like exporting)"""
+        if self.EXPORT:
+            self.EXPORT = False
+            exportFbo(self.buffers.screen, "output.png")
+        pg.display.flip()
+
     def render_pipeline(self):
         self.clear_buffers()
         self.render(target=self.buffers.screen)
         #self.render_shaders(source=self.buffers.fb_render, target=self.buffers.screen)
-        # swap buffers
-        pg.display.flip()
+        self.flip_buffers()
 
     def opencv_pipeline(self):
         self.clear_buffers()
         self.render()
         self.do_overlay(source=self.buffers.fb_render)
-        pg.display.flip()
+        
+        self.flip_buffers()
 
     def do_overlay(self, target = None, source = None):
         if source is None:
@@ -137,6 +147,7 @@ class GraphicsEngine:
                     self.opencv_pipeline()
                 else:
                     self.render_pipeline()
+            
             self.delta_time = self.clock.tick(60)
 
 

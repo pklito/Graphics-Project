@@ -115,6 +115,11 @@ def postProcessFbo(app, data_fbo = None):
 
     drawOverlays(app, overlay)
 
+def exportFbo(data_fbo, output_file = "output.png"):
+    image = _fboToImage(data_fbo)
+    image_8bit = (image * 255).astype(np.uint8)
+    cv.imwrite(output_file, image_8bit)
+
 def postProcessImage(file):
     image = cv.imread(file)
     canny = genCannyFromFrameBuffer(image)
@@ -127,7 +132,6 @@ def postProcessImage(file):
 def lsd(file):
     image = cv.imread(file)
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-    cv.imshow("gray", gray)
     lsd = cv.createLineSegmentDetector(0)
     lines = lsd.detect(gray)[0]
     drawn = lsd.drawSegments(image, lines)
