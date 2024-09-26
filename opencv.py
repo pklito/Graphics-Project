@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import sys
 from constants import GLOBAL_CONSTANTS as constants
 
+
 def genCannyFromFrameBuffer(image):
 
     # cv.imshow("text", image)
@@ -119,12 +120,32 @@ def postProcessImage(file):
     canny = genCannyFromFrameBuffer(image)
     overlay = np.zeros((canny.shape[0],canny.shape[1],4),dtype=np.uint8)
     #drawHoughEdges(overlay, canny)
-    lines = cv.HoughLines(canny, 1, np.pi / 180, 150, None, 0, 0)
+    lines = cv.HoughLines(canny, 1, np.pi / 180, 60, None, 0, 0)
     drawHoughLines(overlay, lines)
-    cv.imshow("canny", np.hstack((image, overlay[:,:,0:3])))
+    cv.imshow("canny", cv.addWeighted(image, 1, overlay[:,:,0:3], 0.2, 0))
 
+def lsd(file):
+    image = cv.imread(file)
+    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    cv.imshow("gray", gray)
+    lsd = cv.createLineSegmentDetector(0)
+    lines = lsd.detect(gray)[0]
+    drawn = lsd.drawSegments(image, lines)
+    cv.imshow("lsd", drawn)
+
+def prob(file):
+    image = cv.imread(file)
+    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    edges = cv.Canny(gray, 5, 150, apertureSize=3)
+    cv.imshow("canny",edges)
+    lines = cv.HoughLinesP(edges, 1, np.pi/180, threshold=30, minLineLength=50, maxLineGap=10)
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        cv.line(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    cv.imshow("prob", image)
 
 if __name__ == "__main__":
-    postProcessImage("sc.png")
+    prob("sc2.png")
+    lsd("sc2.png")
     cv.waitKey(0)
     cv.destroyAllWindows()
