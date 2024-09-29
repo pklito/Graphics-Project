@@ -1,4 +1,5 @@
 import numpy as np
+from util import *
 
 class Graph:
     """Key methods of Graph class"""
@@ -32,21 +33,14 @@ class Graph:
     def is_neighbor(self, vertex_index, neighbor_index):
         return neighbor_index in self.get_neighbors(vertex_index)
 
-def lineIntersection(a1, a2, b1, b2):
-    xdiff = (a1[0] - a2[0], b1[0] - b2[0])
-    ydiff = (a1[1] - a2[1], b1[1] - b2[1])
-
-    def det(a, b):
-        return a[0] * b[1] - a[1] * b[0]
-
-    div = det(xdiff, ydiff)
-    if div == 0:
-       return None
-
-    d = (det(a1, a2), det(b1, b2))
-    x = det(d, xdiff) / div
-    y = det(d, ydiff) / div
-    return x, y
+def combineParallelLines(lines):
+    
+    """Combine lines that are parallel"""
+    for i in range(len(lines)):
+        for j in range(i + 1, len(lines)):
+            if np.abs(np.dot(lines[i], lines[j])) > 0.99:
+                lines[i] += lines[j]
+                lines[j] = None
 
 
 if __name__ == "__main__":
@@ -58,3 +52,23 @@ if __name__ == "__main__":
     g.add_vertex([5, 6])
     print(g.vertices)
     print(g.has_vertex([1, 2]))
+
+    def line_distance(line1, line2):
+        """Calculate the distance between two lines"""
+        p1, p2 = line1
+        p3, p4 = line2
+
+        def point_line_distance(point, line):
+            p1, p2 = line
+            if np.linalg.norm(p2 - p1) == 0:
+                return np.linalg.norm(point - p1)
+            return np.abs(np.cross(p2 - p1, p1 - point)) / np.linalg.norm(p2 - p1)
+
+        return min(point_line_distance(p1, line2), point_line_distance(p2, line2),
+                    point_line_distance(p3, line1), point_line_distance(p4, line1))
+
+    # Example usage:
+    line1 = np.array([[0, 0], [0, 0]])
+    line2 = np.array([[5, 0], [5, 1]])
+    distance = line_distance(line1, line2)
+    print(f"Distance between lines: {distance}")
