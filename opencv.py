@@ -150,7 +150,7 @@ def prob(file):
     lines = combineParallelLines(lines)
     for line in lines:
         a, b = line
-        cv.line(image, a, b, (0, 255, 0), 1)
+        cv.line(image, np.array(a, dtype=int), np.array(b, dtype=int), (0, 255, 0), 1)
     cv.imshow("prob", image)
 
 def lsd_intersections(file):
@@ -205,7 +205,8 @@ def prob_intersections(file):
 if __name__ == "__main__":
     lsd_intersections("sc3.png")
     prob_intersections("sc3.png")
-
+    prob("sc3.png")
+    lsd("sc3.png")
 
     cv.waitKey(0)
     cv.destroyAllWindows()

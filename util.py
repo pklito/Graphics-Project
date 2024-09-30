@@ -75,20 +75,30 @@ def lineMatrixToPairs(lines):
     return [(np.array(line[0][0:2]), np.array(line[0][2:4])) for line in lines]
 
 def combineEdges(line1, line2):
+    """
+    Takes two parallel edges and combines them into a single edge.
+    """
+    # Find the two points that are the farthest apart, to get the longest continuous edge.
     p1, p2 = line1
     p3, p4 = line2
-    points = [p1, p2, p3, p4]
-    max_dist = 0
-    max_a, max_b = None, None
-    for i in range(len(points)):
-        for j in range(i + 1, len(points)):
-            dist = np.linalg.norm(points[i] - points[j])
-            if dist > max_dist:
-                max_dist = dist
-                max_a = points[i]
-                max_b = points[j]
+    p1 ,p2, p3, p4 = np.array(p1), np.array(p2), np.array(p3), np.array(p4)
+    # The new edge may not be parallel to the previous edges.
+    # We will create one that is more parallel to the previous edges.
+    edge1 = p2 - p1
+    edge2 = p4 - p3
+    # Make both edges face the same direction (not be 180 degrees off)
+    if np.dot(edge1,edge2) < 0:
+        edge2 = -edge2
+        ptemp = p3
+        p3 = p4
+        p4 = ptemp
     
-    return max_a, max_b
+    avg1 = edge1 + edge2
+    origin, end = p1, p4
+    if np.dot(p3 - p1, avg1) < 0:
+        origin, end = p3, p2
+    new_length = np.dot(end - origin, avg1) / (np.dot(avg1, avg1))
+    return np.array([origin, origin + new_length * avg1])
 
 def combineParallelLines(lines, max_distance = 5, max_angle = 3):
     new_lines = []
