@@ -135,7 +135,6 @@ def lsd(file):
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     lsd = cv.createLineSegmentDetector(0)
     lines = lsd.detect(gray)[0]
-    print(lines)
     drawn = lsd.drawSegments(image, lines)
     cv.imshow("lsd", drawn)
 
@@ -203,10 +202,10 @@ def prob_intersections(file):
     cv.imshow("prob intersections", image)
 
 if __name__ == "__main__":
-    lsd_intersections("sc3.png")
-    prob_intersections("sc3.png")
-    prob("sc3.png")
-    lsd("sc3.png")
+    lsd_intersections("sc_7x7.png")
+    prob_intersections("sc_7x7.png")
+    prob("sc_7x7.png")
+    lsd("sc_7x7.png")
 
     cv.waitKey(0)
     cv.destroyAllWindows()
