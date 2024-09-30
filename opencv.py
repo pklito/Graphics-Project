@@ -139,6 +139,7 @@ def lsd(file):
     cv.imshow("lsd", drawn)
 
 def prob(file):
+    # Get Probabilistic Hough Lines from the image
     image = cv.imread(file)
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     edges = cv.Canny(gray, 5, 150, apertureSize=3)
@@ -153,6 +154,7 @@ def prob(file):
     cv.imshow("prob", image)
 
 def lsd_intersections(file):
+    # Get LSD Lines from the image
     image = cv.imread(file)
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     lsd = cv.createLineSegmentDetector(0)
@@ -160,6 +162,7 @@ def lsd_intersections(file):
     lines = lineMatrixToPairs(lines)
 
     lines = combineParallelLines(lines)
+    # Find all intersections between line pairs and draw them
     for i in range(0, len(lines)):
         for j in range(i+1, len(lines)):
             a, b = lines[i]
@@ -168,6 +171,7 @@ def lsd_intersections(file):
             if pt is not None:
                 cv.circle(image, (int(pt[0]), int(pt[1])), 2, (0, 255, 0), 2)
             
+    # Draw all the lines in random colors
     for i in range(0, len(lines)):
         a, b = lines[i]
         a = np.array(a, dtype=int)
@@ -177,6 +181,7 @@ def lsd_intersections(file):
     cv.imshow("lsd intersections", image)
 
 def prob_intersections(file):
+    # Get Probabilistic Hough Lines from the image
     image = cv.imread(file)
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     edges = cv.Canny(gray, 5, 150, apertureSize=3)
@@ -184,7 +189,7 @@ def prob_intersections(file):
     lines = lineMatrixToPairs(lines)
 
     lines = combineParallelLines(lines)
-
+    # Find all intersections between line pairs
     for i in range(0, len(lines)):
         for j in range(i+1, len(lines)):
             a, b = lines[i]
@@ -192,7 +197,8 @@ def prob_intersections(file):
             pt = segmentIntersection(a, b, c, d, threshold=10)
             if pt is not None:
                 cv.circle(image, (int(pt[0]), int(pt[1])), 2, (0, 255, 0), 2)
-            
+    
+    # Draw all the lines in random colors
     for i in range(0, len(lines)):
         a, b = lines[i]
         a = np.array(a, dtype=int)
@@ -202,10 +208,11 @@ def prob_intersections(file):
     cv.imshow("prob intersections", image)
 
 if __name__ == "__main__":
-    lsd_intersections("sc_7x7.png")
-    prob_intersections("sc_7x7.png")
-    prob("sc_7x7.png")
-    lsd("sc_7x7.png")
+    file = "sc_cube.png"
+    lsd_intersections(file)
+    prob_intersections(file)
+    prob(file)
+    lsd(file)
 
     cv.waitKey(0)
     cv.destroyAllWindows()
