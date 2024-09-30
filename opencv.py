@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import sys
 from constants import GLOBAL_CONSTANTS as constants
 from graph import Graph, lineIntersection, segmentIntersection
+from util import *
 
 def genCannyFromFrameBuffer(image):
 
@@ -138,9 +139,6 @@ def lsd(file):
     drawn = lsd.drawSegments(image, lines)
     cv.imshow("lsd", drawn)
 
-def lineMatrixToPairs(lines):
-    return [(np.array(line[0][0:2]), np.array(line[0][2:4])) for line in lines]
-
 def prob(file):
     image = cv.imread(file)
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
@@ -148,9 +146,11 @@ def prob(file):
     cv.imshow("canny",edges)
     lines = cv.HoughLinesP(edges, 1, np.pi/180, threshold=30, minLineLength=50, maxLineGap=10)
     lines = lineMatrixToPairs(lines)
+
+    lines = combineParallelLines(lines)
     for line in lines:
         a, b = line
-        cv.line(image, a, b, (0, 255, 0), 2)
+        cv.line(image, a, b, (0, 255, 0), 1)
     cv.imshow("prob", image)
 
 def lsd_intersections(file):
@@ -159,6 +159,8 @@ def lsd_intersections(file):
     lsd = cv.createLineSegmentDetector(0)
     lines = lsd.detect(gray)[0]
     lines = lineMatrixToPairs(lines)
+
+    lines = combineParallelLines(lines)
     for i in range(0, len(lines)):
         for j in range(i+1, len(lines)):
             a, b = lines[i]
@@ -167,12 +169,43 @@ def lsd_intersections(file):
             if pt is not None:
                 cv.circle(image, (int(pt[0]), int(pt[1])), 2, (0, 255, 0), 2)
             
+    for i in range(0, len(lines)):
+        a, b = lines[i]
+        a = np.array(a, dtype=int)
+        b = np.array(b, dtype=int)
+        cv.line(image, tuple(a), tuple(b), (int(np.random.randint(0, 256)), int(np.random.randint(0, 256)), int(np.random.randint(0, 256))), 1)
+    
     cv.imshow("lsd intersections", image)
 
+def prob_intersections(file):
+    image = cv.imread(file)
+    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    edges = cv.Canny(gray, 5, 150, apertureSize=3)
+    lines = cv.HoughLinesP(edges, 1, np.pi/180, threshold=30, minLineLength=50, maxLineGap=10)
+    lines = lineMatrixToPairs(lines)
+
+    lines = combineParallelLines(lines)
+
+    for i in range(0, len(lines)):
+        for j in range(i+1, len(lines)):
+            a, b = lines[i]
+            c, d = lines[j]
+            pt = segmentIntersection(a, b, c, d, threshold=10)
+            if pt is not None:
+                cv.circle(image, (int(pt[0]), int(pt[1])), 2, (0, 255, 0), 2)
+            
+    for i in range(0, len(lines)):
+        a, b = lines[i]
+        a = np.array(a, dtype=int)
+        b = np.array(b, dtype=int)
+        cv.line(image, tuple(a), tuple(b), (int(np.random.randint(0, 256)), int(np.random.randint(0, 256)), int(np.random.randint(0, 256))), 1)
+    
+    cv.imshow("prob intersections", image)
+
 if __name__ == "__main__":
-    prob("sc3.png")
-    lsd("sc3.png")
     lsd_intersections("sc3.png")
+    prob_intersections("sc3.png")
+
 
     cv.waitKey(0)
     cv.destroyAllWindows()

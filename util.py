@@ -63,3 +63,49 @@ def segmentIntersection(a1, a2, b1, b2, threshold = 0):
         return None
     
     return a1 + t * (np.asarray(a2) - a1)
+
+def edgeDistance(edge1, edge2):
+    p1, p2 = edge1
+    p3, p4 = edge2
+    def dist(point, line):
+        return np.linalg.norm(np.array(point) - getEdgeProjection(point, line))
+    return min(dist(p1, edge2), dist(p2, edge2), dist(p3, edge1), dist(p4, edge1))
+
+def lineMatrixToPairs(lines):
+    return [(np.array(line[0][0:2]), np.array(line[0][2:4])) for line in lines]
+
+def combineEdges(line1, line2):
+    p1, p2 = line1
+    p3, p4 = line2
+    points = [p1, p2, p3, p4]
+    max_dist = 0
+    max_a, max_b = None, None
+    for i in range(len(points)):
+        for j in range(i + 1, len(points)):
+            dist = np.linalg.norm(points[i] - points[j])
+            if dist > max_dist:
+                max_dist = dist
+                max_a = points[i]
+                max_b = points[j]
+    
+    return max_a, max_b
+
+def combineParallelLines(lines, max_distance = 5, max_angle = 3):
+    new_lines = []
+    cancel = False
+    for i in range(len(lines) - 1):
+        for j in range(i + 1, len(lines)):
+            if np.abs(np.dot(lines[i][1] - lines[i][0], lines[j][1] - lines[j][0])) / (np.linalg.norm(lines[i][1] - lines[i][0]) * np.linalg.norm(lines[j][1] - lines[j][0])) > np.cos(np.radians(max_angle)):
+                if edgeDistance(lines[i], lines[j]) < max_distance:
+                    new_lines = new_lines + [combineEdges(lines[i], lines[j])] + lines[i+1:j] + lines[j+1:]
+                    cancel = True
+            
+            if cancel:
+                break
+        if cancel:
+            break        
+        new_lines.append(lines[i])
+
+    if cancel:
+        return combineParallelLines(new_lines)
+    return new_lines
