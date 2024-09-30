@@ -94,10 +94,10 @@ def combineEdges(line1, line2):
         p4 = ptemp
     
     avg1 = edge1 + edge2
-    origin, end = p1, p4
-    if np.dot(p3 - p1, avg1) < 0:
-        origin, end = p3, p2
-    new_length = np.dot(end - origin, avg1) / (np.dot(avg1, avg1))
+    origin = p1
+    if np.dot(p3 - origin, avg1) < 0:
+        origin = p3
+    new_length = max(np.dot(p2 - origin, avg1) / (np.dot(avg1, avg1)), np.dot(p4 - origin, avg1) / (np.dot(avg1, avg1)))
     return np.array([origin, origin + new_length * avg1])
 
 def combineParallelLines(lines, max_distance = 5, max_angle = 3):
