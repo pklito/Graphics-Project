@@ -104,7 +104,6 @@ def combineEdges(line1, line2):
     return np.array([origin, origin + new_length * avg1])
 
 def combineParallelLines(lines, max_distance = 5, max_angle = 3):
-    print("combining:", len(lines))
     new_lines = []
     cancel = False
     for i in range(len(lines)):

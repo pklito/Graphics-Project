@@ -60,8 +60,6 @@ if __name__ == "__main__":
     g.add_vertex([3, 4])
     g.add_vertex([4, 5])
     g.add_vertex([5, 6])
-    print(g.vertices)
-    print(g.has_vertex([1, 2]))
 
     def line_distance(line1, line2):
         """Calculate the distance between two lines"""
