@@ -3,7 +3,7 @@ from util import *
 
 class Graph:
     """Key methods of Graph class"""
-    def __init__(self, vertices = None, edges = None):
+    def __init__(self, vertices):
         #list of points
         self.vertices = []
         #dictionary of out edges for each vertex
@@ -15,13 +15,14 @@ class Graph:
     
     def get_vertex_index(self, vertex, threshold = 0.01):
         for i, v in enumerate(self.vertices):
-            if (v - vertex).dot(v - vertex) < threshold:
+            if (v - vertex).dot(v - vertex) < threshold * threshold:
                 return i
         return None
     
     def add_vertex(self, vertex):
         vertex = np.asarray(vertex).flatten()
         self.vertices.append(vertex)
+        return len(self.vertices) - 1
 
     def add_edge(self, from_index, to_index):
         self.edges.setdefault(from_index, set()).add(to_index)
@@ -33,15 +34,15 @@ class Graph:
     def is_neighbor(self, vertex_index, neighbor_index):
         return neighbor_index in self.get_neighbors(vertex_index)
 
-def combineParallelLines(lines):
-    
-    """Combine lines that are parallel"""
-    for i in range(len(lines)):
-        for j in range(i + 1, len(lines)):
-            if np.abs(np.dot(lines[i], lines[j])) > 0.99:
-                lines[i] += lines[j]
-                lines[j] = None
-
+def makeGraphFromLines(lines):
+    lines = lineMatrixToPairs(lines)
+    lines = combineParallelLines(lines)
+    g = Graph()
+    for i in range(0, len(lines)):
+        p1 = g.add_vertex(lines[i][0])
+        p2 = g.add_vertex(lines[i][1])
+        g.add_edge(p1, p2)
+    return g
 
 if __name__ == "__main__":
     g = Graph()

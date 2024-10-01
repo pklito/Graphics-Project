@@ -72,6 +72,9 @@ def edgeDistance(edge1, edge2):
     return min(dist(p1, edge2), dist(p2, edge2), dist(p3, edge1), dist(p4, edge1))
 
 def lineMatrixToPairs(lines):
+    if lines[0].shape != (1, 4):
+        print("Error: lines must be a matrix of shape (n, 1, 4)", lines[0].shape)
+        return lines
     return [(np.array(line[0][0:2]), np.array(line[0][2:4])) for line in lines]
 
 def combineEdges(line1, line2):
