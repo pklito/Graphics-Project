@@ -11,39 +11,45 @@ class Graph:
         self.edges = {}
         
 
-    def has_vertex(self, vertex):
+    def has_vertex(self, vertex) -> bool:
         return any([(v - vertex).dot(v - vertex) < 0.01 for v in self.vertices])
     
-    def get_vertex_index(self, vertex, threshold = 0.01):
+    def get_vertex_index(self, vertex, threshold = 0.01) -> int | None:
         for i, v in enumerate(self.vertices):
             if (v - vertex).dot(v - vertex) < threshold * threshold:
                 return i
         return None
     
-    def add_vertex(self, vertex):
+    def add_vertex(self, vertex) -> int:
         vertex = np.asarray(vertex).flatten()
         self.vertices.append(vertex)
         return len(self.vertices) - 1
 
-    def add_edge(self, from_index, to_index):
+    def add_edge(self, from_index, to_index) -> None:
         self.edges.setdefault(from_index, set()).add(to_index)
         self.edges.setdefault(to_index, set()).add(from_index)
 
-    def get_neighbors(self, vertex_index):
+    def get_neighbors(self, vertex_index) -> set:
         return self.edges.get(vertex_index, set())
     
-    def is_neighbor(self, vertex_index, neighbor_index):
+    def is_neighbor(self, vertex_index, neighbor_index) -> bool:
         return neighbor_index in self.get_neighbors(vertex_index)
     
-    def draw_graph(self, image):
+    def draw_graph(self, image) -> np.ndarray:
         for i, vertex in enumerate(self.vertices):
             for neighbor in self.get_neighbors(i):
                 neighbor_vertex = self.vertices[neighbor]
                 cv.line(image, np.array(vertex,dtype=np.int32), np.array(neighbor_vertex,dtype=np.int32), (0, 255, 0), 2)
             cv.circle(image, np.array(vertex,dtype=np.int32), 5, (0, 0, 255), -1)
         return image
+    
+    def copy(self) -> 'Graph':
+        g = Graph()
+        g.vertices = self.vertices.copy()
+        g.edges = self.edges.copy()
+        return g
 
-def makeGraphFromLines(lines):
+def makeGraphFromLines(lines) -> Graph:
     lines = lineMatrixToPairs(lines)
     lines = combineParallelLines(lines)
     g = Graph()
