@@ -1,9 +1,10 @@
 import numpy as np
+import cv2 as cv
 from util import *
 
 class Graph:
     """Key methods of Graph class"""
-    def __init__(self, vertices):
+    def __init__(self):
         #list of points
         self.vertices = []
         #dictionary of out edges for each vertex
@@ -33,6 +34,14 @@ class Graph:
     
     def is_neighbor(self, vertex_index, neighbor_index):
         return neighbor_index in self.get_neighbors(vertex_index)
+    
+    def draw_graph(self, image):
+        for i, vertex in enumerate(self.vertices):
+            for neighbor in self.get_neighbors(i):
+                neighbor_vertex = self.vertices[neighbor]
+                cv.line(image, np.array(vertex,dtype=np.int32), np.array(neighbor_vertex,dtype=np.int32), (0, 255, 0), 2)
+            cv.circle(image, np.array(vertex,dtype=np.int32), 5, (0, 0, 255), -1)
+        return image
 
 def makeGraphFromLines(lines):
     lines = lineMatrixToPairs(lines)

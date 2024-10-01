@@ -5,7 +5,7 @@ from logger import LoggerGenerator
 import matplotlib.pyplot as plt
 import sys
 from constants import GLOBAL_CONSTANTS as constants
-from graph import Graph, lineIntersection, segmentIntersection
+from graph import Graph, lineIntersection, segmentIntersection, makeGraphFromLines
 from util import *
 
 def genCannyFromFrameBuffer(image):
@@ -148,9 +148,9 @@ def prob(file):
     lines = lineMatrixToPairs(lines)
 
     lines = combineParallelLines(lines)
-    for line in lines:
-        a, b = line
-        cv.line(image, np.array(a, dtype=int), np.array(b, dtype=int), (0, 255, 0), 1)
+    graph = makeGraphFromLines(lines)
+    graph.draw_graph(image)
+    
     cv.imshow("prob", image)
 
 def lsd_intersections(file):
