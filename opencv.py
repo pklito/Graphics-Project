@@ -146,12 +146,15 @@ def prob(file):
     cv.imshow("canny",edges)
     lines = cv.HoughLinesP(edges, 1, np.pi/180, threshold=30, minLineLength=50, maxLineGap=10)
     lines = lineMatrixToPairs(lines)
-
+    for line in lines:
+        cv.line(image, line[0], line[1], (0,255,0), 2)
+    
     lines = combineParallelLines(lines)
     graph = makeGraphFromLines(lines)
     graph = mergeOverlappingVertices(graph, threshold=10)
-    graph = connectIntersectingEdges(graph, threshold_combine=7, threshold_extend=0)
-    graph.draw_graph(image)
+    #graph.draw_graph(image, (0,0,255), (0,255,0), 2, 5)
+    graph = connectIntersectingEdges(graph, threshold_combine=0, threshold_extend=0)
+    graph.draw_graph(image, (255,50,50), (100,100,100), 1, 3)
     print(graph)
     
     cv.imshow("prob", image)

@@ -36,12 +36,12 @@ class Graph:
     def is_neighbor(self, vertex_index, neighbor_index) -> bool:
         return neighbor_index in self.get_neighbors(vertex_index)
     
-    def draw_graph(self, image) -> np.ndarray:
+    def draw_graph(self, image, edge_color = (0,255,0), vertex_color = (0,255,0), edge_width = 2, vertex_size=5) -> np.ndarray:
         for i, vertex in enumerate(self.vertices):
             for neighbor in self.get_neighbors(i):
                 neighbor_vertex = self.vertices[neighbor]
-                cv.line(image, np.array(vertex,dtype=np.int32), np.array(neighbor_vertex,dtype=np.int32), (0, 255, 0), 2)
-            cv.circle(image, np.array(vertex,dtype=np.int32), 5, (0, 0, 255), -1)
+                cv.line(image, np.array(vertex,dtype=np.int32), np.array(neighbor_vertex,dtype=np.int32), edge_color, edge_width)
+            cv.circle(image, np.array(vertex,dtype=np.int32), vertex_size, vertex_color, -1)
         return image
     
     def __str__(self) -> str:
@@ -52,6 +52,25 @@ class Graph:
         g.vertices = self.vertices.copy()
         g.edges = self.edges.copy()
         return g
+    
+    @property
+    def info(self) -> str:
+        return f"Vertices: {len(self.vertices)}, Edges: {sum([len(edges) for edges in self.edges.values()])}"
+    
+    def print_matrix(self) -> None:
+        print("X ", end="")
+        for i in range(len(self.vertices)):
+            if i % 10 == 0:
+                print(i, end = " ")
+            else:
+                print(i%10, end = " ")
+        print("")
+        for i in range(len(self.vertices)):
+            print(i, end=" ")
+            for j in range(len(self.vertices)):
+                print("1" if i in self.get_neighbors(j) else ".",end=(len(str(j+1)))*" " if (j+1)%10 == 0 else " ")
+            print("")
+            
 
 def makeGraphFromLines(lines) -> Graph:
     lines = lineMatrixToPairs(lines)
@@ -105,7 +124,6 @@ def mergeOverlappingVertices(graph : Graph, threshold = 5):
     new_vertices = []
     new_edges = dict()
     for i in range(len(new_to_old_indices)):
-        print(i, new_to_old_indices[i])
         new_vertices.append(graph.vertices[new_to_old_indices[i]])
         new_edges[i] = {old_to_new_indices[j] for j in graph.get_neighbors(new_to_old_indices[i])}
     graph.vertices = new_vertices
@@ -122,10 +140,13 @@ def connectIntersectingEdges(graph : Graph, threshold_extend = 0, threshold_comb
     # All edges means all starting points 'a' and 'c', and all end points 'b' and 'd' where a < b and c < d
     for a in range(len(graph.vertices) - 1):
         for c in range(a+1, len(graph.vertices)):
-            for b in graph.get_neighbors(a):
-                for d in graph.get_neighbors(c):
+
+            for b in graph.get_neighbors(a).copy():
+                for d in graph.get_neighbors(c).copy():
                     if a == d or b == c or b <= a or d <= c:
                         continue
+                    print(a, b, c, d)
+                    #graph.print_matrix()
                     p1, t, u, ab_len, cd_len = _segmentIntersection(graph.vertices[a], graph.vertices[b], graph.vertices[c], graph.vertices[d], threshold=threshold_extend)
                     if p1 is None:
                         # No intersection
