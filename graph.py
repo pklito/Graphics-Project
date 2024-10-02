@@ -43,6 +43,9 @@ class Graph:
             cv.circle(image, np.array(vertex,dtype=np.int32), 5, (0, 0, 255), -1)
         return image
     
+    def __str__(self) -> str:
+        return f"Vertices: {[(v[0], v[1]) if v is not None else None for v in self.vertices]}, Edges: {self.edges}"
+    
     def copy(self) -> 'Graph':
         g = Graph()
         g.vertices = self.vertices.copy()
@@ -58,6 +61,55 @@ def makeGraphFromLines(lines) -> Graph:
         p2 = g.add_vertex(lines[i][1])
         g.add_edge(p1, p2)
     return g
+
+def mergeOverlappingVertices(graph : Graph, threshold = 5):
+    graph = graph.copy()
+    """Take a disconnected graph and combine vertices that are close together"""
+    for i, vertex in enumerate(graph.vertices):
+        if graph.vertices[i] is None:
+            continue
+        for j, vertex2 in enumerate(graph.vertices):
+            # Skip if one of the vertices was removed
+            if graph.vertices[j] is None:
+                continue
+            # Skip if the same vertex
+            if i == j:
+                continue
+            # Skip if the vertices are connected
+            if j in graph.get_neighbors(i) or i in graph.get_neighbors(j):
+                continue
+
+            if np.linalg.norm(vertex - vertex2) < threshold:
+                for neighbor in graph.get_neighbors(j):
+                    graph.edges[neighbor].remove(j)
+                    graph.add_edge(i, neighbor)
+                    graph.add_edge(neighbor, i)
+
+                graph.edges[j] = None
+                graph.vertices[j] = None
+    
+    # Remove all the None values from the graph
+    new_index = 0
+    new_index_2 = -1
+    new_to_old_indices = []
+    old_to_new_indices = []
+    for i in range(len(graph.vertices)):
+        if graph.vertices[i] is None:
+            new_index += 1
+        else:
+            new_index_2 += 1
+            new_to_old_indices.append(i)
+        old_to_new_indices.append(new_index_2)
+
+    new_vertices = []
+    new_edges = dict()
+    for i in range(len(new_to_old_indices)):
+        print(i, new_to_old_indices[i])
+        new_vertices.append(graph.vertices[new_to_old_indices[i]])
+        new_edges[i] = {old_to_new_indices[j] for j in graph.get_neighbors(new_to_old_indices[i])}
+    graph.vertices = new_vertices
+    graph.edges = new_edges
+    return graph
 
 if __name__ == "__main__":
     g = Graph()

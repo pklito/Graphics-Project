@@ -5,7 +5,7 @@ from logger import LoggerGenerator
 import matplotlib.pyplot as plt
 import sys
 from constants import GLOBAL_CONSTANTS as constants
-from graph import Graph, lineIntersection, segmentIntersection, makeGraphFromLines
+from graph import *
 from util import *
 
 def genCannyFromFrameBuffer(image):
@@ -149,6 +149,7 @@ def prob(file):
 
     lines = combineParallelLines(lines)
     graph = makeGraphFromLines(lines)
+    graph = mergeOverlappingVertices(graph, threshold=10)
     graph.draw_graph(image)
     
     cv.imshow("prob", image)
