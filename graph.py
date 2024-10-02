@@ -1,6 +1,7 @@
 import numpy as np
 import cv2 as cv
 from util import *
+from util import _segmentIntersection
 
 class Graph:
     """Key methods of Graph class"""
@@ -110,6 +111,54 @@ def mergeOverlappingVertices(graph : Graph, threshold = 5):
     graph.vertices = new_vertices
     graph.edges = new_edges
     return graph
+
+def connectIntersectingEdges(graph : Graph, threshold_extend = 0, threshold_combine = 5):
+    """
+    threshold_extend: The threshold for how many pixels edges can be extended by.
+    threshold_combine: how close in pixels does the intersection have to be to an end to combine them.
+    """
+    graph = graph.copy()
+    # Go over all edges for intersections.
+    # All edges means all starting points 'a' and 'c', and all end points 'b' and 'd' where a < b and c < d
+    for a in range(len(graph.vertices) - 1):
+        for c in range(a+1, len(graph.vertices)):
+            for b in graph.get_neighbors(a):
+                for d in graph.get_neighbors(c):
+                    if a == d or b == c or b <= a or d <= c:
+                        continue
+                    p1, t, u, ab_len, cd_len = _segmentIntersection(graph.vertices[a], graph.vertices[b], graph.vertices[c], graph.vertices[d], threshold=threshold_extend)
+                    if p1 is None:
+                        # No intersection
+                        continue
+                    p1_index = c if u < 0.5 else d
+                    in_ab = t > 0 + threshold_combine/ab_len and t < 1 - threshold_combine/ab_len
+                    in_cd = u > 0 + threshold_combine/cd_len and u < 1 - threshold_combine/cd_len
+                    if in_ab and in_cd:
+                        p1_index = graph.add_vertex(p1)
+                    if in_ab:
+                        graph.edges[a].remove(b)
+                        graph.edges[b].remove(a)
+                        graph.add_edge(a, p1_index)
+                        graph.add_edge(p1_index, b)
+                    else:
+                        if t < 0.5:
+                            graph.vertices[a] = p1
+                            p1_index = a
+                        else:
+                            p1_index = b
+                            graph.vertices[b] = p1
+                    if u > 0 + threshold_combine/ab_len and u < 1 - threshold_combine/ab_len:
+                        graph.edges[c].remove(d)
+                        graph.edges[d].remove(c)
+                        graph.add_edge(c, p1_index)
+                        graph.add_edge(p1_index, d)
+                    else:
+                        if u < 0.5:
+                            graph.vertices[c] = p1
+                        else:
+                            graph.vertices[d] = p1
+    return graph
+
 
 if __name__ == "__main__":
     g = Graph()

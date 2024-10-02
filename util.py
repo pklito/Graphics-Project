@@ -46,13 +46,13 @@ def lineIntersection(a1, a2, b1, b2):
     y = det(d, ydiff) / div
     return x, y
 
-def segmentIntersection(a1, a2, b1, b2, threshold = 0):
+def _segmentIntersection(a1, a2, b1, b2, threshold = 0):
     top = (b2[0] - b1[0]) * (a1[1] - b1[1]) - (b2[1] - b1[1]) * (a1[0] - b1[0])
     utop = (a2[1] - a1[1]) * (b1[0] - a1[0]) - (a2[0] - a1[0]) * (b1[1] - a1[1])
     bottom = (a2[0] - a1[0]) * (b2[1] - b1[1]) - (a2[1] - a1[1]) * (b2[0] - b1[0])
     
     if bottom == 0:
-        return None
+        return None, None, None, None, None
     t = top / bottom
     u = utop / bottom
     
@@ -60,9 +60,9 @@ def segmentIntersection(a1, a2, b1, b2, threshold = 0):
     b_len = np.linalg.norm(np.array(b2) - b1)
 
     if t < 0 - threshold / a_len or t > 1 + threshold / a_len or u < 0 - threshold / b_len or u > 1 + threshold / b_len:
-        return None
+        return None, None, None, a_len, b_len
     
-    return a1 + t * (np.asarray(a2) - a1)
+    return a1 + t * (np.asarray(a2) - a1), t, u, a_len, b_len
 
 def edgeDistance(edge1, edge2):
     p1, p2 = edge1

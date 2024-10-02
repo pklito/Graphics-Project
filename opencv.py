@@ -150,12 +150,14 @@ def prob(file):
     lines = combineParallelLines(lines)
     graph = makeGraphFromLines(lines)
     graph = mergeOverlappingVertices(graph, threshold=10)
+    graph = connectIntersectingEdges(graph, threshold_combine=7, threshold_extend=0)
     graph.draw_graph(image)
+    print(graph)
     
     cv.imshow("prob", image)
 
 if __name__ == "__main__":
-    file = "sc_cube.png"
+    file = "sc_7x7.png"
     prob(file)
     lsd(file)
 
