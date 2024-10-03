@@ -138,6 +138,39 @@ def lsd(file):
     drawn = lsd.drawSegments(image, lines)
     cv.imshow("lsd", drawn)
 
+def handleFaces(image, faces):
+    print("handleFaces")
+    for face in faces:
+        object_points = np.array([[0,0,0],[0,1,0],[1,1,0],[1,0,0]], dtype=np.float32)
+        image_points = np.array(face, dtype=np.float32)
+
+        # Define the camera matrix for a perspective camera with resolution 600x400 and FOV of 90 degrees
+        focal_length = 600 / (2 * np.tan(np.deg2rad(90) / 2))
+        camera_matrix = np.array([
+            [focal_length, 0, 300],
+            [0, focal_length, 200],
+            [0, 0, 1]
+        ])
+        
+        ret, rvec, tvec = cv.solvePnP(object_points, image_points, camera_matrix, None, flags=cv.SOLVEPNP_ITERATIVE)
+        if ret:
+            # Define the point in the world coordinates
+            world_point = np.array([[0.5, 0.5, 0.5]], dtype=np.float32)
+            
+            # Project the 3D point to the image plane
+            image_point, _ = cv.projectPoints(world_point, rvec, tvec, camera_matrix, None)
+            # Draw the point on the image
+            image_point = tuple(image_point[0][0].astype(int))
+            cv.circle(image, image_point, 3, (255, 255, 255), -1)
+            world_point = np.array([[0.5, 0.5, -0.5]], dtype=np.float32)
+            
+            # Project the 3D point to the image plane
+            image_point, _ = cv.projectPoints(world_point, rvec, tvec, camera_matrix, None)
+            # Draw the point on the image
+            image_point = tuple(image_point[0][0].astype(int))
+            cv.circle(image, image_point, 3, (0, 0, 0), -1)
+
+
 def prob(file):
     # Get Probabilistic Hough Lines from the image
     image = cv.imread(file)
@@ -146,23 +179,24 @@ def prob(file):
     cv.imshow("canny",edges)
     lines = cv.HoughLinesP(edges, 1, np.pi/180, threshold=30, minLineLength=50, maxLineGap=10)
     lines = lineMatrixToPairs(lines)
-    for line in lines:
-        cv.line(image, line[0], line[1], (0,255,0), 2)
+    # for line in lines:
+    #     cv.line(image, line[0], line[1], (0,255,0), 2)
     
     lines = combineParallelLines(lines)
     graph = makeGraphFromLines(lines)
-    graph = mergeOverlappingVertices(graph, threshold=10)
-    #graph.draw_graph(image, (0,0,255), (0,255,0), 2, 5)
+    graph = mergeOverlappingVertices(graph, threshold=20)
+    graph.draw_graph(image, (0,0,255), (0,255,0), 2, 5)
     graph = connectIntersectingEdges(graph, threshold_combine=0, threshold_extend=0)
+    faces = getFaces(graph)
+    handleFaces(image, faces)
     graph.draw_graph(image, (255,50,50), (100,100,100), 1, 3)
-    print(graph)
     
     cv.imshow("prob", image)
 
 if __name__ == "__main__":
-    file = "sc_7x7.png"
+    file = "sc_cube.png"
     prob(file)
-    lsd(file)
+
 
     cv.waitKey(0)
     cv.destroyAllWindows()
