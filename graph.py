@@ -145,7 +145,6 @@ def connectIntersectingEdges(graph : Graph, threshold_extend = 0, threshold_comb
                 for d in graph.get_neighbors(c).copy():
                     if a == d or b == c or b <= a or d <= c:
                         continue
-                    print(a, b, c, d)
                     #graph.print_matrix()
                     p1, t, u, ab_len, cd_len = _segmentIntersection(graph.vertices[a], graph.vertices[b], graph.vertices[c], graph.vertices[d], threshold=threshold_extend)
                     if p1 is None:
