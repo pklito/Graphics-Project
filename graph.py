@@ -180,6 +180,26 @@ def connectIntersectingEdges(graph : Graph, threshold_extend = 0, threshold_comb
                             graph.vertices[d] = p1
     return graph
 
+def getFaces(graph : Graph):
+    """Return the faces of the graph"""
+    faces_list = [] # Preserve vertex order
+    faces_set = set() # Prevent repetitions ( there are 7 per face )
+    for i in range(len(graph.vertices)):
+        for j in graph.get_neighbors(i):
+            if j == i:
+                continue
+            for k in graph.get_neighbors(j):
+                if j == k or i == k:
+                    continue
+                for l in graph.get_neighbors(k):
+                    if l == i or l == j or l == k:
+                        continue
+                    if i in graph.get_neighbors(l):
+                        if frozenset((i, j, k, l)) in faces_set:
+                            continue
+                        faces_set.add(frozenset((i, j, k, l)))
+                        faces_list.append(tuple([graph.vertices[x] for x in [i, j, k, l]]))
+    return faces_list
 
 if __name__ == "__main__":
     g = Graph()
