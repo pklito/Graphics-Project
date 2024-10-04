@@ -130,13 +130,25 @@ def postProcessImage(file):
     drawHoughLines(overlay, lines)
     cv.imshow("canny", cv.addWeighted(image, 1, overlay[:,:,0:3], 0.2, 0))
 
-def lsd(file):
+def lsd(file, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th = 22.5, log_eps = 0.0, density_th = 0.7, n_bins = 1024):
     image = cv.imread(file)
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-    lsd = cv.createLineSegmentDetector(0)
+    lsd = cv.createLineSegmentDetector(detector, scale=scale, sigma_scale=sigma_scale, quant=quant, ang_th=ang_th, log_eps=log_eps, density_th=density_th, n_bins=n_bins)
     lines = lsd.detect(gray)[0]
     drawn = lsd.drawSegments(image, lines)
-    cv.imshow("lsd", drawn)
+    lines = lineMatrixToPairs(lines)
+    # for line in lines:
+    #     cv.line(image, line[0], line[1], (0,255,0), 2)
+    
+    lines = combineParallelLines(lines)
+    graph = makeGraphFromLines(lines)
+    graph = mergeOverlappingVertices(graph, threshold=5)
+    graph = connectIntersectingEdges(graph, threshold_combine=0, threshold_extend=0)
+    graph = mergeOverlappingVertices(graph, threshold=10)
+    faces = getFaces(graph)
+    
+    graph.draw_graph(image, (255,50,50), (100,100,100), 1, 3)
+    cv.imshow("lsd " + str(np.random.random()), drawn)
 
 def handleFaces(image, faces):
     print("handleFaces")
@@ -184,7 +196,7 @@ def prob(file):
     
     lines = combineParallelLines(lines)
     graph = makeGraphFromLines(lines)
-    graph = mergeOverlappingVertices(graph, threshold=20)
+    graph = mergeOverlappingVertices(graph, threshold=5)
     graph.draw_graph(image, (0,0,255), (0,255,0), 2, 5)
     graph = connectIntersectingEdges(graph, threshold_combine=0, threshold_extend=0)
     faces = getFaces(graph)
@@ -194,8 +206,10 @@ def prob(file):
     cv.imshow("prob", image)
 
 if __name__ == "__main__":
-    file = "sc_cube.png"
+    file = "sc_7x7.png"
     prob(file)
+    lsd(file,2,scale=0.5)
+
 
 
     cv.waitKey(0)

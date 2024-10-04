@@ -140,7 +140,6 @@ def connectIntersectingEdges(graph : Graph, threshold_extend = 0, threshold_comb
     # All edges means all starting points 'a' and 'c', and all end points 'b' and 'd' where a < b and c < d
     for a in range(len(graph.vertices) - 1):
         for c in range(a+1, len(graph.vertices)):
-
             for b in graph.get_neighbors(a).copy():
                 for d in graph.get_neighbors(c).copy():
                     if a == d or b == c or b <= a or d <= c:
@@ -153,30 +152,23 @@ def connectIntersectingEdges(graph : Graph, threshold_extend = 0, threshold_comb
                     p1_index = c if u < 0.5 else d
                     in_ab = t > 0 + threshold_combine/ab_len and t < 1 - threshold_combine/ab_len
                     in_cd = u > 0 + threshold_combine/cd_len and u < 1 - threshold_combine/cd_len
-                    if in_ab and in_cd:
-                        p1_index = graph.add_vertex(p1)
+
                     if in_ab:
+                        p1_index = graph.add_vertex(p1)
                         graph.edges[a].remove(b)
                         graph.edges[b].remove(a)
                         graph.add_edge(a, p1_index)
                         graph.add_edge(p1_index, b)
                     else:
-                        if t < 0.5:
-                            graph.vertices[a] = p1
-                            p1_index = a
-                        else:
-                            p1_index = b
-                            graph.vertices[b] = p1
-                    if u > 0 + threshold_combine/ab_len and u < 1 - threshold_combine/ab_len:
+                        pass
+                    if in_cd:
+                        p2_index = graph.add_vertex(p1)
                         graph.edges[c].remove(d)
                         graph.edges[d].remove(c)
-                        graph.add_edge(c, p1_index)
-                        graph.add_edge(p1_index, d)
+                        graph.add_edge(c, p2_index)
+                        graph.add_edge(p2_index, d)
                     else:
-                        if u < 0.5:
-                            graph.vertices[c] = p1
-                        else:
-                            graph.vertices[d] = p1
+                        pass
     return graph
 
 def getFaces(graph : Graph):
