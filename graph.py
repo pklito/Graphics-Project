@@ -29,6 +29,9 @@ class Graph:
     def add_edge(self, from_index, to_index) -> None:
         self.edges.setdefault(from_index, set()).add(to_index)
         self.edges.setdefault(to_index, set()).add(from_index)
+    
+    def remove_vertex(self, vertex_index) -> None:
+        pass
 
     def get_neighbors(self, vertex_index) -> set:
         return self.edges.get(vertex_index, set())
@@ -144,7 +147,7 @@ def connectIntersectingEdges(graph : Graph, threshold_extend = 0, threshold_comb
                 for d in graph.get_neighbors(c).copy():
                     if a == d or b == c or b <= a or d <= c:
                         continue
-                    #graph.print_matrix()
+                    graph.print_matrix()
                     p1, t, u, ab_len, cd_len = _segmentIntersection(graph.vertices[a], graph.vertices[b], graph.vertices[c], graph.vertices[d], threshold=threshold_extend)
                     if p1 is None:
                         # No intersection
@@ -194,28 +197,19 @@ def getFaces(graph : Graph):
 
 if __name__ == "__main__":
     g = Graph()
-    g.add_vertex([1, 2])
-    g.add_vertex([2, 3])
-    g.add_vertex([3, 4])
-    g.add_vertex([4, 5])
-    g.add_vertex([5, 6])
-
-    def line_distance(line1, line2):
-        """Calculate the distance between two lines"""
-        p1, p2 = line1
-        p3, p4 = line2
-
-        def point_line_distance(point, line):
-            p1, p2 = line
-            if np.linalg.norm(p2 - p1) == 0:
-                return np.linalg.norm(point - p1)
-            return np.abs(np.cross(p2 - p1, p1 - point)) / np.linalg.norm(p2 - p1)
-
-        return min(point_line_distance(p1, line2), point_line_distance(p2, line2),
-                    point_line_distance(p3, line1), point_line_distance(p4, line1))
-
-    # Example usage:
-    line1 = np.array([[0, 0], [0, 0]])
-    line2 = np.array([[5, 0], [5, 1]])
-    distance = line_distance(line1, line2)
-    print(f"Distance between lines: {distance}")
+    np.random.seed(0)  # For reproducibility
+    for _ in range(7):
+        amount = np.random.randint(2, 5)
+        group = [g.add_vertex((np.random.uniform(0, 600), np.random.uniform(0, 400))) for _ in range(amount)]
+        for i in range(len(group)-1):
+            g.add_edge(group[i], group[i+1])
+    print(g)
+    image = np.zeros((400, 600, 3), dtype=np.uint8)
+    g.draw_graph(image)
+    cv.imshow('Graph', image)
+    cv.waitKey(0)
+    g = connectIntersectingEdges(g, threshold_combine=10, threshold_extend=5)
+    g.draw_graph(image)
+    cv.imshow('Graph2', image)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
