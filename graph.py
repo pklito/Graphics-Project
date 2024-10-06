@@ -2,6 +2,7 @@ import numpy as np
 import cv2 as cv
 from util import *
 from util import _segmentIntersection
+import itertools
 
 class Graph:
     """Key methods of Graph class"""
@@ -24,14 +25,45 @@ class Graph:
     def add_vertex(self, vertex) -> int:
         vertex = np.asarray(vertex).flatten()
         self.vertices.append(vertex)
+        self.edges[len(self.vertices) - 1] = set()
         return len(self.vertices) - 1
 
     def add_edge(self, from_index, to_index) -> None:
         self.edges.setdefault(from_index, set()).add(to_index)
         self.edges.setdefault(to_index, set()).add(from_index)
     
+    def swap_vertices(self, v1, v2) -> None:
+        # Swap coord values
+        self.vertices[v1], self.vertices[v2] = self.vertices[v2], self.vertices[v1]
+        # Swap inwards edges (edges of neighbors to v1, and v2)
+        for neighbor in self.get_neighbors(v1):
+            print(f"neighbor of {v1}: {neighbor}")
+            if v2 in self.get_neighbors(neighbor):
+                continue
+            self.edges[neighbor].remove(v1)
+            self.edges[neighbor].add(v2)
+        for neighbor in self.get_neighbors(v2):
+            if v1 in self.get_neighbors(neighbor):
+                continue
+            self.edges[neighbor].remove(v2)
+            self.edges[neighbor].add(v1)
+        # Swap outwards edges of v1 and v2
+        self.edges[v1], self.edges[v2] = self.edges[v2], self.edges[v1]
+
     def remove_vertex(self, vertex_index) -> None:
-        pass
+        # Remove edges pointing to vertex
+        for neighbor in self.get_neighbors(vertex_index):
+            self.edges[neighbor].remove(vertex_index)
+        
+        # Remove vertex neighbors
+        self.edges[vertex_index] = set()
+
+        # Swap with last element
+        self.swap_vertices(vertex_index, len(self.vertices) - 1)
+
+        # Pop new last element
+        self.edges.pop(len(self.vertices) - 1)
+        self.vertices.pop()
 
     def get_neighbors(self, vertex_index) -> set:
         return self.edges.get(vertex_index, set())
@@ -198,13 +230,23 @@ def getFaces(graph : Graph):
 if __name__ == "__main__":
     g = Graph()
     np.random.seed(0)  # For reproducibility
+    groups = []
     for _ in range(7):
         amount = np.random.randint(2, 5)
         group = [g.add_vertex((np.random.uniform(0, 600), np.random.uniform(0, 400))) for _ in range(amount)]
+        groups.append(group)
         for i in range(len(group)-1):
             g.add_edge(group[i], group[i+1])
-    print(g)
+
     image = np.zeros((400, 600, 3), dtype=np.uint8)
+    g.draw_graph(image)
+
+    g.draw_graph(image, vertex_color=(255,255,255),edge_color=(255,0,0),edge_width=1)
+    cv.imshow("Graph", image)
+    cv.waitKey(0)
+     
+    exit()
+    print(groups)
     g.draw_graph(image)
     cv.imshow('Graph', image)
     cv.waitKey(0)
