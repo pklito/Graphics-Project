@@ -65,6 +65,16 @@ class Graph:
         self.edges.pop(len(self.vertices) - 1)
         self.vertices.pop()
 
+    def remove_vertices(self, delete_indices) -> None:
+        delete_indices = sorted(delete_indices)
+        final_vert = len(self.vertices)-1
+        for vertex in delete_indices:
+            while final_vert in delete_indices:
+                final_vert -= 1
+            if final_vert <= vertex:
+                break
+            self.swap_vertices(vertex, final_vert)
+
     def get_neighbors(self, vertex_index) -> set:
         return self.edges.get(vertex_index, set())
     
