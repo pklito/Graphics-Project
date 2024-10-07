@@ -28,8 +28,10 @@ class Graph:
         self.max_index += 1
         self.vertices[self.max_index] = vertex
         self.edges[self.max_index] = set()
+        return self.max_index
 
     def add_edge(self, from_index, to_index) -> None:
+        print("adding edge i", from_index, to_index)
         self.edges.setdefault(from_index, set()).add(to_index)
         self.edges.setdefault(to_index, set()).add(from_index)
     
@@ -53,14 +55,17 @@ class Graph:
 
     def remove_vertex(self, vertex_index) -> None:
         # Remove edges pointing to vertex
+        print("loop", vertex_index, self.get_neighbors(vertex_index))
+
         for neighbor in self.get_neighbors(vertex_index):
             self.edges[neighbor].remove(vertex_index)
 
         # Pop new last element
-        self.edges.pop(vertex_index)
-        self.vertices.pop(vertex_index)
+        del self.edges[vertex_index]
+        del self.vertices[vertex_index]
 
     def remove_vertices(self, delete_indices : list) -> None:
+        print("deleting", delete_indices)
         for index in delete_indices:
             self.remove_vertex(index)
 
@@ -70,21 +75,25 @@ class Graph:
     def is_neighbor(self, vertex_index, neighbor_index) -> bool:
         return neighbor_index in self.get_neighbors(vertex_index)
     
-    def draw_graph(self, image, edge_color = (0,255,0), vertex_color = (0,255,0), edge_width = 2, vertex_size=5) -> np.ndarray:
+    def draw_graph(self, image, edge_color = (0,255,0), vertex_color = (0,255,0), edge_width = 2, vertex_size=5, vertex_numbers = False) -> np.ndarray:
         for i, vertex in self.vertices.items():
             for neighbor in self.get_neighbors(i):
                 neighbor_vertex = self.vertices[neighbor]
                 cv.line(image, np.array(vertex,dtype=np.int32), np.array(neighbor_vertex,dtype=np.int32), edge_color, edge_width)
             cv.circle(image, np.array(vertex,dtype=np.int32), vertex_size, vertex_color, -1)
+            if vertex_numbers:
+                cv.putText(image, str(i), tuple(vertex.astype(int) + np.array([0,15])), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1, cv.LINE_AA)
         return image
     
     def __str__(self) -> str:
-        return f"Vertices: {[str(i) + " : " + str((round(v[0],2), round(v[1],2))) if v is not None else None for i, v in self.vertices.items()]}, Edges: {self.edges}"
+        return f"Vertices: {[ str(str(i) + str((round(v[0],2), round(v[1],2)))) if v is not None else None for i, v in self.vertices.items()]}, Edges: {self.edges}"
     
     def copy(self) -> 'Graph':
         g = Graph()
-        g.vertices = self.vertices.copy()
-        g.edges = self.edges.copy()
+        for i, vertex in self.vertices.items():
+            g.vertices[i] = vertex.copy()
+        for i, edges in self.edges.items():
+            g.edges[i] = edges.copy()
         return g
     
     @property
@@ -150,53 +159,78 @@ def mergeOverlappingVertices(const_graph : Graph, threshold = 5):
     graph.remove_vertices(keys_to_remove)
     return graph
 
-def connectIntersectingEdges(const_graph : Graph, threshold_extend = 0, threshold_combine = 5):
+def _sliceEdges(graph : Graph,tree, a,b,c,d, threshold_detect = 5, threshold_splice = 5):
+    p1, t, u, ab_len, cd_len = _segmentIntersection(graph.vertices[a], graph.vertices[b], graph.vertices[c], graph.vertices[d], threshold=threshold_detect)
+    if p1 is None:
+        # No intersection
+        return False
+    p1_index = c if u < 0.5 else d
+    in_ab = t > 0 + threshold_splice/ab_len and t < 1 - threshold_splice/ab_len
+    in_cd = u > 0 + threshold_splice/cd_len and u < 1 - threshold_splice/cd_len
+
+    if in_ab:
+        p1_index = graph.add_vertex(p1)
+        graph.edges[a].remove(b)
+        graph.edges[b].remove(a)
+        graph.add_edge(a, p1_index)
+        graph.add_edge(p1_index, b)
+        tree[(a, b)] = (a, p1_index, b)
+    else:
+        pass
+    if in_cd:
+        p2_index = graph.add_vertex(p1)
+        graph.edges[c].remove(d)
+        graph.edges[d].remove(c)
+        graph.add_edge(c, p2_index)
+        graph.add_edge(p2_index, d)
+        tree[(c, d)] = (c, p2_index, d)
+    else:
+        pass
+    return in_ab or in_cd
+
+def connectIntersectingEdges(const_graph : Graph, threshold_detect = 5, threshold_splice = 0):
     """
     threshold_extend: The threshold for how many pixels edges can be extended by.
     threshold_combine: how close in pixels does the intersection have to be to an end to combine them.
     """
     graph = const_graph.copy()
-
+    replaced_edges = dict()
     # Go over all edges for intersections.
     # All edges means all starting points 'a' and 'c', and all end points 'b' and 'd' where a < b and c < d
-    for a in range(len(graph.vertices) - 1):
-        for c in range(a+1, len(graph.vertices)):
-            for b in graph.get_neighbors(a).copy():
-                for d in graph.get_neighbors(c).copy():
+    for a, v_a in const_graph.vertices.items():
+        for c, v_c in const_graph.vertices.items():
+            if c <= a:
+                continue
+            for b in const_graph.get_neighbors(a):
+                for d in const_graph.get_neighbors(c):
+                    # if a == d or b == c it's the same edge. if b <= a or d <= c the reverse edge was already found
                     if a == d or b == c or b <= a or d <= c:
                         continue
-                    p1, t, u, ab_len, cd_len = _segmentIntersection(graph.vertices[a], graph.vertices[b], graph.vertices[c], graph.vertices[d], threshold=threshold_extend)
-                    if p1 is None:
-                        # No intersection
-                        continue
-                    p1_index = c if u < 0.5 else d
-                    in_ab = t > 0 + threshold_combine/ab_len and t < 1 - threshold_combine/ab_len
-                    in_cd = u > 0 + threshold_combine/cd_len and u < 1 - threshold_combine/cd_len
+                    ab_candidates = [(a, b)]
+                    cd_candidates = [(c, d)]
+                    while any([edge in replaced_edges.keys() for edge in ab_candidates + cd_candidates]):
+                        ab_candidates = [replaced_edges.get(edge, edge) for edge in ab_candidates]
+                        cd_candidates = [replaced_edges.get(edge, edge) for edge in cd_candidates]
+                        ab_candidates = [(edge[0], edge[1]) if len(edge) == 3 else edge for edge in ab_candidates] + [(edge[1], edge[2]) if len(edge) == 3 else None for edge in ab_candidates]
+                        cd_candidates = [(edge[0], edge[1]) if len(edge) == 3 else edge for edge in cd_candidates] + [(edge[1], edge[2]) if len(edge) == 3 else None for edge in cd_candidates]
+                        ab_candidates = [edge for edge in ab_candidates if edge is not None]
+                        cd_candidates = [edge for edge in cd_candidates if edge is not None]
+                    print(replaced_edges,ab_candidates, cd_candidates)
+                    
+                    for ab, cd in itertools.product(ab_candidates, cd_candidates):
+                        # Do all combinations until one is found
+                        if _sliceEdges(graph, replaced_edges, *ab, *cd, threshold_detect=threshold_detect, threshold_splice=threshold_splice):
+                            break
 
-                    if in_ab:
-                        p1_index = graph.add_vertex(p1)
-                        graph.edges[a].remove(b)
-                        graph.edges[b].remove(a)
-                        graph.add_edge(a, p1_index)
-                        graph.add_edge(p1_index, b)
-                    else:
-                        pass
-                    if in_cd:
-                        p2_index = graph.add_vertex(p1)
-                        graph.edges[c].remove(d)
-                        graph.edges[d].remove(c)
-                        graph.add_edge(c, p2_index)
-                        graph.add_edge(p2_index, d)
-                    else:
-                        pass
-    print(graph.edges, "\n",  const_graph.edges)
+
+                    
     return graph
 
 def getFaces(graph : Graph):
     """Return the faces of the graph"""
     faces_list = [] # Preserve vertex order
     faces_set = set() # Prevent repetitions ( there are 7 per face )
-    for i in range(len(graph.vertices)):
+    for i in graph.vertices.keys():
         for j in graph.get_neighbors(i):
             if j == i:
                 continue
@@ -225,22 +259,24 @@ if __name__ == "__main__":
             g.add_edge(group[i], group[i+1])
 
     image = np.zeros((400, 600, 3), dtype=np.uint8)
+    g.draw_graph(image)
     # Create power group of the elements in groups
     for r in range(len(groups) + 1)[::-1]:
         for p in itertools.combinations(groups, r):
             gnew = g.copy()
-            print(gnew)
             gnew.remove_vertices([v for group in p for v in group])
             try:
-                connectIntersectingEdges(gnew, threshold_combine=10, threshold_extend=5)
+                print("NEW ATTEMPT\n\n")
+                connectIntersectingEdges(gnew, threshold_splice=10, threshold_detect=5)
             except:
-                gnew.draw_graph(image)
+                print("ERROR")
+                gnew.draw_graph(image, vertex_color=(255,255,255),edge_color=(255,0,0),edge_width=1, vertex_numbers=True)
                 cv.imshow("Graph", image)
                 cv.waitKey(0)
                 
                 exit()
 
-            
+
 
     g.draw_graph(image, vertex_color=(255,255,255),edge_color=(255,0,0),edge_width=1)
     cv.imshow("Graph", image)
@@ -250,7 +286,7 @@ if __name__ == "__main__":
     g.draw_graph(image)
     cv.imshow('Graph', image)
     cv.waitKey(0)
-    g = connectIntersectingEdges(g, threshold_combine=10, threshold_extend=5)
+    g = connectIntersectingEdges(g, threshold_splice=10, threshold_detect=5)
     g.draw_graph(image)
     cv.imshow('Graph2', image)
     cv.waitKey(0)
