@@ -31,7 +31,7 @@ class Graph:
         return self.max_index
 
     def add_edge(self, from_index, to_index) -> None:
-        print("adding edge i", from_index, to_index)
+        print("adding edge ", from_index, to_index)
         self.edges.setdefault(from_index, set()).add(to_index)
         self.edges.setdefault(to_index, set()).add(from_index)
     
@@ -55,7 +55,6 @@ class Graph:
 
     def remove_vertex(self, vertex_index) -> None:
         # Remove edges pointing to vertex
-        print("loop", vertex_index, self.get_neighbors(vertex_index))
 
         for neighbor in self.get_neighbors(vertex_index):
             self.edges[neighbor].remove(vertex_index)
@@ -65,7 +64,6 @@ class Graph:
         del self.vertices[vertex_index]
 
     def remove_vertices(self, delete_indices : list) -> None:
-        print("deleting", delete_indices)
         for index in delete_indices:
             self.remove_vertex(index)
 
@@ -90,6 +88,7 @@ class Graph:
     
     def copy(self) -> 'Graph':
         g = Graph()
+        g.max_index = self.max_index
         for i, vertex in self.vertices.items():
             g.vertices[i] = vertex.copy()
         for i, edges in self.edges.items():
@@ -172,8 +171,12 @@ def _sliceEdges(graph : Graph,tree, a,b,c,d, threshold_detect = 5, threshold_spl
         p1_index = graph.add_vertex(p1)
         graph.edges[a].remove(b)
         graph.edges[b].remove(a)
+        graph.add_edge(p1_index, a)
         graph.add_edge(a, p1_index)
         graph.add_edge(p1_index, b)
+        graph.add_edge(b, p1_index)
+        
+
         tree[(a, b)] = (a, p1_index, b)
     else:
         pass
@@ -182,7 +185,10 @@ def _sliceEdges(graph : Graph,tree, a,b,c,d, threshold_detect = 5, threshold_spl
         graph.edges[c].remove(d)
         graph.edges[d].remove(c)
         graph.add_edge(c, p2_index)
+        graph.add_edge(p2_index, c)
+        graph.add_edge(d, p2_index)
         graph.add_edge(p2_index, d)
+
         tree[(c, d)] = (c, p2_index, d)
     else:
         pass
@@ -209,13 +215,17 @@ def connectIntersectingEdges(const_graph : Graph, threshold_detect = 5, threshol
                     ab_candidates = [(a, b)]
                     cd_candidates = [(c, d)]
                     while any([edge in replaced_edges.keys() for edge in ab_candidates + cd_candidates]):
+                        # Replace edges with their replacements (iteratively)
+                        # This is done in three stages to maintain edges which don't have replacements?
+                        # In more detail, (a,b) -> (a, p1, b) or stays as (a, b)
                         ab_candidates = [replaced_edges.get(edge, edge) for edge in ab_candidates]
                         cd_candidates = [replaced_edges.get(edge, edge) for edge in cd_candidates]
+                        # (a, p1, b) -> [(a, p1)] + [(p1, b)]   but (c,d) -> [(c, d)] + [None]
                         ab_candidates = [(edge[0], edge[1]) if len(edge) == 3 else edge for edge in ab_candidates] + [(edge[1], edge[2]) if len(edge) == 3 else None for edge in ab_candidates]
                         cd_candidates = [(edge[0], edge[1]) if len(edge) == 3 else edge for edge in cd_candidates] + [(edge[1], edge[2]) if len(edge) == 3 else None for edge in cd_candidates]
+                        # [(a, p1), (p1, b), (c, d), None] -> [(a, p1), (p1, b), (c, d)]
                         ab_candidates = [edge for edge in ab_candidates if edge is not None]
                         cd_candidates = [edge for edge in cd_candidates if edge is not None]
-                    print(replaced_edges,ab_candidates, cd_candidates)
                     
                     for ab, cd in itertools.product(ab_candidates, cd_candidates):
                         # Do all combinations until one is found
