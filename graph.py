@@ -8,25 +8,26 @@ class Graph:
     """Key methods of Graph class"""
     def __init__(self):
         #list of points
-        self.vertices = []
+        self.vertices = dict()
         #dictionary of out edges for each vertex
-        self.edges = {}
+        self.edges = dict()
+        self.max_index = -1
         
 
     def has_vertex(self, vertex) -> bool:
-        return any([(v - vertex).dot(v - vertex) < 0.01 for v in self.vertices])
+        return any([(v - vertex).dot(v - vertex) < 0.01 for v in self.vertices.values()])
     
     def get_vertex_index(self, vertex, threshold = 0.01) -> int | None:
-        for i, v in enumerate(self.vertices):
+        for i, v in self.vertices.pairs():
             if (v - vertex).dot(v - vertex) < threshold * threshold:
                 return i
         return None
     
     def add_vertex(self, vertex) -> int:
         vertex = np.asarray(vertex).flatten()
-        self.vertices.append(vertex)
-        self.edges[len(self.vertices) - 1] = set()
-        return len(self.vertices) - 1
+        self.max_index += 1
+        self.vertices[self.max_index] = vertex
+        self.edges[self.max_index] = set()
 
     def add_edge(self, from_index, to_index) -> None:
         self.edges.setdefault(from_index, set()).add(to_index)
@@ -54,26 +55,14 @@ class Graph:
         # Remove edges pointing to vertex
         for neighbor in self.get_neighbors(vertex_index):
             self.edges[neighbor].remove(vertex_index)
-        
-        # Remove vertex neighbors
-        self.edges[vertex_index] = set()
-
-        # Swap with last element
-        self.swap_vertices(vertex_index, len(self.vertices) - 1)
 
         # Pop new last element
-        self.edges.pop(len(self.vertices) - 1)
-        self.vertices.pop()
+        self.edges.pop(vertex_index)
+        self.vertices.pop(vertex_index)
 
-    def remove_vertices(self, delete_indices) -> None:
-        delete_indices = sorted(delete_indices)
-        final_vert = len(self.vertices)-1
-        for vertex in delete_indices:
-            while final_vert in delete_indices:
-                final_vert -= 1
-            if final_vert <= vertex:
-                break
-            self.swap_vertices(vertex, final_vert)
+    def remove_vertices(self, delete_indices : list) -> None:
+        for index in delete_indices:
+            self.remove_vertex(index)
 
     def get_neighbors(self, vertex_index) -> set:
         return self.edges.get(vertex_index, set())
@@ -82,7 +71,7 @@ class Graph:
         return neighbor_index in self.get_neighbors(vertex_index)
     
     def draw_graph(self, image, edge_color = (0,255,0), vertex_color = (0,255,0), edge_width = 2, vertex_size=5) -> np.ndarray:
-        for i, vertex in enumerate(self.vertices):
+        for i, vertex in self.vertices.items():
             for neighbor in self.get_neighbors(i):
                 neighbor_vertex = self.vertices[neighbor]
                 cv.line(image, np.array(vertex,dtype=np.int32), np.array(neighbor_vertex,dtype=np.int32), edge_color, edge_width)
@@ -90,7 +79,7 @@ class Graph:
         return image
     
     def __str__(self) -> str:
-        return f"Vertices: {[(v[0], v[1]) if v is not None else None for v in self.vertices]}, Edges: {self.edges}"
+        return f"Vertices: {[str(i) + " : " + str((round(v[0],2), round(v[1],2))) if v is not None else None for i, v in self.vertices.items()]}, Edges: {self.edges}"
     
     def copy(self) -> 'Graph':
         g = Graph()
@@ -104,15 +93,15 @@ class Graph:
     
     def print_matrix(self) -> None:
         print("X ", end="")
-        for i in range(len(self.vertices)):
+        for i in self.vertices.keys():
             if i % 10 == 0:
                 print(i, end = " ")
             else:
                 print(i%10, end = " ")
         print("")
-        for i in range(len(self.vertices)):
+        for i in self.vertices.keys():
             print(i, end=" ")
-            for j in range(len(self.vertices)):
+            for j in self.vertices.keys():
                 print("1" if i in self.get_neighbors(j) else ".",end=(len(str(j+1)))*" " if (j+1)%10 == 0 else " ")
             print("")
             
@@ -127,15 +116,15 @@ def makeGraphFromLines(lines) -> Graph:
         g.add_edge(p1, p2)
     return g
 
-def mergeOverlappingVertices(graph : Graph, threshold = 5):
-    graph = graph.copy()
+def mergeOverlappingVertices(const_graph : Graph, threshold = 5):
+    graph = const_graph.copy()
     """Take a disconnected graph and combine vertices that are close together"""
-    for i, vertex in enumerate(graph.vertices):
-        if graph.vertices[i] is None:
+    for i, vertex in graph.vertices.items():
+        if vertex is None:
             continue
-        for j, vertex2 in enumerate(graph.vertices):
+        for j, vertex2 in graph.vertices.items():
             # Skip if one of the vertices was removed
-            if graph.vertices[j] is None:
+            if vertex2 is None:
                 continue
             # Skip if the same vertex
             if i == j:
@@ -153,34 +142,21 @@ def mergeOverlappingVertices(graph : Graph, threshold = 5):
                 graph.edges[j] = None
                 graph.vertices[j] = None
     
-    # Remove all the None values from the graph
-    new_index = 0
-    new_index_2 = -1
-    new_to_old_indices = []
-    old_to_new_indices = []
-    for i in range(len(graph.vertices)):
-        if graph.vertices[i] is None:
-            new_index += 1
-        else:
-            new_index_2 += 1
-            new_to_old_indices.append(i)
-        old_to_new_indices.append(new_index_2)
+    keys_to_remove = []
 
-    new_vertices = []
-    new_edges = dict()
-    for i in range(len(new_to_old_indices)):
-        new_vertices.append(graph.vertices[new_to_old_indices[i]])
-        new_edges[i] = {old_to_new_indices[j] for j in graph.get_neighbors(new_to_old_indices[i])}
-    graph.vertices = new_vertices
-    graph.edges = new_edges
+    for key, value in graph.vertices.items():
+        if value == None:
+            keys_to_remove.append(key)
+    graph.remove_vertices(keys_to_remove)
     return graph
 
-def connectIntersectingEdges(graph : Graph, threshold_extend = 0, threshold_combine = 5):
+def connectIntersectingEdges(const_graph : Graph, threshold_extend = 0, threshold_combine = 5):
     """
     threshold_extend: The threshold for how many pixels edges can be extended by.
     threshold_combine: how close in pixels does the intersection have to be to an end to combine them.
     """
-    graph = graph.copy()
+    graph = const_graph.copy()
+
     # Go over all edges for intersections.
     # All edges means all starting points 'a' and 'c', and all end points 'b' and 'd' where a < b and c < d
     for a in range(len(graph.vertices) - 1):
@@ -189,7 +165,6 @@ def connectIntersectingEdges(graph : Graph, threshold_extend = 0, threshold_comb
                 for d in graph.get_neighbors(c).copy():
                     if a == d or b == c or b <= a or d <= c:
                         continue
-                    graph.print_matrix()
                     p1, t, u, ab_len, cd_len = _segmentIntersection(graph.vertices[a], graph.vertices[b], graph.vertices[c], graph.vertices[d], threshold=threshold_extend)
                     if p1 is None:
                         # No intersection
@@ -214,6 +189,7 @@ def connectIntersectingEdges(graph : Graph, threshold_extend = 0, threshold_comb
                         graph.add_edge(p2_index, d)
                     else:
                         pass
+    print(graph.edges, "\n",  const_graph.edges)
     return graph
 
 def getFaces(graph : Graph):
@@ -249,14 +225,28 @@ if __name__ == "__main__":
             g.add_edge(group[i], group[i+1])
 
     image = np.zeros((400, 600, 3), dtype=np.uint8)
-    g.draw_graph(image)
+    # Create power group of the elements in groups
+    for r in range(len(groups) + 1)[::-1]:
+        for p in itertools.combinations(groups, r):
+            gnew = g.copy()
+            print(gnew)
+            gnew.remove_vertices([v for group in p for v in group])
+            try:
+                connectIntersectingEdges(gnew, threshold_combine=10, threshold_extend=5)
+            except:
+                gnew.draw_graph(image)
+                cv.imshow("Graph", image)
+                cv.waitKey(0)
+                
+                exit()
+
+            
 
     g.draw_graph(image, vertex_color=(255,255,255),edge_color=(255,0,0),edge_width=1)
     cv.imshow("Graph", image)
     cv.waitKey(0)
      
     exit()
-    print(groups)
     g.draw_graph(image)
     cv.imshow('Graph', image)
     cv.waitKey(0)
