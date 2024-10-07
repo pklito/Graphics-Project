@@ -31,7 +31,6 @@ class Graph:
         return self.max_index
 
     def add_edge(self, from_index, to_index) -> None:
-        print("adding edge ", from_index, to_index)
         self.edges.setdefault(from_index, set()).add(to_index)
         self.edges.setdefault(to_index, set()).add(from_index)
     
@@ -55,7 +54,6 @@ class Graph:
 
     def remove_vertex(self, vertex_index) -> None:
         # Remove edges pointing to vertex
-
         for neighbor in self.get_neighbors(vertex_index):
             self.edges[neighbor].remove(vertex_index)
 
@@ -143,17 +141,15 @@ def mergeOverlappingVertices(const_graph : Graph, threshold = 5):
 
             if np.linalg.norm(vertex - vertex2) < threshold:
                 for neighbor in graph.get_neighbors(j):
-                    graph.edges[neighbor].remove(j)
                     graph.add_edge(i, neighbor)
                     graph.add_edge(neighbor, i)
 
-                graph.edges[j] = None
                 graph.vertices[j] = None
     
     keys_to_remove = []
 
     for key, value in graph.vertices.items():
-        if value == None:
+        if type(value) == type(None):
             keys_to_remove.append(key)
     graph.remove_vertices(keys_to_remove)
     return graph
@@ -271,21 +267,8 @@ if __name__ == "__main__":
     image = np.zeros((400, 600, 3), dtype=np.uint8)
     g.draw_graph(image)
     # Create power group of the elements in groups
-    for r in range(len(groups) + 1)[::-1]:
-        for p in itertools.combinations(groups, r):
-            gnew = g.copy()
-            gnew.remove_vertices([v for group in p for v in group])
-            try:
-                print("NEW ATTEMPT\n\n")
-                connectIntersectingEdges(gnew, threshold_splice=10, threshold_detect=5)
-            except:
-                print("ERROR")
-                gnew.draw_graph(image, vertex_color=(255,255,255),edge_color=(255,0,0),edge_width=1, vertex_numbers=True)
-                cv.imshow("Graph", image)
-                cv.waitKey(0)
-                
-                exit()
-
+    g = connectIntersectingEdges(g, threshold_splice=0, threshold_detect=5)
+    g = mergeOverlappingVertices(g, threshold=20)
 
 
     g.draw_graph(image, vertex_color=(255,255,255),edge_color=(255,0,0),edge_width=1)
