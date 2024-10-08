@@ -122,7 +122,7 @@ def makeGraphFromLines(lines) -> Graph:
         g.add_edge(p1, p2)
     return g
 
-def mergeOverlappingVertices(const_graph : Graph, threshold = 5):
+def mergeOverlappingVertices(const_graph : Graph, threshold = 5, neighbor_limit = None, merge_neighbors = False) -> Graph:
     graph = const_graph.copy()
     """Take a disconnected graph and combine vertices that are close together"""
     for i, vertex in graph.vertices.items():
@@ -136,7 +136,10 @@ def mergeOverlappingVertices(const_graph : Graph, threshold = 5):
             if i == j:
                 continue
             # Skip if the vertices are connected
-            if j in graph.get_neighbors(i) or i in graph.get_neighbors(j):
+            if not merge_neighbors and (j in graph.get_neighbors(i) or i in graph.get_neighbors(j)):
+                continue
+
+            if neighbor_limit is not None and len(graph.get_neighbors(j)) > neighbor_limit:
                 continue
 
             if np.linalg.norm(vertex - vertex2) < threshold:
