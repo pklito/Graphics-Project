@@ -151,36 +151,41 @@ def lsd(file, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th 
     cv.imshow("lsd " + str(np.random.random()), drawn)
 
 def handleFaces(image, faces):
-    print("handleFaces")
-    for face in faces:
-        object_points = np.array([[0,0,0],[0,1,0],[1,1,0],[1,0,0]], dtype=np.float32)
-        image_points = np.array(face, dtype=np.float32)
+    object_points = np.array([[-0.5,-0.5,0],[-0.5,0.5,0],[0.5,0.5,0],[0.5,-0.5,0]], dtype=np.float32)
 
-        # Define the camera matrix for a perspective camera with resolution 600x400 and FOV of 90 degrees
-        focal_length = 600 / (2 * np.tan(np.deg2rad(90) / 2))
-        camera_matrix = np.array([
-            [focal_length, 0, 300],
-            [0, focal_length, 200],
-            [0, 0, 1]
-        ])
-        
+    # Define the camera matrix for a perspective camera with resolution 600x400 and FOV of 90 degrees
+    focal_length = 600 / (2 * np.tan(np.deg2rad(90) / 2))
+    camera_matrix = np.array([
+        [focal_length, 0, 300],
+        [0, focal_length, 200],
+        [0, 0, 1]
+    ])
+    
+    rvecs = []
+    for face in faces:
+        image_points = np.array(face, dtype=np.float32)
         ret, rvec, tvec = cv.solvePnP(object_points, image_points, camera_matrix, None, flags=cv.SOLVEPNP_ITERATIVE)
-        if ret:
+        if not ret:
+            continue
+
+        rotation_matrix, _ = cv.Rodrigues(rvec)
+        
+        world_point1 = np.array([[0, 0, 0.5]], dtype=np.float32)
+        world_point2 = np.array([[0, 0, -0.5]], dtype=np.float32)
+        rel_coord1 = np.dot(rotation_matrix, world_point1.T) + tvec
+        rel_coord2 = np.dot(rotation_matrix, world_point2.T) + tvec
+        rel_coord = rel_coord1 if np.linalg.norm(rel_coord1) > np.linalg.norm(rel_coord2) else rel_coord2
+        imaginary_point = (camera_matrix @ (rel_coord)).flatten()
+
+        print([round(i,2) for i in (rel_coord).flatten()], [round(i,2) for i in (tvec).flatten()])
             # Define the point in the world coordinates
-            world_point = np.array([[0.5, 0.5, 0.5]], dtype=np.float32)
+        world_point = np.array([[0, 0, 0.5]], dtype=np.float32)
+        cv.circle(image, tuple(np.array(imaginary_point[:2]/imaginary_point[2], dtype=int)), 3, (0, 0, 0), -1)
+
+        rvecs.append(rvec)
+    print("rvec", [[round(b[0],2) for b in a.tolist()] for a in rvecs])
             
-            # Project the 3D point to the image plane
-            image_point, _ = cv.projectPoints(world_point, rvec, tvec, camera_matrix, None)
-            # Draw the point on the image
-            image_point = tuple(image_point[0][0].astype(int))
-            cv.circle(image, image_point, 3, (255, 255, 255), -1)
-            world_point = np.array([[0.5, 0.5, -0.5]], dtype=np.float32)
-            
-            # Project the 3D point to the image plane
-            image_point, _ = cv.projectPoints(world_point, rvec, tvec, camera_matrix, None)
-            # Draw the point on the image
-            image_point = tuple(image_point[0][0].astype(int))
-            cv.circle(image, image_point, 3, (0, 0, 0), -1)
+
 
 
 def prob(file):
