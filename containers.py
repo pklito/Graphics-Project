@@ -49,8 +49,8 @@ class Scene:
                 if random() < 0.3:
                     height -= 1
                 height = clamp(height, 0, 2)
-                if(random()< 0.1):
-                    add(Cube(app, tex_id=int(0.8+1.4*random()),pos=(2*x, 2*height -s, 2*z)))
+                if(random()< 0.3):
+                    add(Cube(app, tex_id=int(0.8+1.4*random()),pos=(2*x, 2*(random()>0.5), 2*z)))
             
                 
         # for x in range(n):
