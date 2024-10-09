@@ -39,7 +39,6 @@ class Graph:
         self.vertices[v1], self.vertices[v2] = self.vertices[v2], self.vertices[v1]
         # Swap inwards edges (edges of neighbors to v1, and v2)
         for neighbor in self.get_neighbors(v1):
-            print(f"neighbor of {v1}: {neighbor}")
             if v2 in self.get_neighbors(neighbor):
                 continue
             self.edges[neighbor].remove(v1)
@@ -127,23 +126,12 @@ def mergeOverlappingVertices(const_graph : Graph, threshold = 5, neighbor_limit 
     keys_to_remove = []
 
     """Take a disconnected graph and combine vertices that are close together"""
-    print(graph)
     for i, vertex in graph.vertices.items():
         if vertex is None:
             continue
         for j, vertex2 in sorted(graph.vertices.items(),key=lambda x: np.linalg.norm(vertex - x[1]) if x[1] is not None else 10000):
             # if(j <= i):
             #     continue
-            # Skip if one of the vertices was removed
-            if i == 68 or i == 69 or i == 34:
-                if j == None or vertex2 is None:
-                    print(i, "is None")
-                else:
-                    print(i,j, round(np.linalg.norm(vertex - vertex2),2))
-                    if not merge_neighbors and (j in graph.get_neighbors(i) or i in graph.get_neighbors(j)):
-                        print("neighbors issue", graph.get_neighbors(i), graph.get_neighbors(j))
-                    if neighbor_limit is not None and not (len(graph.get_neighbors(j)) <= neighbor_limit or len(graph.get_neighbors(i)) <= neighbor_limit):
-                        print("neighbor limit issue j:", graph.get_neighbors(j), graph.get_neighbors(i))
     
                     
             if vertex2 is None:
@@ -164,7 +152,6 @@ def mergeOverlappingVertices(const_graph : Graph, threshold = 5, neighbor_limit 
 
                     graph.add_edge(i, neighbor)
                     graph.add_edge(neighbor, i)
-                    print("neighbor", neighbor, "j", j, "i", i)
                     graph.edges[neighbor].remove(j)
 
                 # Merge the positions
