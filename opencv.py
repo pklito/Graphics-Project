@@ -152,7 +152,6 @@ def lsd(file, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th 
     faces = getFaces(graph)
     handleFaces(image, faces)
 
-    print(graph)
     
     graph.draw_graph(image, (255,50,50), (100,100,100), 1, 3, vertex_numbers=True)
     print(graph)

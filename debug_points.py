@@ -4,22 +4,13 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 
 points = [
-[3.38, -1.4, 4.69], [3.39, -1.83, 4.43],
-[-0.42, 1.49, 4.01], [-0.51, 1.16, 3.65],
-[2.0, -0.86, 3.75], [2.0, -1.28, 3.49],
-[1.24, -0.58, 3.33], [1.25, -1.01, 3.07],
-[1.91, -1.0, 3.72], [2.21, -0.7, 3.45],
-[1.11, -0.66, 3.2], [1.41, -0.37, 2.92],
-[-0.95, 1.02, 5.04], [-1.02, 0.65, 4.71],
-[0.33, 1.19, 4.6], [0.34, 0.84, 4.25],
-[2.79, -1.19, 4.35], [2.81, -1.62, 4.1],
-[-0.16, 0.7, 5.53], [-0.18, 0.31, 5.21],
-[1.66, -2.38, 7.53], [1.66, -2.76, 7.2],
-[-1.52, 0.49, 6.19], [-1.56, 0.12, 5.85],
-[1.69, -1.52, 5.07], [1.69, -1.95, 4.8]
-]
-
-rvecs = [[-0.46, 1.24, 2.21], [2.31, -0.65, 0.01], [2.04, -0.69, 0.38], [-0.44, 1.24, 2.24], [-2.02, -1.76, -1.48], [0.13, 2.31, 0.9], [-0.67, -0.76, -1.94], [2.29, -0.65, 0.3], [2.0, -0.75, 0.48], [-0.79, 0.5, 0.96], [-0.55, -0.84, -1.85], [2.23, -0.55, 0.14], [-0.59, -1.08, -1.95]]
+[0.71, -0.55, 5.15], [0.47, -0.4, 4.74],
+[1.04, 0.89, 3.8], [0.81, 1.15, 3.45],
+[-3.48, -0.25, 7.9], [-3.14, -0.19, 7.54],
+[2.86, -1.32, 7.2], [2.56, -1.39, 6.8],
+[-3.41, -0.31, 7.36], [-3.68, -0.08, 7.01],
+[-3.57, -1.16, 7.13], [-3.41, -0.69, 7.08]]
+rvecs = [[-0.11, 0.64, -1.37], [0.13, 0.84, -1.28], [-1.36, 2.0, -0.38], [2.06, -1.53, -0.57], [3.52, 0.09, -1.07], [0.93, -1.23, 0.96]]
 randindex = np.random.randint(len(rvecs))
 rvec = rvecs[4]
 print(4)
@@ -39,19 +30,25 @@ rotation_matrix_y = np.array([
     [-np.sin(theta),0, np.cos(theta)]
 ])
 
-points = points[0::2]
-points = [(matrix.T @ np.array(point)).flatten() for point in points]
-
+# points = points[0::2]
+# points = [(matrix.T @ np.array(point)).flatten() for point in points]
 points = [[p[0] - points[0][0], p[1]- points[0][1], p[2] - points[0][2]] for p in points]
 points = [[p[0] + 0.35*p[2], p[1], p[2]] for p in points]
 
+
+for i in range(0, len(points) - 1, 2):
+    ax.quiver(points[i][0], points[i][1], points[i][2],
+              points[i+1][0] - points[i][0], points[i+1][1] - points[i][1], points[i+1][2] - points[i][2],
+              arrow_length_ratio=0.1, color='b')
 
 x = [point[0] for point in points]
 y = [point[1] for point in points]
 z = [point[2] for point in points]
 
 ax.scatter(x, y, z, c='r', marker='o')
-
+ax.set_xlim([-5, 2])
+ax.set_ylim([-5, 2])
+ax.set_zlim([-5, 2])
 ax.set_xlabel('X Label')
 ax.set_ylabel('Y Label')
 ax.set_zlabel('Z Label')
