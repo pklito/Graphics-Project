@@ -78,7 +78,7 @@ class Graph:
                 cv.line(image, np.array(vertex,dtype=np.int32), np.array(neighbor_vertex,dtype=np.int32), edge_color, edge_width)
             cv.circle(image, np.array(vertex,dtype=np.int32), vertex_size, vertex_color, -1)
             if vertex_numbers:
-                cv.putText(image, str(i), tuple(vertex.astype(int) + np.array([0,15])), cv.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1, cv.LINE_AA)
+                cv.putText(image, str(i), tuple(vertex.astype(int) + np.array([0,15])), cv.FONT_HERSHEY_SIMPLEX, 0.2, (255, 255, 0), 1, cv.LINE_AA)
         return image
     
     def __str__(self) -> str:
@@ -128,7 +128,8 @@ def mergeOverlappingVertices(const_graph : Graph, threshold = 5, neighbor_limit 
     for i, vertex in graph.vertices.items():
         if vertex is None:
             continue
-        for j, vertex2 in graph.vertices.items():
+        for j, vertex2 in sorted(graph.vertices.items(), key=lambda x: np.linalg.norm(vertex - x[1]) if x[1] is not None else 10000):
+            
             # Skip if one of the vertices was removed
             if vertex2 is None:
                 continue
@@ -139,15 +140,20 @@ def mergeOverlappingVertices(const_graph : Graph, threshold = 5, neighbor_limit 
             if not merge_neighbors and (j in graph.get_neighbors(i) or i in graph.get_neighbors(j)):
                 continue
 
-            if neighbor_limit is not None and len(graph.get_neighbors(j)) > neighbor_limit:
+            if neighbor_limit is not None and not (len(graph.get_neighbors(j)) <= neighbor_limit or len(graph.get_neighbors(i)) <= neighbor_limit):
                 continue
 
             if np.linalg.norm(vertex - vertex2) < threshold:
                 for neighbor in graph.get_neighbors(j):
+                    if neighbor == j or neighbor == i:
+                        continue
+
                     graph.add_edge(i, neighbor)
                     graph.add_edge(neighbor, i)
 
                 graph.vertices[j] = None
+            # List is sorted so if one doesn't fit threshhold none do, or a neighbor was found.
+            break
     
     keys_to_remove = []
 

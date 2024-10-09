@@ -142,12 +142,17 @@ def lsd(file, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th 
     
     lines = combineParallelLines(lines)
     graph = makeGraphFromLines(lines)
-    graph = mergeOverlappingVertices(graph, threshold=5)
-    graph = connectIntersectingEdges(graph, threshold_splice=0, threshold_detect=0)
-    graph = mergeOverlappingVertices(graph, threshold=10)
+    graph = mergeOverlappingVertices(graph, threshold=20, neighbor_limit=1)
+    #graph.draw_graph(image, (0,0,255), (0,255,0), 2, 5)
+    graph = connectIntersectingEdges(graph, threshold_splice=0, threshold_detect=7)
+    graph = mergeOverlappingVertices(graph, threshold=5, merge_neighbors=True)
+    graph = mergeOverlappingVertices(graph, threshold=8, merge_neighbors=True)
+
     faces = getFaces(graph)
+    handleFaces(image, faces)
     
-    graph.draw_graph(image, (255,50,50), (100,100,100), 1, 3)
+    graph.draw_graph(image, (255,50,50), (100,100,100), 1, 3, vertex_numbers=True)
+    print(graph)
     cv.imshow("lsd " + str(np.random.random()), drawn)
 
 def handleFaces(image, faces):
@@ -201,21 +206,20 @@ def prob(file):
     
     lines = combineParallelLines(lines)
     graph = makeGraphFromLines(lines)
-    graph = mergeOverlappingVertices(graph, threshold=10, neighbor_limit=1)
-    #graph.draw_graph(image, (0,0,255), (0,255,0), 2, 5)
-    graph = connectIntersectingEdges(graph, threshold_splice=0, threshold_detect=7)
-    graph = mergeOverlappingVertices(graph, threshold=5, merge_neighbors=True)
-    graph = mergeOverlappingVertices(graph, threshold=7, merge_neighbors=True)
+    # graph = mergeOverlappingVertices(graph, threshold=10, neighbor_limit=1)
+    # #graph.draw_graph(image, (0,0,255), (0,255,0), 2, 5)
+    # graph = connectIntersectingEdges(graph, threshold_splice=0, threshold_detect=7)
+    # graph = mergeOverlappingVertices(graph, threshold=5, merge_neighbors=True)
+    # graph = mergeOverlappingVertices(graph, threshold=7, merge_neighbors=True)
 
-    print([(i1, i2, round(np.linalg.norm(np.array(v1) - np.array(v2)),2)) for i1, v1 in graph.vertices.items() for i2, v2 in graph.vertices.items() if i1 != i2 if np.linalg.norm(np.array(v1) - np.array(v2)) < 5])
-    faces = getFaces(graph)
-    handleFaces(image, faces)
+    # faces = getFaces(graph)
+    # handleFaces(image, faces)
     graph.draw_graph(image, vertex_numbers=True)
     
     cv.imshow("prob", image)
 
 if __name__ == "__main__":
-    file = "sc_7x7.png"
+    file = "sc_scarce_2.png"
     prob(file)
     lsd(file,2,scale=0.5)
 
