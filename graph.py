@@ -124,13 +124,28 @@ def makeGraphFromLines(lines) -> Graph:
 
 def mergeOverlappingVertices(const_graph : Graph, threshold = 5, neighbor_limit = None, merge_neighbors = False) -> Graph:
     graph = const_graph.copy()
+    keys_to_remove = []
+
     """Take a disconnected graph and combine vertices that are close together"""
+    print(graph)
     for i, vertex in graph.vertices.items():
         if vertex is None:
             continue
-        for j, vertex2 in sorted(graph.vertices.items(), key=lambda x: np.linalg.norm(vertex - x[1]) if x[1] is not None else 10000):
-            
+        for j, vertex2 in sorted(graph.vertices.items(),key=lambda x: np.linalg.norm(vertex - x[1]) if x[1] is not None else 10000):
+            # if(j <= i):
+            #     continue
             # Skip if one of the vertices was removed
+            if i == 68 or i == 69 or i == 34:
+                if j == None or vertex2 is None:
+                    print(i, "is None")
+                else:
+                    print(i,j, round(np.linalg.norm(vertex - vertex2),2))
+                    if not merge_neighbors and (j in graph.get_neighbors(i) or i in graph.get_neighbors(j)):
+                        print("neighbors issue", graph.get_neighbors(i), graph.get_neighbors(j))
+                    if neighbor_limit is not None and not (len(graph.get_neighbors(j)) <= neighbor_limit or len(graph.get_neighbors(i)) <= neighbor_limit):
+                        print("neighbor limit issue j:", graph.get_neighbors(j), graph.get_neighbors(i))
+    
+                    
             if vertex2 is None:
                 continue
             # Skip if the same vertex
@@ -139,7 +154,6 @@ def mergeOverlappingVertices(const_graph : Graph, threshold = 5, neighbor_limit 
             # Skip if the vertices are connected
             if not merge_neighbors and (j in graph.get_neighbors(i) or i in graph.get_neighbors(j)):
                 continue
-
             if neighbor_limit is not None and not (len(graph.get_neighbors(j)) <= neighbor_limit or len(graph.get_neighbors(i)) <= neighbor_limit):
                 continue
 
@@ -150,16 +164,24 @@ def mergeOverlappingVertices(const_graph : Graph, threshold = 5, neighbor_limit 
 
                     graph.add_edge(i, neighbor)
                     graph.add_edge(neighbor, i)
+                    print("neighbor", neighbor, "j", j, "i", i)
+                    graph.edges[neighbor].remove(j)
 
+                # Merge the positions
+                weight_i = len(graph.get_neighbors(i))
+                weight_j = len(graph.get_neighbors(j))
+                if(weight_i == 0 and weight_j == 0):
+                    weight_i = 1
+                    weight_j = 1
+                graph.vertices[i] = (weight_i*vertex + weight_j*vertex2) / (weight_j + weight_i)
+                # Remove j
+                if j in graph.edges[i]:
+                    graph.edges[i].remove(j)
                 graph.vertices[j] = None
+                graph.edges[j] = set()
+                keys_to_remove.append(j)
             # List is sorted so if one doesn't fit threshhold none do, or a neighbor was found.
             break
-    
-    keys_to_remove = []
-
-    for key, value in graph.vertices.items():
-        if type(value) == type(None):
-            keys_to_remove.append(key)
     graph.remove_vertices(keys_to_remove)
     return graph
 

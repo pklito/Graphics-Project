@@ -142,7 +142,8 @@ def lsd(file, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th 
     
     lines = combineParallelLines(lines)
     graph = makeGraphFromLines(lines)
-    graph = mergeOverlappingVertices(graph, threshold=20, neighbor_limit=1)
+    graph = mergeOverlappingVertices(graph, threshold=9, neighbor_limit=1)
+
     #graph.draw_graph(image, (0,0,255), (0,255,0), 2, 5)
     graph = connectIntersectingEdges(graph, threshold_splice=0, threshold_detect=7)
     graph = mergeOverlappingVertices(graph, threshold=5, merge_neighbors=True)
@@ -150,6 +151,8 @@ def lsd(file, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th 
 
     faces = getFaces(graph)
     handleFaces(image, faces)
+
+    print(graph)
     
     graph.draw_graph(image, (255,50,50), (100,100,100), 1, 3, vertex_numbers=True)
     print(graph)
