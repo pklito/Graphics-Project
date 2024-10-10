@@ -248,18 +248,25 @@ def connectIntersectingEdges(const_graph : Graph, threshold_detect = 5, threshol
     return graph
 
 
-def _getFaces(graph : Graph, v_start, v_curr, visited_vertices : set, face : list):
-    if len(face) == 4 and v_start in graph.get_neighbors(v_curr):
+def _getFaces(graph : Graph, v_start, visited_vertices : set, face : list):
+    if len(face) == 4 and v_start in graph.get_neighbors(face[-1]):
         return [face]
     if len(face) >= 4:
         return []
     faces = []
-    for neighbor in graph.get_neighbors(v_curr):
+    for neighbor in graph.get_neighbors(face[-1]):
         if neighbor in visited_vertices:
             continue
-        visited_vertices = visited_vertices.copy()
-        visited_vertices.add(neighbor)
-        faces += _getFaces(graph, v_start, neighbor, visited_vertices, face + [neighbor])
+        next_visited = visited_vertices.copy()
+        next_visited.add(neighbor)
+        faces += _getFaces(graph, v_start, next_visited, face + [neighbor])
+        if len(face) >= 2:
+            prev_edge = np.array(graph.vertices[face[-1]]) - graph.vertices[face[-2]]
+            curr_edge = np.array(graph.vertices[neighbor]) - graph.vertices[face[-1]]
+            if np.dot(prev_edge, curr_edge) / (np.linalg.norm(prev_edge) * np.linalg.norm(curr_edge)) > 0.95:
+                faces += _getFaces(graph, v_start, next_visited, face[:-1] + [neighbor])
+
+
     return faces
 
 def getFaces(graph : Graph):
@@ -267,7 +274,7 @@ def getFaces(graph : Graph):
     faces_list = [] # Preserve vertex order
     faces_set = set() # Prevent repetitions ( there are 7 per face )
     for i in graph.vertices.keys():
-        faces_list += _getFaces(graph, i, i, set([i]), [i])
+        faces_list += _getFaces(graph, i, set([i]), [i])
     
     unique_face_list = []
     for face in faces_list:

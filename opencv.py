@@ -130,7 +130,7 @@ def postProcessImage(file):
     drawHoughLines(overlay, lines)
     cv.imshow("canny", cv.addWeighted(image, 1, overlay[:,:,0:3], 0.2, 0))
 
-def lsd(file, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th = 22.5, log_eps = 0.0, density_th = 0.7, n_bins = 1024):
+def lsd(file, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th = 22.5, log_eps = 0.0, density_th = 0.7, n_bins = 1024, post_process = True):
     image = cv.imread(file)
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     lsd = cv.createLineSegmentDetector(detector, scale=scale, sigma_scale=sigma_scale, quant=quant, ang_th=ang_th, log_eps=log_eps, density_th=density_th, n_bins=n_bins)
@@ -142,6 +142,10 @@ def lsd(file, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th 
     
     lines = combineParallelLines(lines)
     graph = makeGraphFromLines(lines)
+    if not post_process:
+        graph.draw_graph(image, (0,0,255), (0,255,0), 2, 5)
+        cv.imshow("lsd plain", image)
+        return
     graph = mergeOverlappingVertices(graph, threshold=9, neighbor_limit=1)
 
     #graph.draw_graph(image, (0,0,255), (0,255,0), 2, 5)
@@ -152,26 +156,48 @@ def lsd(file, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th 
     faces = getFaces(graph)
     handleFaces(image, faces)
 
-    
-    graph.draw_graph(image, (255,50,50), (100,100,100), 1, 3, vertex_numbers=True)
-    print(graph)
-    cv.imshow("lsd " + str(np.random.random()), drawn)
+    graph.draw_graph(image)
+    cv.imshow("lsd full" + str(np.random.random()), drawn)
+
+def pointToScreen(rvec,tvec, world_point, camera_matrix = None):
+    tvec = np.array(tvec)
+    rvec = np.array(rvec)
+    world_point = np.array(world_point)
+    if camera_matrix is None:
+        camera_matrix = np.array([
+            [300, 0, 300],
+            [0, 300, 200],
+            [0, 0, 1]
+        ])
+    rotation_matrix, _ = cv.Rodrigues(rvec)
+    rel_coord = np.dot(rotation_matrix, world_point.T) + tvec
+    imaginary_point = (camera_matrix @ (rel_coord)).flatten()
+    return imaginary_point[:2]/imaginary_point[2]
 
 def handleFaces(image, faces):
-    object_points = np.array([[-0.5,-0.5,0],[-0.5,0.5,0],[0.5,0.5,0],[0.5,-0.5,0]], dtype=np.float32)
+    object_points = np.array([[-0.5,-0.5,0.5],[-0.5,0.5,0.5],[0.5,0.5,0.5],[0.5,-0.5,0.5]], dtype=np.float32)
+    object_points_inv = np.array([[-0.5,-0.5,-0.5],[-0.5,0.5,-0.5],[0.5,0.5,-0.5],[0.5,-0.5,-0.5]], dtype=np.float32)
+
 
     # Define the camera matrix for a perspective camera with resolution 600x400 and FOV of 90 degrees
-    focal_length = 600 / (2 * np.tan(np.deg2rad(90) / 2))
+    focal_length_x = 600 / 2
+    focal_length_y = 600 / 2
     camera_matrix = np.array([
-        [focal_length, 0, 300],
-        [0, focal_length, 200],
+        [focal_length_x, 0, 300],
+        [0, focal_length_y, 200],
         [0, 0, 1]
     ])
+
     
-    rvecs = []
+    trans = []
+    index = 0
     for face in faces:
+        index += 1
+        if np.cross(face[1] - face[0], face[2] - face[0]) < 0:
+            face = face[::-1]
         image_points = np.array(face, dtype=np.float32)
-        ret, rvec, tvec = cv.solvePnP(object_points, image_points, camera_matrix, None, flags=cv.SOLVEPNP_ITERATIVE)
+        ret, rvec, tvec = cv.solveP3P(object_points, image_points, camera_matrix, None, flags=cv.SOLVEPNP_P3P)
+        rvec, tvec = rvec[0], tvec[0]
         if not ret:
             continue
 
@@ -181,16 +207,23 @@ def handleFaces(image, faces):
         world_point2 = np.array([[0, 0, -0.5]], dtype=np.float32)
         rel_coord1 = np.dot(rotation_matrix, world_point1.T) + tvec
         rel_coord2 = np.dot(rotation_matrix, world_point2.T) + tvec
-        rel_coord = rel_coord1 if np.linalg.norm(rel_coord1) > np.linalg.norm(rel_coord2) else rel_coord2
+        rel_coord = tvec
         imaginary_point = (camera_matrix @ (rel_coord)).flatten()
 
         print([round(i,2) for i in (rel_coord).flatten()], [round(i,2) for i in (tvec).flatten()])
             # Define the point in the world coordinates
-        world_point = np.array([[0, 0, 0.5]], dtype=np.float32)
-        cv.circle(image, tuple(np.array(imaginary_point[:2]/imaginary_point[2], dtype=int)), 3, (0, 0, 0), -1)
-
-        rvecs.append(rvec)
-    print("rvec", [[round(b[0],2) for b in a.tolist()] for a in rvecs])
+        
+        cv.circle(image, tuple(np.array(imaginary_point[:2]/imaginary_point[2], dtype=int)), 3, (255,255,255), -1)
+        # cv.drawFrameAxes(image, camera_matrix, None, rvec, tvec, 0.5)
+        
+        trans.append([[round(a,2) for a in rvec.ravel()], [round(a,2) for a in tvec.ravel()]])
+    print(trans)
+    shape = np.array([[-0.5,-0.5,0],[-0.5,0.5,0],[0.5,0.5,0],[0.5,-0.5,0]], dtype=np.float32)
+    for rvec, tvec in trans[:]:
+        cv.polylines(image, [np.array([pointToScreen(rvec, tvec, point, camera_matrix) for point in shape], dtype=np.int32)], True, (0,255,0), 2)
+        # tvec = np.array(tvec)
+        # rvec = np.array(rvec)
+        # cv.drawFrameAxes(image, camera_matrix, None, rvec, tvec, 0.5)
             
 
 
@@ -208,22 +241,24 @@ def prob(file):
     
     lines = combineParallelLines(lines)
     graph = makeGraphFromLines(lines)
-    # graph = mergeOverlappingVertices(graph, threshold=10, neighbor_limit=1)
-    # #graph.draw_graph(image, (0,0,255), (0,255,0), 2, 5)
-    # graph = connectIntersectingEdges(graph, threshold_splice=0, threshold_detect=7)
-    # graph = mergeOverlappingVertices(graph, threshold=5, merge_neighbors=True)
-    # graph = mergeOverlappingVertices(graph, threshold=7, merge_neighbors=True)
+    graph = mergeOverlappingVertices(graph, threshold=10, neighbor_limit=1)
+    #graph.draw_graph(image, (0,0,255), (0,255,0), 2, 5)
+    graph = connectIntersectingEdges(graph, threshold_splice=0, threshold_detect=7)
+    graph = mergeOverlappingVertices(graph, threshold=5, merge_neighbors=True)
+    graph = mergeOverlappingVertices(graph, threshold=7, merge_neighbors=True)
 
-    # faces = getFaces(graph)
-    # handleFaces(image, faces)
+    faces = getFaces(graph)
+
+    handleFaces(image, faces)
     graph.draw_graph(image, vertex_numbers=True)
     
     cv.imshow("prob", image)
 
 if __name__ == "__main__":
-    file = "sc_scarce_2.png"
-    prob(file)
+    file = "sc_white_2.png"
     lsd(file,2,scale=0.5)
+    lsd(file,2,scale=0.5,post_process=False)
+
 
 
 
