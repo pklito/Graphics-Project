@@ -151,7 +151,6 @@ def mergeOverlappingVertices(const_graph : Graph, threshold = 5, neighbor_limit 
                         continue
 
                     graph.add_edge(i, neighbor)
-                    graph.add_edge(neighbor, i)
                     graph.edges[neighbor].remove(j)
 
                 # Merge the positions
@@ -186,9 +185,7 @@ def _sliceEdges(graph : Graph,tree, a,b,c,d, threshold_detect = 5, threshold_spl
         graph.edges[a].remove(b)
         graph.edges[b].remove(a)
         graph.add_edge(p1_index, a)
-        graph.add_edge(a, p1_index)
         graph.add_edge(p1_index, b)
-        graph.add_edge(b, p1_index)
         
 
         tree[(a, b)] = (a, p1_index, b)
