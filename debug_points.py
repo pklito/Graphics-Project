@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
+from itertools import combinations
 
 # points = [[-0.11, 1.17, 3.1], [-0.11, 1.17, 3.1],
 # [-3.76, 0.4, 5.61], [-3.76, 0.4, 5.61],
@@ -20,38 +21,45 @@ trans = [[[2.27, -0.74, -2.03], [1.93, 1.57, 4.52]], [[1.62, -2.14, 0.84], [1.95
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
 
-theta = np.radians(0)
-rotation_matrix_y = np.array([
+def get_options(mat):
+    vx = mat[:,0]
+    vy = mat[:,1]
+    vz = mat[:,2]
+    flips = [(1,1), (-1,1), (1,-1), (-1,-1)]
+    lst = [vx, vy, vz]
+    combs = list(combinations(lst, 2))
+    combs += [a[::-1] for a in combs]
     
-    [np.cos(theta), 0, np.sin(theta)],
-    [0, 1, 0],
-    [-np.sin(theta),0, np.cos(theta)]
-])
+    return [np.array([s1*a, s2*b, np.cross(s1*a,s2*b)]).T for a, b in combs for s1, s2 in flips]
 
-# points = points[0::2]
-# points = [(matrix.T @ np.array(point)).flatten() for point in points]
-# points = [[p[0] - points[0][0], p[1]- points[0][1], p[2] - points[0][2]] for p in points]
-# points = [[p[0] + 0.35*p[2], p[1], p[2]] for p in points]
+def get_comp(base):
+    return lambda m: (np.dot(m[:,0], base[:,0]) + np.dot(m[:,1], base[:,1]) + np.dot(m[:,2], base[:,2]))/3
+
+# Filter points if angles are wrong:
+mats = [(sorted(get_options(cv.Rodrigues(np.array(t[0]))[0]),key=get_comp(np.eye(3)))[-1], t[1]) for t in trans]
+average_mat = sum([m[0] for m in mats])
+x_temp = average_mat[:,0]/np.linalg.norm(average_mat[:,0])
+y_temp = average_mat[:,1]/np.linalg.norm(average_mat[:,1])
+average_mat = np.array([x_temp, y_temp, np.cross(x_temp, y_temp)]).T
+mats = [(m[0], m[1]) for m in mats if get_comp(average_mat)(m[0]) > 0.96]
+
+trans = mats
+
+#Draw
 points = [t[1] for t in trans]
+#
+points = [(average_mat.T @ np.array(p)).ravel() for p in points]
 
-arrows = False
-if arrows:
-    for i in range(0, len(points) - 1, 2):
-        ax.quiver(points[i][0], points[i][1], points[i][2],
-                points[i+1][0] - points[i][0], points[i+1][1] - points[i][1], points[i+1][2] - points[i][2],
-                arrow_length_ratio=0.1, color='b')
 
 x = [point[0] for point in points]
 y = [point[1] for point in points]
 z = [point[2] for point in points]
-
 ax.scatter(x, y, z, c='r', marker='o')
 
-# Draw render
+# Draw render screen
 ax.scatter([0],[0],[0],c='b')
 screen_points = [[point[0]/point[2], point[1]/point[2],1] for point in points]
 screen_points = np.array(screen_points)
-
 
 # Cubing
 average_fract = [np.average([i - np.floor(i) for i in x]), np.average([i - np.floor(i) for i in y]),np.average([i - np.floor(i) for i in z])]
