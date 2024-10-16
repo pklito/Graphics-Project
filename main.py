@@ -108,6 +108,7 @@ class GraphicsEngine:
         if self.EXPORT:
             self.EXPORT = False
             print("camera proj:", self.camera.m_view)
+            print("cubes (and rabbit):" + str([[x/2 for x in b.pos] for b in self.scene.objects]))
             exportFbo(self.buffers.screen, "output.png")
         pg.display.flip()
 
