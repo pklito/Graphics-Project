@@ -107,6 +107,7 @@ class GraphicsEngine:
         """Flip the buffers, useful if you want to do something before the flip (like exporting)"""
         if self.EXPORT:
             self.EXPORT = False
+            print("camera proj:", self.camera.m_view)
             exportFbo(self.buffers.screen, "output.png")
         pg.display.flip()
 
