@@ -41,7 +41,7 @@ average_mat = sum([m[0] for m in mats])
 x_temp = average_mat[:,0]/np.linalg.norm(average_mat[:,0])
 y_temp = average_mat[:,1]/np.linalg.norm(average_mat[:,1])
 average_mat = np.array([x_temp, y_temp, np.cross(x_temp, y_temp)]).T
-mats = [(m[0], m[1]) for m in mats if get_comp(average_mat)(m[0]) > 0.96]
+mats = [(m[0], m[1]) for m in mats if get_comp(average_mat)(m[0]) > 0.985]
 
 trans = mats
 
@@ -50,21 +50,21 @@ points = [t[1] for t in trans]
 #
 points = [(average_mat.T @ np.array(p)).ravel() for p in points]
 
-
-x = [point[0] for point in points]
-y = [point[1] for point in points]
-z = [point[2] for point in points]
-ax.scatter(x, y, z, c='r', marker='o')
-
 # Draw render screen
 ax.scatter([0],[0],[0],c='b')
 screen_points = [[point[0]/point[2], point[1]/point[2],1] for point in points]
 screen_points = np.array(screen_points)
 
+points = np.array(points)
+
 # Cubing
-average_fract = [np.average([i - np.floor(i) for i in x]), np.average([i - np.floor(i) for i in y]),np.average([i - np.floor(i) for i in z])]
+average_fract = [np.average([i - np.floor(i) for i in points[:,0]]), np.average([i - np.floor(i) for i in points[:,1]]),np.average([i - np.floor(i) for i in points[:,2]])]
 print("average fractions:", average_fract)
 # Define the vertices of the cube centered at (1, 2, 1) with side length 2
+points = [[i+(0.5 - j) for i, j in zip(p,average_fract)] for p in points]
+
+points = np.array(points)
+ax.scatter(points[:,0], points[:,1], points[:,2], c='r', marker='o')
 
 def draw_cube(ax, point):
     corner = [np.floor(i) for i in point]
