@@ -121,14 +121,50 @@ def exportFbo(data_fbo, output_file = "output.png"):
     image_8bit = (image * 255).astype(np.uint8)
     cv.imwrite(output_file, image_8bit)
 
+def _getIntersections(lines):
+    """
+    lines are in the format rho, theta
+    """
+    intersections = []
+    for i in range(len(lines)):
+        for j in range(i+1, len(lines)):
+            rho1, theta1 = lines[i][0]
+            rho2, theta2 = lines[j][0]
+            if (abs(rho1- rho2) < 40 and abs(theta1-theta2) < np.deg2rad(10)) or  abs(theta1-theta2) > np.deg2rad(80):
+                continue
+            A = np.array([[np.cos(theta1), np.sin(theta1)], [np.cos(theta2), np.sin(theta2)]])
+            b = np.array([rho1, rho2])
+            try:
+                x0, y0 = np.linalg.solve(A, b)
+                intersections.append((x0,y0))
+            except:
+                pass # Lines are parallel
+    return intersections
+
+def _processIntersections(image, intersections):
+    
+
+    overlay = np.zeros((image.shape[0],image.shape[1],4),dtype=np.uint8)
+    for intersection in intersections:
+        if intersection[0] < 0 or intersection[0] > image.shape[1] or intersection[1] < 0 or intersection[1] > image.shape[0]:
+            continue
+        cv.circle(overlay, (int(intersection[0]), int(intersection[1])), 5, (0,55,255))
+
+    return cv.addWeighted(image, 1, overlay[:,:,0:3], 0.8, 0)
+
 def postProcessImage(file):
     image = cv.imread(file)
     canny = genCannyFromFrameBuffer(image)
     overlay = np.zeros((canny.shape[0],canny.shape[1],4),dtype=np.uint8)
     #drawHoughEdges(overlay, canny)
-    lines = cv.HoughLines(canny, 1, np.pi / 180, 60, None, 0, 0)
+    lines = cv.HoughLines(canny, 1, np.pi / 180, 50, None, 0, 0)
     drawHoughLines(overlay, lines)
-    cv.imshow("canny", cv.addWeighted(image, 1, overlay[:,:,0:3], 0.2, 0))
+    image = cv.addWeighted(image, 1, overlay[:,:,0:3], 0.2, 0)
+
+    intersections = _getIntersections(lines)
+    image = _processIntersections(image, intersections)
+
+    cv.imshow("canny", image)
 
 def lsd(file, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th = 22.5, log_eps = 0.0, density_th = 0.7, n_bins = 1024, post_process = True):
     image = cv.imread(file)
@@ -220,10 +256,10 @@ def handleFaces(image, faces):
     print(trans)
     shape = np.array([[-0.5,-0.5,0],[-0.5,0.5,0],[0.5,0.5,0],[0.5,-0.5,0]], dtype=np.float32)
     for rvec, tvec in trans[:]:
-        cv.polylines(image, [np.array([pointToScreen(rvec, tvec, point, camera_matrix) for point in shape], dtype=np.int32)], True, (0,255,0), 2)
-        # tvec = np.array(tvec)
-        # rvec = np.array(rvec)
-        # cv.drawFrameAxes(image, camera_matrix, None, rvec, tvec, 0.5)
+        # cv.polylines(image, [np.array([pointToScreen(rvec, tvec, point, camera_matrix) for point in shape], dtype=np.int32)], True, (0,255,0), 2)
+        tvec = np.array(tvec)
+        rvec = np.array(rvec)
+        cv.drawFrameAxes(image, camera_matrix, None, rvec, tvec, 0.5)
             
 
 
@@ -255,10 +291,10 @@ def prob(file):
     cv.imshow("prob", image)
 
 if __name__ == "__main__":
-    file = "sc_white_2.png"
+    file = "sc_rgb.png"
     lsd(file,2,scale=0.5)
     lsd(file,2,scale=0.5,post_process=False)
-
+    postProcessImage(file)
 
 
 
