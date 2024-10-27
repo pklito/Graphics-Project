@@ -116,6 +116,12 @@ def postProcessFbo(app, data_fbo = None):
 
     drawOverlays(app, overlay)
 
+def postProcessCubesFbo(app, data_fbo = None):
+    if data_fbo is None:
+        data_fbo = app.ctx.screen
+    image = _fboToImage(data_fbo) 
+
+
 def exportFbo(data_fbo, output_file = "output.png"):
     image = _fboToImage(data_fbo)
     image_8bit = (image * 255).astype(np.uint8)
@@ -152,8 +158,7 @@ def _processIntersections(image, intersections):
 
     return cv.addWeighted(image, 1, overlay[:,:,0:3], 0.8, 0)
 
-def postProcessImage(file):
-    image = cv.imread(file)
+def postProcessImage(image):
     canny = genCannyFromFrameBuffer(image)
     overlay = np.zeros((canny.shape[0],canny.shape[1],4),dtype=np.uint8)
     #drawHoughEdges(overlay, canny)
@@ -166,8 +171,8 @@ def postProcessImage(file):
 
     cv.imshow("canny", image)
 
-def lsd(file, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th = 22.5, log_eps = 0.0, density_th = 0.7, n_bins = 1024, post_process = True):
-    image = cv.imread(file)
+def lsd(image, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th = 22.5, log_eps = 0.0, density_th = 0.7, n_bins = 1024, post_process = True):
+
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     lsd = cv.createLineSegmentDetector(detector, scale=scale, sigma_scale=sigma_scale, quant=quant, ang_th=ang_th, log_eps=log_eps, density_th=density_th, n_bins=n_bins)
     lines = lsd.detect(gray)[0]
@@ -264,9 +269,8 @@ def handleFaces(image, faces):
 
 
 
-def prob(file):
+def prob(image):
     # Get Probabilistic Hough Lines from the image
-    image = cv.imread(file)
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     edges = cv.Canny(gray, 5, 150, apertureSize=3)
     cv.imshow("canny",edges)
@@ -292,9 +296,10 @@ def prob(file):
 
 if __name__ == "__main__":
     file = "sc_rgb.png"
-    lsd(file,2,scale=0.5)
-    lsd(file,2,scale=0.5,post_process=False)
-    postProcessImage(file)
+    image = cv.imread(file)
+    lsd(image.copy(),2,scale=0.5)
+    lsd(image.copy(),2,scale=0.5,post_process=False)
+    postProcessImage(image.copy())
 
 
 
