@@ -73,23 +73,44 @@ total[:,2] = np.cross(total[:,0], total[:,1])
 mat_base = total
 
 ctr = 0
+valid_mats = []
 for t in trans:
     rvec = t[0]
     mat, _ = cv.Rodrigues(np.array(rvec))
     comp = get_comp(mat_base)
     closest_mat = sorted([m for m in get_options(mat)], key=comp )[-1]
     val1, val2, val3 = random(), random(), random()
-    color = (ctr/15,ctr/15,ctr/15)
     print(t[0], comp(closest_mat), ctr)
     ctr += 1
     #draw_tris(ax, mat, color, color, color)
     offset = closest_mat @ np.array([0.0,0.0,0.0])
     if comp(closest_mat) > 0.98:
+        valid_mats.append(closest_mat)
         draw_tris(ax, closest_mat, 'b', 'b', 'b', offset = offset)
     else:
         draw_tris(ax, closest_mat, 'y', 'y', 'y', offset = offset)
-        
-        
+    
+def yawpitchrolldecomposition(R):
+
+    sin_x    = math.sqrt(R[2,0] * R[2,0] +  R[2,1] * R[2,1])    
+    validity  = sin_x < 1e-6
+    if not validity:
+        z1    = math.atan2(R[2,0], R[2,1])     # around z1-axis
+        x      = math.atan2(sin_x,  R[2,2])     # around x-axis
+        z2    = math.atan2(R[0,2], -R[1,2])    # around z2-axis
+    else: # gimbal lock
+        z1    = 0                                         # around z1-axis
+        x      = math.atan2(sin_x,  R[2,2])     # around x-axis
+        z2    = 0                                         # around z2-axis
+
+    return np.array([[z1], [x], [z2]])
+
+
+print(yawpitchrolldecomposition(mat_base))
+print(yawpitchrolldecomposition(np.array([mat_base[:,2], mat_base[:,0], mat_base[:,1]]).T))
+
+print(yawpitchrolldecomposition(np.array([mat_base[:,1], mat_base[:,2], mat_base[:,0]]).T))
+print(np.pi,np.pi/2,np.pi/4)
         
 
 ax.set_xlim([-1, 1])
