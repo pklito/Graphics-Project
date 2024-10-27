@@ -27,6 +27,8 @@ class GraphicsEngine:
         self.ctx = mgl.create_context()
         # self.ctx.front_face = 'cw'
         self.ctx.enable(flags=mgl.DEPTH_TEST | mgl.CULL_FACE)
+
+        #self.ctx.enable(flags=mgl.AA)
         # increase line width
         self.ctx.line_width = 3.0
         # create an object to help track time
