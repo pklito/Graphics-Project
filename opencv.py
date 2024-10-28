@@ -122,10 +122,11 @@ def postProcessCubesFbo(app, data_fbo = None, camera_trans = None, display = Fal
         data_fbo = app.ctx.screen
     image = _fboToImage(data_fbo)
     image = (image * 255).astype(np.uint8)
+    #image = cv.blur(image, (3,3))
     trans = lsd(image, 2, scale=0.5, dont_display=not display)
     print("trans:", trans)
     if camera_trans is None:
-        cubes = transToCubes(trans, threshold=0.85)
+        cubes = transToCubes(trans, threshold=0.97)
     else:
         cubes = [(np.linalg.inv(camera_trans) @ np.array([-x for x in t[1]] + [1])).ravel() for t in trans]
     
