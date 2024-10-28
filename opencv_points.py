@@ -31,15 +31,23 @@ def get_options(mat):
 def get_comp(base):
     return lambda m: (np.dot(m[:,0], base[:,0]) + np.dot(m[:,1], base[:,1]) + np.dot(m[:,2], base[:,2]))/3
 
-def trans_to_cubes(trans):
+def transToCubes(trans):
     # Filter points if angles are wrong:
-    mats = [(sorted(get_options(cv.Rodrigues(np.array(t[0]))[0]),key=get_comp(np.eye(3)))[-1], t[1]) for t in trans]
-    average_mat = sum([m[0] for m in mats])
-    x_temp = average_mat[:,0]/np.linalg.norm(average_mat[:,0])
-    y_temp = average_mat[:,1]/np.linalg.norm(average_mat[:,1])
-    average_mat = np.array([x_temp, y_temp, np.cross(x_temp, y_temp)]).T
-    mats = [(m[0], m[1]) for m in mats if get_comp(average_mat)(m[0]) > 0.985]
 
+    for i in range(len(trans)):
+        mats = [(sorted(get_options(cv.Rodrigues(np.array(t[0]))[0]),key=get_comp(np.eye(3)))[-1], t[1]) for t in trans]
+        # average_mat = sum([m[0] for m in mats])
+        # x_temp = average_mat[:,0]/np.linalg.norm(average_mat[:,0])
+        # y_temp = average_mat[:,1]/np.linalg.norm(average_mat[:,1])
+        # average_mat = np.array([x_temp, y_temp, np.cross(x_temp, y_temp)]).T
+        mat_size = len(mats)
+        average_mat = mats[np.random.randint(0,mat_size)][0]
+        mats = [(m[0], m[1]) for m in mats if get_comp(average_mat)(m[0]) > 0.985]
+        if len(mats) > 0.5 * mat_size:
+            break
+
+    if len(mats) == 0:
+        return []
     trans = mats
 
     #Draw
@@ -67,7 +75,7 @@ if __name__ == "__main__":
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    points = trans_to_cubes(trans)
+    points = transToCubes(trans)
     
     ax.scatter([0],[0],[0],c='b')
     screen_points = [[point[0]/point[2], point[1]/point[2],1] for point in points]

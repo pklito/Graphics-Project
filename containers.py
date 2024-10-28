@@ -52,8 +52,6 @@ class Scene:
                 if(random()< 0.3):
                     y = (random()>0.5)
                     add(Cube(app, tex_id=int(0.8+1.4*random()),pos=(x, y, z)))
-                    if(random() < 0.5):
-                        add(MarkerCube(app,pos=(x, y, z), scale=(0.51,0.51,0.51)))
                         
             
                 

@@ -7,6 +7,7 @@ import sys
 from constants import GLOBAL_CONSTANTS as constants
 from graph import *
 from util import *
+from opencv_points import transToCubes
 
 def genCannyFromFrameBuffer(image):
 
@@ -122,7 +123,10 @@ def postProcessCubesFbo(app, data_fbo = None):
     image = _fboToImage(data_fbo)
     image = (image * 255).astype(np.uint8)
     trans = lsd(image, 2, scale=0.5, dont_display=True)
-    
+    print("trans:", trans)
+    cubes = transToCubes(trans)
+    return cubes
+
 
 
 def exportFbo(data_fbo, output_file = "output.png"):

@@ -119,6 +119,7 @@ class GraphicsEngine:
                 exportFbo(self.buffers.screen, "output.png")
             elif self.EXPORT_REASON == "process":
                 newcubes = postProcessCubesFbo(self, self.buffers.screen)
+                print(newcubes)
         pg.display.flip()
 
     def render_pipeline(self):
