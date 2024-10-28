@@ -52,11 +52,19 @@ class Scene:
                 if random() < 0.3:
                     height -= 1
                 height = clamp(height, 0, 2)
-                if(random()< 0.3):
+                if(random()< 0.2):
                     y = (random()>0.5)
                     add(Cube(app, tex_id=int(0.8+1.4*random()),pos=(x, y, z)))
                         
-            
+        add(Cube(app, tex_id=1,pos=(10, 0, 0)))
+        add(Cube(app, tex_id=1,pos=(0, 0, 10)))
+        add(Cube(app, tex_id=1,pos=(10, 1, 0)))
+        add(Cube(app, tex_id=1,pos=(0, -1, 0)))
+        add(Cube(app, tex_id=1,pos=(10, 1, 3)))
+        add(Cube(app, tex_id=1,pos=(10, 1, 5)))
+        add(Cube(app, tex_id=1,pos=(10, 1, 4)))
+
+
                 
         # for x in range(n):
         #     add(Cube(app, tex_id=1,pos=(x**3+50, 0, 0)))
@@ -65,7 +73,7 @@ class Scene:
 
 
 
-        add(Cat(app, pos=(0, -2, -10)))
+        # add(Cat(app, pos=(0, 0, 0)))
 
     def render(self):
         for obj in self.objects:
