@@ -36,6 +36,9 @@ class Scene:
     def add_object(self, obj):
         self.objects.append(obj)
 
+    def clear_objects(self, obj):
+        self.objects = [o for o in self.objects if type(o) != type(obj)]
+
     def load(self):
         app = self.app
         add = self.add_object

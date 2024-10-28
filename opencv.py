@@ -7,7 +7,7 @@ import sys
 from constants import GLOBAL_CONSTANTS as constants
 from graph import *
 from util import *
-from opencv_points import transToCubes
+from opencv_points import transToCubes, plot_cubes
 
 def genCannyFromFrameBuffer(image):
 
@@ -117,14 +117,20 @@ def postProcessFbo(app, data_fbo = None):
 
     drawOverlays(app, overlay)
 
-def postProcessCubesFbo(app, data_fbo = None):
+def postProcessCubesFbo(app, data_fbo = None, camera_trans = None, display = False):
     if data_fbo is None:
         data_fbo = app.ctx.screen
     image = _fboToImage(data_fbo)
     image = (image * 255).astype(np.uint8)
-    trans = lsd(image, 2, scale=0.5, dont_display=True)
+    trans = lsd(image, 2, scale=0.5, dont_display=not display)
     print("trans:", trans)
-    cubes = transToCubes(trans)
+    if camera_trans is None:
+        cubes = transToCubes(trans, threshold=0.85)
+    else:
+        cubes = [(np.linalg.inv(camera_trans) @ np.array([-x for x in t[1]] + [1])).ravel() for t in trans]
+    
+    if display:
+        plot_cubes(cubes)
     return cubes
 
 

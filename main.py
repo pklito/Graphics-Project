@@ -7,6 +7,7 @@ from containers import *
 from opencv import postProcessFbo, postProcessCubesFbo, exportFbo
 from constants import loadConstants
 from texture import do_pass
+import itertools
 
 class GraphicsEngine:
     def __init__(self, win_size=(600, 400)):
@@ -63,6 +64,8 @@ class GraphicsEngine:
         if event.key == pg.K_g:
             self.EXPORT = True
             self.EXPORT_REASON = "process"
+        if event.key == pg.K_b:
+            self.scene.clear_objects(MarkerCube(self))
         if event.key == pg.K_p:
             self.PAUSED = not self.PAUSED
             self.opencv_pipeline()
@@ -118,8 +121,13 @@ class GraphicsEngine:
                 print("cubes (and rabbit):" + str([[x/2 for x in b.pos] for b in self.scene.objects]))
                 exportFbo(self.buffers.screen, "output.png")
             elif self.EXPORT_REASON == "process":
-                newcubes = postProcessCubesFbo(self, self.buffers.screen)
-                print(newcubes)
+                print(self.camera.m_view)
+                newcubes = postProcessCubesFbo(self, self.buffers.screen, display=True)
+                # for a1,a2,a3 in itertools.product([-1, 1], repeat=3):
+                    
+                #     newcubes = [[a1*b[0], a2*b[1], a3*b[2]] for b in cubes]
+                for c in newcubes:
+                    self.scene.add_object(MarkerCube(self, pos=[np.floor(x1+x2) for x1,x2 in zip(c,self.camera.position)]))
         pg.display.flip()
 
     def render_pipeline(self):
