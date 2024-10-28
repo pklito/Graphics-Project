@@ -126,8 +126,9 @@ class GraphicsEngine:
                 # for a1,a2,a3 in itertools.product([-1, 1], repeat=3):
                     
                 #     newcubes = [[a1*b[0], a2*b[1], a3*b[2]] for b in cubes]
+                print("new cubes: " + str(newcubes))
                 for c in newcubes:
-                    self.scene.add_object(MarkerCube(self, pos=[np.floor(x1+x2) for x1,x2 in zip(c,self.camera.position)]))
+                    self.scene.add_object(MarkerCube(self, pos=[x1 for x1,x2 in zip(c,self.camera.position)]))
         pg.display.flip()
 
     def render_pipeline(self):

@@ -52,13 +52,13 @@ def transToCubes(trans, threshold = 0.97):
     y_temp = average_mat[:,1]/np.linalg.norm(average_mat[:,1])
     average_mat = np.array([x_temp, y_temp, np.cross(x_temp, y_temp)]).T
     for i in range(len(trans)):
-        mats = [(sorted(get_options(cv.Rodrigues(np.array(t[0]))[0]),key=get_comp(np.eye(3)))[-1], t[1]) for t in trans]
         
         mat_size = len(mats)
         mats = [(m[0], m[1]) for m in mats if get_comp(average_mat)(m[0]) > threshold]
         if len(mats) > 0.5 * mat_size:
             break
         print("Failed to find good average_matrix, ", len(mats) / mat_size)
+        mats = [(sorted(get_options(cv.Rodrigues(np.array(t[0]))[0]),key=get_comp(np.eye(3)))[-1], t[1]) for t in trans]
         average_mat = mats[np.random.randint(0,mat_size)][0]
 
     if len(mats) == 0:
