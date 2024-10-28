@@ -50,7 +50,11 @@ class Scene:
                     height -= 1
                 height = clamp(height, 0, 2)
                 if(random()< 0.3):
-                    add(Cube(app, tex_id=int(0.8+1.4*random()),pos=(x, (random()>0.5), z)))
+                    y = (random()>0.5)
+                    add(Cube(app, tex_id=int(0.8+1.4*random()),pos=(x, y, z)))
+                    if(random() < 0.5):
+                        add(MarkerCube(app,pos=(x, y, z), scale=(0.51,0.51,0.51)))
+                        
             
                 
         # for x in range(n):
@@ -89,6 +93,7 @@ class Mesh:
         self.textures[0] = get_texture(ctx, path='textures/img.png')
         self.textures[1] = get_texture(ctx, path='textures/img_1.png')
         self.textures[2] = get_texture(ctx, path='textures/img_2.png')
+        self.textures[3] = get_texture(ctx, path='textures/img_3.png')
         self.textures['cat'] = get_texture(ctx, path='objects/bunny/UVMap.png')
         self.textures['skybox'] = get_texture_cube(ctx, dir_path='textures/skybox1/', ext='png')
     
@@ -101,6 +106,7 @@ class Mesh:
     def gen_programs(self, ctx: mgl.Context):
         self.programs['default'] = get_program(ctx, 'default')
         self.programs['flat'] = get_program(ctx, 'default', 'default_flat')
+        self.programs['alpha'] = get_program(ctx, 'default', 'default_alpha')
         self.programs['skybox'] = get_program(ctx, 'skybox')
         self.programs['advanced_skybox'] = get_program(ctx, 'advanced_skybox')
         self.programs['blit'] = get_program(ctx, 'screen')    #draw texture on screen for opencv.
@@ -110,9 +116,13 @@ class Mesh:
 
     def gen_vaos(self, ctx: mgl.Context):
         # cube vao
-        self.vaos['cube'] = get_vao(ctx, 
+        self.vaos['flat_cube'] = get_vao(ctx, 
             program=self.programs['flat'],
             vbo = self.vbos['cube'])
+        
+        self.vaos['cube'] = get_vao(ctx, program=self.programs['default'], vbo=self.vbos['cube'])
+
+        self.vaos['alpha_cube'] = get_vao(ctx, program=self.programs['alpha'], vbo=self.vbos['cube'])
 
         # cat vao
         self.vaos['cat'] = get_vao(ctx, 

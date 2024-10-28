@@ -27,8 +27,8 @@ def get_texture_cube(ctx, dir_path, ext='png'):
 def get_texture(ctx, path):
         texture = pg.image.load(path).convert()
         texture = pg.transform.flip(texture, flip_x=False, flip_y=True)
-        texture = ctx.texture(size=texture.get_size(), components=3,
-                                   data=pg.image.tostring(texture, 'RGB'))
+        texture = ctx.texture(size=texture.get_size(), components=4,
+                                   data=pg.image.tostring(texture, 'RGBA'))
         # mipmaps
         texture.filter = (mgl.LINEAR_MIPMAP_LINEAR, mgl.LINEAR)
         texture.build_mipmaps()

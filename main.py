@@ -4,7 +4,7 @@ import sys
 from model import *
 from camera import Camera
 from containers import *
-from opencv import postProcessFbo, exportFbo
+from opencv import postProcessFbo, postProcessCubesFbo, exportFbo
 from constants import loadConstants
 from texture import do_pass
 
@@ -59,6 +59,10 @@ class GraphicsEngine:
             loadConstants()
         if event.key == pg.K_t:
             self.EXPORT = True
+            self.EXPORT_REASON = "file"
+        if event.key == pg.K_g:
+            self.EXPORT = True
+            self.EXPORT_REASON = "process"
         if event.key == pg.K_p:
             self.PAUSED = not self.PAUSED
             self.opencv_pipeline()
@@ -109,9 +113,12 @@ class GraphicsEngine:
         """Flip the buffers, useful if you want to do something before the flip (like exporting)"""
         if self.EXPORT:
             self.EXPORT = False
-            print("camera proj:", self.camera.m_view)
-            print("cubes (and rabbit):" + str([[x/2 for x in b.pos] for b in self.scene.objects]))
-            exportFbo(self.buffers.screen, "output.png")
+            if self.EXPORT_REASON == "file":
+                print("camera proj:", self.camera.m_view)
+                print("cubes (and rabbit):" + str([[x/2 for x in b.pos] for b in self.scene.objects]))
+                exportFbo(self.buffers.screen, "output.png")
+            elif self.EXPORT_REASON == "process":
+                newcubes = postProcessCubesFbo(self, self.buffers.screen)
         pg.display.flip()
 
     def render_pipeline(self):
