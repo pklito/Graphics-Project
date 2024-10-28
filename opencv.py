@@ -119,7 +119,10 @@ def postProcessFbo(app, data_fbo = None):
 def postProcessCubesFbo(app, data_fbo = None):
     if data_fbo is None:
         data_fbo = app.ctx.screen
-    image = _fboToImage(data_fbo) 
+    image = _fboToImage(data_fbo)
+    image = (image * 255).astype(np.uint8)
+    trans = lsd(image, 2, scale=0.5, dont_display=True)
+    
 
 
 def exportFbo(data_fbo, output_file = "output.png"):
@@ -171,12 +174,13 @@ def postProcessImage(image):
 
     cv.imshow("canny", image)
 
-def lsd(image, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th = 22.5, log_eps = 0.0, density_th = 0.7, n_bins = 1024, post_process = True):
-
+def lsd(image, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th = 22.5, log_eps = 0.0, density_th = 0.7, n_bins = 1024, post_process = True, dont_display = False):
+    print(image.dtype)
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     lsd = cv.createLineSegmentDetector(detector, scale=scale, sigma_scale=sigma_scale, quant=quant, ang_th=ang_th, log_eps=log_eps, density_th=density_th, n_bins=n_bins)
     lines = lsd.detect(gray)[0]
-    drawn = lsd.drawSegments(image, lines)
+    if not dont_display:
+        drawn = lsd.drawSegments(image, lines)
     lines = lineMatrixToPairs(lines)
     # for line in lines:
     #     cv.line(image, line[0], line[1], (0,255,0), 2)
@@ -195,10 +199,13 @@ def lsd(image, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th
     graph = mergeOverlappingVertices(graph, threshold=8, merge_neighbors=True)
 
     faces = getFaces(graph)
-    handleFaces(image, faces)
-
-    graph.draw_graph(image)
-    cv.imshow("lsd full" + str(np.random.random()), drawn)
+    
+    trans = handleFaces(image, faces, not dont_display)
+    if not dont_display:
+        graph.draw_graph(image, vertex_numbers=True)
+        cv.imshow("lsd full" + str(np.random.random()), drawn)
+    
+    return trans
 
 def pointToScreen(rvec,tvec, world_point, camera_matrix = None):
     tvec = np.array(tvec)
@@ -215,7 +222,7 @@ def pointToScreen(rvec,tvec, world_point, camera_matrix = None):
     imaginary_point = (camera_matrix @ (rel_coord)).flatten()
     return imaginary_point[:2]/imaginary_point[2]
 
-def handleFaces(image, faces):
+def handleFaces(image, faces, draw = True):
     object_points = np.array([[-0.5,-0.5,0.5],[-0.5,0.5,0.5],[0.5,0.5,0.5],[0.5,-0.5,0.5]], dtype=np.float32)
     object_points_inv = np.array([[-0.5,-0.5,-0.5],[-0.5,0.5,-0.5],[0.5,0.5,-0.5],[0.5,-0.5,-0.5]], dtype=np.float32)
 
@@ -258,13 +265,15 @@ def handleFaces(image, faces):
         # cv.drawFrameAxes(image, camera_matrix, None, rvec, tvec, 0.5)
         
         trans.append([[round(a,2) for a in rvec.ravel()], [round(a,2) for a in tvec.ravel()]])
-    print(trans)
-    shape = np.array([[-0.5,-0.5,0],[-0.5,0.5,0],[0.5,0.5,0],[0.5,-0.5,0]], dtype=np.float32)
-    for rvec, tvec in trans[:]:
-        # cv.polylines(image, [np.array([pointToScreen(rvec, tvec, point, camera_matrix) for point in shape], dtype=np.int32)], True, (0,255,0), 2)
-        tvec = np.array(tvec)
-        rvec = np.array(rvec)
-        cv.drawFrameAxes(image, camera_matrix, None, rvec, tvec, 0.5)
+    
+    # shape = np.array([[-0.5,-0.5,0],[-0.5,0.5,0],[0.5,0.5,0],[0.5,-0.5,0]], dtype=np.float32)
+    if draw:
+        for rvec, tvec in trans[:]:
+            # cv.polylines(image, [np.array([pointToScreen(rvec, tvec, point, camera_matrix) for point in shape], dtype=np.int32)], True, (0,255,0), 2)
+            tvec = np.array(tvec)
+            rvec = np.array(rvec)
+            cv.drawFrameAxes(image, camera_matrix, None, rvec, tvec, 0.5)
+    return trans
             
 
 
