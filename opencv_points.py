@@ -31,28 +31,49 @@ def get_options(mat):
 def get_comp(base):
     return lambda m: (np.dot(m[:,0], base[:,0]) + np.dot(m[:,1], base[:,1]) + np.dot(m[:,2], base[:,2]))/3
 
+def orient_up(mat):
+    def tilt(vec):
+        return abs(np.dot(vec,np.array([1,0,0])))
+    vx = mat[:,0]
+    vy = mat[:,1]
+    vz = mat[:,2]
+    if tilt(vy) < tilt(vx) and tilt(vy) < tilt(vz):
+        return mat
+    if tilt(vx) < tilt(vz):
+        return np.array([vy, vz, vx]).T
+    return np.array([vz, vx, vy]).T
+
 def transToCubes(trans, threshold = 0.97):
     # Filter points if angles are wrong:
-
+    mats = [(sorted(get_options(cv.Rodrigues(np.array(t[0]))[0]),key=get_comp(np.eye(3)))[-1], t[1]) for t in trans]
+        
+    average_mat = sum([m[0] for m in mats])
+    x_temp = average_mat[:,0]/np.linalg.norm(average_mat[:,0])
+    y_temp = average_mat[:,1]/np.linalg.norm(average_mat[:,1])
+    average_mat = np.array([x_temp, y_temp, np.cross(x_temp, y_temp)]).T
     for i in range(len(trans)):
         mats = [(sorted(get_options(cv.Rodrigues(np.array(t[0]))[0]),key=get_comp(np.eye(3)))[-1], t[1]) for t in trans]
-        # average_mat = sum([m[0] for m in mats])
-        # x_temp = average_mat[:,0]/np.linalg.norm(average_mat[:,0])
-        # y_temp = average_mat[:,1]/np.linalg.norm(average_mat[:,1])
-        # average_mat = np.array([x_temp, y_temp, np.cross(x_temp, y_temp)]).T
+        
         mat_size = len(mats)
-        average_mat = mats[np.random.randint(0,mat_size)][0]
         mats = [(m[0], m[1]) for m in mats if get_comp(average_mat)(m[0]) > threshold]
         if len(mats) > 0.5 * mat_size:
             break
+        print("Failed to find good average_matrix, ", len(mats) / mat_size)
+        average_mat = mats[np.random.randint(0,mat_size)][0]
 
     if len(mats) == 0:
         return []
     trans = mats
 
+    average_mat = sum([m[0] for m in mats])
+    x_temp = average_mat[:,0]/np.linalg.norm(average_mat[:,0])
+    y_temp = average_mat[:,1]/np.linalg.norm(average_mat[:,1])
+    average_mat = np.array([x_temp, y_temp, np.cross(x_temp, y_temp)]).T
+
+    # average_mat = orient_up(average_mat)
+    
     #Draw
     points = [t[1] for t in trans]
-    #
     points = [(average_mat.T @ np.array(p)).ravel() for p in points]
 
     # Draw render screen
@@ -117,7 +138,7 @@ def plot_cubes(points):
     fig2 = plt.figure()
     ax2 = fig2.add_subplot(111)
     ax2.scatter(screen_points[:,0],screen_points[:,1], c='g')
-    plt.ion()
+    # plt.ion()
     plt.show()
     plt.pause(.001)
 if __name__ == "__main__":
