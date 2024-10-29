@@ -9,11 +9,11 @@ from graph import *
 from util import *
 from opencv_points import transToCubes, plot_cubes
 
-def genCannyFromFrameBuffer(image):
+#
+#   Old post processing, hough lines, with constants.json
+#
 
-    # cv.imshow("text", image)
-    
-    ### CALCULATIONS ###
+def canny(image):
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
     def get_edges_image(image, blur = (5, 5),thresh_soft = 5, thresh_hard = 10):
@@ -21,6 +21,7 @@ def genCannyFromFrameBuffer(image):
         return cv.Canny(cv.normalize(blurred, None, 0, 255, cv.NORM_MINMAX).astype(np.uint8), thresh_soft, thresh_hard)
 
     return get_edges_image(gray, thresh_soft=constants.opencv.CANNY_THRESH_SOFT, thresh_hard=constants.opencv.CANNY_THRESH_HARD)
+
 
 def drawHoughEdges(overlay, canny):
     if(constants.opencv.HOUGH_PROB_LINE_WIDTH <= 0):
@@ -35,34 +36,16 @@ def drawHoughEdges(overlay, canny):
             x1, y1, x2, y2 = line[0]
             cv.line(overlay, (x1, y1), (x2, y2), (255, 0, 0,255), constants.opencv.HOUGH_PROB_LINE_WIDTH)
 
-def _toRange(v, min, max, newmin, newmax):
-            if max == min:
-                return (v-min)*(newmax-newmin) + newmin
-            return (v - min)*(newmax - newmin)/(max-min)+newmin
-
-def _polarToLine(rho, theta):
-    """
-    Converts vector to line to two points, which are off screen."""
-    max_rho, min_rho, max_theta, min_theta = np.sqrt(600*600+400*400), -np.sqrt(600*600+400*400), np.pi, 0
-    if rho < min_rho or rho > max_rho or theta < min_theta or theta > max_theta:
-        return None, None
-    a = np.cos(theta)
-    b = np.sin(theta)
-    x0 = a * rho
-    y0 = b * rho
-    pt1 = (int(x0 + 1800*(-b)), int(y0 + 1800*(a)))
-    pt2 = (int(x0 - 1800*(-b)), int(y0 - 1800*(a)))
-    return pt1, pt2
-    
 
 def drawHoughLines(overlay, lines, linewidth = 1):
     for i in range(0, len(lines)):
         rho = lines[i][0][0]
         theta = lines[i][0][1]
-        pt1, pt2 = _polarToLine(rho, theta)
+        pt1, pt2 = polarToLine(rho, theta)
         if pt1 is None or pt2 is None:
             continue
         cv.line(overlay, pt1, pt2, (0,0,255,50), linewidth, cv.LINE_AA)
+
 
 def drawHoughBuckets(overlay, lines):
     max_rho, min_rho, max_theta, min_theta = np.sqrt(600*600+400*400), -np.sqrt(600*600+400*400), np.pi, 0
@@ -72,10 +55,10 @@ def drawHoughBuckets(overlay, lines):
     for i in range(0, len(lines)):
         rho = lines[i][0][0]
         theta = lines[i][0][1]
-        pt1, pt2 = _polarToLine(rho, theta)
+        pt1, pt2 = polarToLine(rho, theta)
         if pt1 is None or pt2 is None:
             continue
-        cv.circle(overlay,(int(_toRange(theta,min_theta,max_theta,0,600)), int(_toRange(rho,min_rho,max_rho,0,400))), 2, (255,255,0,255))
+        cv.circle(overlay,(int(toRange(theta,min_theta,max_theta,0,600)), int(toRange(rho,min_rho,max_rho,0,400))), 2, (255,255,0,255))
 
 
 fps = 0.0
@@ -92,6 +75,10 @@ def drawOverlays(app, overlay):
     app.buffers.opencv_tex.use()
     app.mesh.vaos['blit'].render()
 
+#
+#   FBO functions
+#
+
 def _fboToImage(fbo : mgl.Framebuffer):
     """
     Reads the image data from a modernGL framebuffer
@@ -105,7 +92,7 @@ def postProcessFbo(app, data_fbo = None):
     if data_fbo is None:
         data_fbo = app.ctx.screen
     image = _fboToImage(data_fbo)
-    canny = genCannyFromFrameBuffer(image)
+    canny = canny(image)
 
     overlay = np.zeros((canny.shape[0],canny.shape[1],4),dtype=np.uint8)
     if app.SHOW_HOUGH:
@@ -123,7 +110,7 @@ def postProcessCubesFbo(app, data_fbo = None, camera_trans = None, display = Fal
     image = _fboToImage(data_fbo)
     image = (image * 255).astype(np.uint8)
     #image = cv.blur(image, (3,3))
-    trans = lsd(image, 2, scale=0.5, dont_display=not display)
+    trans = lsd(image, 2, scale=0.5)
     print("trans:", trans)
     if camera_trans is None:
         cubes = transToCubes(trans, threshold=0.97)
@@ -135,11 +122,15 @@ def postProcessCubesFbo(app, data_fbo = None, camera_trans = None, display = Fal
     return cubes
 
 
-
 def exportFbo(data_fbo, output_file = "output.png"):
     image = _fboToImage(data_fbo)
     image_8bit = (image * 255).astype(np.uint8)
     cv.imwrite(output_file, image_8bit)
+
+
+#
+#   Graph intersections
+#
 
 def _getIntersections(lines):
     """
@@ -173,7 +164,7 @@ def _processIntersections(image, intersections):
     return cv.addWeighted(image, 1, overlay[:,:,0:3], 0.8, 0)
 
 def postProcessImage(image):
-    canny = genCannyFromFrameBuffer(image)
+    canny = canny(image)
     overlay = np.zeros((canny.shape[0],canny.shape[1],4),dtype=np.uint8)
     #drawHoughEdges(overlay, canny)
     lines = cv.HoughLines(canny, 1, np.pi / 180, 50, None, 0, 0)
@@ -185,38 +176,24 @@ def postProcessImage(image):
 
     cv.imshow("canny", image)
 
-def lsd(image, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th = 22.5, log_eps = 0.0, density_th = 0.7, n_bins = 1024, post_process = True, dont_display = False):
+def lsd(image, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th = 22.5, log_eps = 0.0, density_th = 0.7, n_bins = 1024):
     print(image.dtype)
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     lsd = cv.createLineSegmentDetector(detector, scale=scale, sigma_scale=sigma_scale, quant=quant, ang_th=ang_th, log_eps=log_eps, density_th=density_th, n_bins=n_bins)
     lines = lsd.detect(gray)[0]
-    if not dont_display:
-        drawn = lsd.drawSegments(image, lines)
     lines = lineMatrixToPairs(lines)
-    # for line in lines:
-    #     cv.line(image, line[0], line[1], (0,255,0), 2)
+    return lines
     
+def linesToPlanarGraph(lines):
     lines = combineParallelLines(lines)
     graph = makeGraphFromLines(lines)
-    if not post_process:
-        graph.draw_graph(image, (0,0,255), (0,255,0), 2, 5)
-        cv.imshow("lsd plain", image)
-        return
     graph = mergeOverlappingVertices(graph, threshold=9, neighbor_limit=1)
 
     #graph.draw_graph(image, (0,0,255), (0,255,0), 2, 5)
     graph = connectIntersectingEdges(graph, threshold_splice=0, threshold_detect=7)
     graph = mergeOverlappingVertices(graph, threshold=5, merge_neighbors=True)
     graph = mergeOverlappingVertices(graph, threshold=8, merge_neighbors=True)
-
-    faces = getFaces(graph)
-    
-    trans = handleFaces(image, faces, not dont_display)
-    if not dont_display:
-        graph.draw_graph(image, vertex_numbers=True)
-        cv.imshow("lsd full" + str(np.random.random()), drawn)
-    
-    return trans
+    return graph
 
 def pointToScreen(rvec,tvec, world_point, camera_matrix = None):
     tvec = np.array(tvec)
@@ -233,7 +210,7 @@ def pointToScreen(rvec,tvec, world_point, camera_matrix = None):
     imaginary_point = (camera_matrix @ (rel_coord)).flatten()
     return imaginary_point[:2]/imaginary_point[2]
 
-def handleFaces(image, faces, draw = True):
+def handleFaces(faces):
     object_points = np.array([[-0.5,-0.5,0.5],[-0.5,0.5,0.5],[0.5,0.5,0.5],[0.5,-0.5,0.5]], dtype=np.float32)
     object_points_inv = np.array([[-0.5,-0.5,-0.5],[-0.5,0.5,-0.5],[0.5,0.5,-0.5],[0.5,-0.5,-0.5]], dtype=np.float32)
 
@@ -268,25 +245,9 @@ def handleFaces(image, faces, draw = True):
         rel_coord2 = np.dot(rotation_matrix, world_point2.T) + tvec
         rel_coord = tvec
         imaginary_point = (camera_matrix @ (rel_coord)).flatten()
-
-        print([round(i,2) for i in (rel_coord).flatten()], [round(i,2) for i in (tvec).flatten()])
-            # Define the point in the world coordinates
-        
-        cv.circle(image, tuple(np.array(imaginary_point[:2]/imaginary_point[2], dtype=int)), 3, (255,255,255), -1)
-        # cv.drawFrameAxes(image, camera_matrix, None, rvec, tvec, 0.5)
         
         trans.append([[round(a,2) for a in rvec.ravel()], [round(a,2) for a in tvec.ravel()]])
-    
-    # shape = np.array([[-0.5,-0.5,0],[-0.5,0.5,0],[0.5,0.5,0],[0.5,-0.5,0]], dtype=np.float32)
-    if draw:
-        for rvec, tvec in trans[:]:
-            # cv.polylines(image, [np.array([pointToScreen(rvec, tvec, point, camera_matrix) for point in shape], dtype=np.int32)], True, (0,255,0), 2)
-            tvec = np.array(tvec)
-            rvec = np.array(rvec)
-            cv.drawFrameAxes(image, camera_matrix, None, rvec, tvec, 0.5)
     return trans
-            
-
 
 
 def prob(image):
@@ -296,29 +257,13 @@ def prob(image):
     cv.imshow("canny",edges)
     lines = cv.HoughLinesP(edges, 1, np.pi/180, threshold=30, minLineLength=50, maxLineGap=10)
     lines = lineMatrixToPairs(lines)
-    # for line in lines:
-    #     cv.line(image, line[0], line[1], (0,255,0), 2)
-    
-    lines = combineParallelLines(lines)
-    graph = makeGraphFromLines(lines)
-    graph = mergeOverlappingVertices(graph, threshold=10, neighbor_limit=1)
-    #graph.draw_graph(image, (0,0,255), (0,255,0), 2, 5)
-    graph = connectIntersectingEdges(graph, threshold_splice=0, threshold_detect=7)
-    graph = mergeOverlappingVertices(graph, threshold=5, merge_neighbors=True)
-    graph = mergeOverlappingVertices(graph, threshold=7, merge_neighbors=True)
-
-    faces = getFaces(graph)
-
-    handleFaces(image, faces)
-    graph.draw_graph(image, vertex_numbers=True)
-    
-    cv.imshow("prob", image)
+    return lines
 
 if __name__ == "__main__":
     file = "sc_rgb.png"
     image = cv.imread(file)
     lsd(image.copy(),2,scale=0.5)
-    lsd(image.copy(),2,scale=0.5,post_process=False)
+    lsd(image.copy(),2,scale=0.5)
     postProcessImage(image.copy())
 
 

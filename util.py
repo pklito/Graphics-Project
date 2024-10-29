@@ -1,5 +1,25 @@
 import numpy as np
 
+def toRange(v, min, max, newmin, newmax):
+            if max == min:
+                return (v-min)*(newmax-newmin) + newmin
+            return (v - min)*(newmax - newmin)/(max-min)+newmin
+
+def polarToLine(rho, theta):
+    """
+    Used for drawing polar lines on screen
+    Converts vector to line to two points, which are off screen."""
+    max_rho, min_rho, max_theta, min_theta = np.sqrt(600*600+400*400), -np.sqrt(600*600+400*400), np.pi, 0
+    if rho < min_rho or rho > max_rho or theta < min_theta or theta > max_theta:
+        return None, None
+    a = np.cos(theta)
+    b = np.sin(theta)
+    x0 = a * rho
+    y0 = b * rho
+    pt1 = (int(x0 + 1800*(-b)), int(y0 + 1800*(a)))
+    pt2 = (int(x0 - 1800*(-b)), int(y0 - 1800*(a)))
+    return pt1, pt2
+    
 def clamp(val, v_min, v_max):
     return min(v_max, max(v_min,val))
 
