@@ -124,7 +124,8 @@ def postProcessCubesFbo(app, data_fbo = None, camera_trans = None, display = Fal
     image = _fboToImage(data_fbo)
     image = (image * 255).astype(np.uint8)
     #image = cv.blur(image, (3,3))
-    trans = lsd(image, 2, scale=0.5)
+    trans = getCubes(lsd(image, 2, scale=0.5))
+    drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=False, doAxis=True, doFaces=True)
     print("trans:", trans)
     if camera_trans is None:
         cubes = transToCubes(trans, threshold=0.97)
@@ -285,16 +286,22 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
             [300, 0, 300],
             [0, 300, 200],
             [0, 0, 1]
-        ])
+        ], dtype=np.float32)
 
     if doGraph:
-        graph.draw_graph(image)
-    if doAxis:
-        for rvec, tvec in trans:
-            cv.drawFrameAxes(image, camera_matrix, None, np.array(rvec, dtype=np.float32), np.array(tvec, dtype=np.float32), 10)
+        graph.draw_graph(image, edge_width=1,vertex_size=3)
+    
     if doFaces:
         for face in faces:
-            cv.polylines(image, face, True, (0,0,255), 3)
+            print(np.asarray(face,dtype=np.int32))
+            cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (0,0,100))
+            cv.polylines(image, [np.asarray(face,dtype=np.int32)], True, (0,0,255), 3)
+    
+    if doAxis:
+        for rvec, tvec in trans:
+            tvec = np.array(tvec)
+            rvec = np.array(rvec)
+            cv.drawFrameAxes(image, camera_matrix, None, rvec, tvec, 0.5)
 
     cv.imshow("drawPipeline", image)
 
@@ -316,10 +323,10 @@ def drawLinesColorful(image, lines):
 
 
 if __name__ == "__main__":
-    file = "sc_rgb.png"
+    file = "sc_scarce_3.png"
     image = cv.imread(file)
-    drawGraphPipeline(image.copy(), prob(image), True, True, True)
-    drawLinesColorful(image,prob(image))
+    drawGraphPipeline(image.copy(), lsd(image), True, False, False)
+    drawLinesColorful(image,lsd(image))
 
     cv.waitKey(0)
     cv.destroyAllWindows()
