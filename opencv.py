@@ -75,6 +75,20 @@ def drawOverlays(app, overlay):
     app.buffers.opencv_tex.use()
     app.mesh.vaos['blit'].render()
 
+
+def postProcessImage(image):
+    canny = canny(image)
+    overlay = np.zeros((canny.shape[0],canny.shape[1],4),dtype=np.uint8)
+    #drawHoughEdges(overlay, canny)
+    lines = cv.HoughLines(canny, 1, np.pi / 180, 50, None, 0, 0)
+    drawHoughLines(overlay, lines)
+    image = cv.addWeighted(image, 1, overlay[:,:,0:3], 0.2, 0)
+
+    intersections = _getIntersections(lines)
+    image = _overlayIntersections(image, intersections)
+
+    cv.imshow("canny", image)
+
 #
 #   FBO functions
 #
@@ -152,9 +166,7 @@ def _getIntersections(lines):
                 pass # Lines are parallel
     return intersections
 
-def _processIntersections(image, intersections):
-    
-
+def _overlayIntersections(image, intersections):
     overlay = np.zeros((image.shape[0],image.shape[1],4),dtype=np.uint8)
     for intersection in intersections:
         if intersection[0] < 0 or intersection[0] > image.shape[1] or intersection[1] < 0 or intersection[1] > image.shape[0]:
@@ -163,18 +175,9 @@ def _processIntersections(image, intersections):
 
     return cv.addWeighted(image, 1, overlay[:,:,0:3], 0.8, 0)
 
-def postProcessImage(image):
-    canny = canny(image)
-    overlay = np.zeros((canny.shape[0],canny.shape[1],4),dtype=np.uint8)
-    #drawHoughEdges(overlay, canny)
-    lines = cv.HoughLines(canny, 1, np.pi / 180, 50, None, 0, 0)
-    drawHoughLines(overlay, lines)
-    image = cv.addWeighted(image, 1, overlay[:,:,0:3], 0.2, 0)
-
-    intersections = _getIntersections(lines)
-    image = _processIntersections(image, intersections)
-
-    cv.imshow("canny", image)
+#
+#   Edge detectors
+#
 
 def lsd(image, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th = 22.5, log_eps = 0.0, density_th = 0.7, n_bins = 1024):
     print(image.dtype)
@@ -183,7 +186,19 @@ def lsd(image, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th
     lines = lsd.detect(gray)[0]
     lines = lineMatrixToPairs(lines)
     return lines
+
+def prob(image):
+    # Get Probabilistic Hough Lines from the image
+    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    edges = cv.Canny(gray, 5, 150, apertureSize=3)
+    cv.imshow("canny",edges)
+    lines = cv.HoughLinesP(edges, 1, np.pi/180, threshold=30, minLineLength=50, maxLineGap=10)
+    lines = lineMatrixToPairs(lines)
+    return lines
     
+#
+#   Graph detector pipeline
+#
 def linesToPlanarGraph(lines):
     lines = combineParallelLines(lines)
     graph = makeGraphFromLines(lines)
@@ -211,6 +226,9 @@ def pointToScreen(rvec,tvec, world_point, camera_matrix = None):
     return imaginary_point[:2]/imaginary_point[2]
 
 def handleFaces(faces):
+    """
+    get 4 corners of faces and convert them to rvec, tvec pairs
+    """
     object_points = np.array([[-0.5,-0.5,0.5],[-0.5,0.5,0.5],[0.5,0.5,0.5],[0.5,-0.5,0.5]], dtype=np.float32)
     object_points_inv = np.array([[-0.5,-0.5,-0.5],[-0.5,0.5,-0.5],[0.5,0.5,-0.5],[0.5,-0.5,-0.5]], dtype=np.float32)
 
@@ -249,24 +267,59 @@ def handleFaces(faces):
         trans.append([[round(a,2) for a in rvec.ravel()], [round(a,2) for a in tvec.ravel()]])
     return trans
 
+#
+#   Pipelines
+#
+def getCubes(lines):
+    graph = linesToPlanarGraph(lines)
+    faces = getFaces(graph)
+    trans = handleFaces(faces)
+    return trans
 
-def prob(image):
-    # Get Probabilistic Hough Lines from the image
-    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-    edges = cv.Canny(gray, 5, 150, apertureSize=3)
-    cv.imshow("canny",edges)
-    lines = cv.HoughLinesP(edges, 1, np.pi/180, threshold=30, minLineLength=50, maxLineGap=10)
-    lines = lineMatrixToPairs(lines)
-    return lines
+def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = False):
+    graph = linesToPlanarGraph(lines)
+    faces = getFaces(graph)
+    trans = handleFaces(faces)
+
+    camera_matrix = np.array([
+            [300, 0, 300],
+            [0, 300, 200],
+            [0, 0, 1]
+        ])
+
+    if doGraph:
+        graph.draw_graph(image)
+    if doAxis:
+        for rvec, tvec in trans:
+            cv.drawFrameAxes(image, camera_matrix, None, np.array(rvec, dtype=np.float32), np.array(tvec, dtype=np.float32), 10)
+    if doFaces:
+        for face in faces:
+            cv.polylines(image, face, True, (0,0,255), 3)
+
+    cv.imshow("drawPipeline", image)
+
+
+def drawLines(image, lines):
+    image = cv.addWeighted(image, 0.5, np.zeros(image.shape, image.dtype), 0.5, 0)
+    for line in lines:
+        cv.line(image, np.array(line[0],dtype=np.uint32), np.array(line[1],dtype=np.uint32), (255,255,255), 1)
+    cv.imshow("lines", image)
+
+def drawLinesColorful(image, lines):
+    image = cv.addWeighted(image, 0.5, np.zeros(image.shape, image.dtype), 0.5, 0)
+    for line in lines:
+        red = 255*np.random.random()
+        blue = 255 - red
+        green = 255*np.random.random()
+        cv.line(image, np.array(line[0],dtype=np.uint32), np.array(line[1],dtype=np.uint32), (blue, green, red), 2)
+    cv.imshow("lines", image)
+
 
 if __name__ == "__main__":
     file = "sc_rgb.png"
     image = cv.imread(file)
-    lsd(image.copy(),2,scale=0.5)
-    lsd(image.copy(),2,scale=0.5)
-    postProcessImage(image.copy())
-
-
+    drawGraphPipeline(image.copy(), prob(image), True, True, True)
+    drawLinesColorful(image,prob(image))
 
     cv.waitKey(0)
     cv.destroyAllWindows()
