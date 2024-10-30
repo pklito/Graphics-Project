@@ -43,7 +43,11 @@ def orient_up(mat):
         return np.array([vy, vz, vx]).T
     return np.array([vz, vx, vy]).T
 
-def alignTrans(trans, threshold = 0.97):
+def alignTrans(trans, threshold = 0.97, stop_early_percent = 0.8):
+    """
+    Threshold, similarity that allows two transformations to be grouped together
+    stop_early_percent. if % of matrices are similar, return this group without going through all options.
+    """
     # Convert rodrigues vectors to matrices
     mats = [(cv.Rodrigues(np.array(t[0]))[0], t[1]) for t in trans]
     # Align matrices to (1, 0, 0), (0, 1, 0), (0, 0, 1)
@@ -63,13 +67,13 @@ def alignTrans(trans, threshold = 0.97):
         mat_size = len(mats)
         new_mats = [(sorted(get_options(t[0]),key=get_comp(average_mat))[-1], t[1]) for t in mats]
         filtered_mats = [(m[0], m[1]) for m in new_mats if get_comp(average_mat)(m[0]) > threshold]
-        if len(new_mats) > 0.8 * mat_size:
+        if len(filtered_mats) >= stop_early_percent * mat_size:
             max_list = filtered_mats
             not_in = [(m[0], m[1]) for m in new_mats if get_comp(average_mat)(m[0]) <= threshold]
             max_amount = len(new_mats)
             break
-        print("Failed to find good average_matrix, ", len(mats) / mat_size)
-        if len(new_mats) > max_amount:
+        print("Failed to find good average_matrix, ", len(filtered_mats) / mat_size)
+        if len(filtered_mats) > max_amount:
             max_list = new_mats
             not_in = [(m[0], m[1]) for m in new_mats if get_comp(average_mat)(m[0]) <= threshold]
             max_amount = len(new_mats)

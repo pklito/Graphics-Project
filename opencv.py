@@ -214,6 +214,11 @@ def linesToPlanarGraph(lines):
     graph = mergeOverlappingVertices(graph, threshold=8, merge_neighbors=True)
     return graph
 
+def _pointToScreen(rotation_matrix,tvec, world_point, camera_matrix):
+    rel_coord = np.dot(rotation_matrix, world_point.T) + tvec
+    imaginary_point = (camera_matrix @ (rel_coord)).flatten()
+    return imaginary_point[:2]/imaginary_point[2]
+
 def pointToScreen(rvec,tvec, world_point, camera_matrix = None):
     tvec = np.array(tvec)
     rvec = np.array(rvec)
@@ -225,9 +230,7 @@ def pointToScreen(rvec,tvec, world_point, camera_matrix = None):
             [0, 0, 1]
         ])
     rotation_matrix, _ = cv.Rodrigues(rvec)
-    rel_coord = np.dot(rotation_matrix, world_point.T) + tvec
-    imaginary_point = (camera_matrix @ (rel_coord)).flatten()
-    return imaginary_point[:2]/imaginary_point[2]
+    return _pointToScreen(rotation_matrix, tvec, world_point, camera_matrix)
 
 def handleFaces(faces):
     """
@@ -280,10 +283,26 @@ def getCubes(lines):
     trans = handleFaces(faces)
     return trans
 
+def drawFrameAxesMat(image, mat, tvec, camera_intrinsics, length = 1, width = 3):
+    x = np.array([length, 0, 0])
+    y = np.array([0, length, 0])
+    z = np.array([0, 0, length])
+    porigin = np.array(_pointToScreen(mat, tvec, np.array([0,0,0]), camera_intrinsics), dtype=np.int32)
+    px = np.array(_pointToScreen(mat, tvec, x, camera_intrinsics), dtype=np.int32)
+    py = np.array(_pointToScreen(mat, tvec, y, camera_intrinsics), dtype=np.int32)
+    pz = np.array(_pointToScreen(mat, tvec, z, camera_intrinsics), dtype=np.int32)
+    cv.line(image, porigin, px, (0,0,255), width)
+    cv.line(image, porigin, py, (0,255,0), width)
+    cv.line(image, porigin, pz, (255, 0, 0), width)
+
+
+
 def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = False, doNewAxis = False):
     graph = linesToPlanarGraph(lines)
     faces = getFaces(graph)
     trans = handleFaces(faces)
+    mats, excluded_mats = alignTrans(trans)
+    # cubes = matsToCubes(mats)
 
     camera_matrix = np.array([
             [300, 0, 300],
@@ -306,6 +325,15 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
             rvec = np.array(rvec)
             cv.drawFrameAxes(image, camera_matrix, None, rvec, tvec, 0.5)
 
+    
+    if doNewAxis:
+        for mat, tvec in mats:
+            drawFrameAxesMat(image, mat, tvec, camera_matrix, 0.5, 3)
+        for mat, tvec in excluded_mats:
+            pass
+            # drawFrameAxesMat(image, mat, tvec, camera_matrix, 0.5, 3)
+
+
     cv.imshow("drawPipeline" + str(np.random.randint(0,99)), image)
 
 
@@ -326,13 +354,13 @@ def drawLinesColorful(image, lines, name = "lines"):
 
 
 if __name__ == "__main__":
-    file = "sc_rgb.png"
+    file = "sc_pres.png"
     image = cv.imread(file)
     cv.imshow("base", image)
-    drawGraphPipeline(image.copy(), lsd(image), True, False, False)
-    drawLinesColorful(image,lsd(image), name = "lsd")
-    drawLinesColorful(image,prob(image), name = "prob")
-    postProcessImage(image.copy())
+    drawGraphPipeline(image.copy(), lsd(image), True, False, False, True)
+    # drawLinesColorful(image,lsd(image), name = "lsd")
+    # drawLinesColorful(image,prob(image), name = "prob")
+    # postProcessImage(image.copy())
 
     cv.waitKey(0)
     cv.destroyAllWindows()
