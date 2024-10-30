@@ -7,7 +7,7 @@ import sys
 from constants import GLOBAL_CONSTANTS as constants
 from graph import *
 from util import *
-from opencv_points import transToCubes, plot_cubes
+from opencv_points import matsToCubes, plot_cubes, alignTrans
 
 #
 #   Old post processing, hough lines, with constants.json
@@ -125,12 +125,13 @@ def postProcessCubesFbo(app, data_fbo = None, camera_trans = None, display = Fal
     image = (image * 255).astype(np.uint8)
     #image = cv.blur(image, (3,3))
     trans = getCubes(lsd(image, 2, scale=0.5))
-    drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=False, doAxis=True, doFaces=True)
-    drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=True, doAxis=False, doFaces=True)
-    drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=False, doAxis=False, doFaces=True)
-    print("trans:", trans)
+    if display:
+        drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=False, doAxis=True, doFaces=True)
+        drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=True, doAxis=False, doFaces=True)
+        print("trans:", trans)
     if camera_trans is None:
-        cubes = transToCubes(trans, threshold=0.97)
+        mats, excluded = alignTrans(trans, threshold=0.97)
+        cubes = matsToCubes(mats)
     else:
         cubes = [(np.linalg.inv(camera_trans) @ np.array([-x for x in t[1]] + [1])).ravel() for t in trans]
     
@@ -279,7 +280,7 @@ def getCubes(lines):
     trans = handleFaces(faces)
     return trans
 
-def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = False):
+def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = False, doNewAxis = False):
     graph = linesToPlanarGraph(lines)
     faces = getFaces(graph)
     trans = handleFaces(faces)

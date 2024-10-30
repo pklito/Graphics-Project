@@ -43,40 +43,56 @@ def orient_up(mat):
         return np.array([vy, vz, vx]).T
     return np.array([vz, vx, vy]).T
 
-def transToCubes(trans, threshold = 0.97):
-    # Filter points if angles are wrong:
-    mats = [(sorted(get_options(cv.Rodrigues(np.array(t[0]))[0]),key=get_comp(np.eye(3)))[-1], t[1]) for t in trans]
-        
+def alignTrans(trans, threshold = 0.97):
+    # Convert rodrigues vectors to matrices
+    mats = [(cv.Rodrigues(np.array(t[0]))[0], t[1]) for t in trans]
+    # Align matrices to (1, 0, 0), (0, 1, 0), (0, 0, 1)
+    mats = [(sorted(get_options(m[0]),key=get_comp(np.eye(3)))[-1], m[1]) for m in mats]
+    
+    # Get some common matrix
     average_mat = sum([m[0] for m in mats])
     x_temp = average_mat[:,0]/np.linalg.norm(average_mat[:,0])
     y_temp = average_mat[:,1]/np.linalg.norm(average_mat[:,1])
     average_mat = np.array([x_temp, y_temp, np.cross(x_temp, y_temp)]).T
-    for i in range(len(trans)):
-        
+
+    max_list = []
+    not_in = []
+    max_amount = 0
+    # Overly complicated
+    for i in range(len(mats)):
         mat_size = len(mats)
-        mats = [(m[0], m[1]) for m in mats if get_comp(average_mat)(m[0]) > threshold]
-        if len(mats) > 0.5 * mat_size:
+        new_mats = [(sorted(get_options(t[0]),key=get_comp(average_mat))[-1], t[1]) for t in mats]
+        filtered_mats = [(m[0], m[1]) for m in new_mats if get_comp(average_mat)(m[0]) > threshold]
+        if len(new_mats) > 0.8 * mat_size:
+            max_list = filtered_mats
+            not_in = [(m[0], m[1]) for m in new_mats if get_comp(average_mat)(m[0]) <= threshold]
+            max_amount = len(new_mats)
             break
         print("Failed to find good average_matrix, ", len(mats) / mat_size)
-        mats = [(sorted(get_options(cv.Rodrigues(np.array(t[0]))[0]),key=get_comp(np.eye(3)))[-1], t[1]) for t in trans]
-        average_mat = mats[np.random.randint(0,mat_size)][0]
+        if len(new_mats) > max_amount:
+            max_list = new_mats
+            not_in = [(m[0], m[1]) for m in new_mats if get_comp(average_mat)(m[0]) <= threshold]
+            max_amount = len(new_mats)
+        average_mat = mats[i][0]
 
-    if len(mats) == 0:
-        return []
-    trans = mats
+    return max_list, not_in
 
+def matsToCubesWithCamera(mats, camera_mat):
+    cam_inv = np.linalg.inv(camera_mat)
+    return [(cam_inv @ m[1]).ravel() for m in mats]
+
+def matsToCubes(mats):
+    """
+    Rotate all the cubes around the origin based on the rotation matrices of each,
+    and average the cubes so that they fall in one block
+    """
     average_mat = sum([m[0] for m in mats])
     x_temp = average_mat[:,0]/np.linalg.norm(average_mat[:,0])
     y_temp = average_mat[:,1]/np.linalg.norm(average_mat[:,1])
     average_mat = np.array([x_temp, y_temp, np.cross(x_temp, y_temp)]).T
 
-    # average_mat = orient_up(average_mat)
-    
-    #Draw
-    points = [t[1] for t in trans]
+    points = [t[1] for t in mats]
     points = [(average_mat.T @ np.array(p)).ravel() for p in points]
-
-    # Draw render screen
 
     points = np.array(points)
 
@@ -144,7 +160,8 @@ def plot_cubes(points):
 if __name__ == "__main__":
 
     trans = [[[2.27, -0.74, -2.03], [1.93, 1.57, 4.52]], [[1.62, -2.14, 0.84], [1.95, 1.75, 4.54]], [[0.94, -2.12, -1.06], [-2.09, -1.58, 6.42]], [[-1.45, 1.53, 0.59], [1.57, -0.47, 5.23]], [[2.1, 1.57, -0.53], [-0.66, -0.27, 6.76]], [[-2.01, 0.21, -0.18], [-1.29, 0.17, 4.3]], [[0.5, 2.89, -0.89], [0.57, 0.33, 5.94]], [[2.04, 0.31, 1.82], [-2.92, 1.89, 4.51]], [[-1.9, -0.8, 1.24], [1.55, -0.46, 5.31]], [[2.08, 1.64, -0.65], [-2.81, 1.93, 4.21]], [[-0.33, -2.87, 1.02], [-3.32, 0.41, 5.76]], [[0.45, 2.78, -0.94], [1.47, -0.39, 4.91]], [[-1.46, 0.99, -1.47], [-4.12, 0.17, 7.12]], [[2.01, 1.57, -0.54], [-2.93, -1.2, 5.9]], [[2.72, -0.0, -0.98], [-3.03, 0.08, 6.95]], [[-1.39, 1.1, -1.73], [-1.42, 0.19, 4.8]]]# matrix, _ = cv.Rodrigues(np.array(rvec))
-    points = transToCubes(trans)
+    mats, excluded = alignTrans(trans)
+    points = matsToCubes(mats)
     plot_cubes(points)
     
     
