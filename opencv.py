@@ -13,7 +13,7 @@ from opencv_points import transToCubes, plot_cubes
 #   Old post processing, hough lines, with constants.json
 #
 
-def canny(image):
+def doCanny(image):
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
     def get_edges_image(image, blur = (5, 5),thresh_soft = 5, thresh_hard = 10):
@@ -77,7 +77,7 @@ def drawOverlays(app, overlay):
 
 
 def postProcessImage(image):
-    canny = canny(image)
+    canny = doCanny(image)
     overlay = np.zeros((canny.shape[0],canny.shape[1],4),dtype=np.uint8)
     #drawHoughEdges(overlay, canny)
     lines = cv.HoughLines(canny, 1, np.pi / 180, 50, None, 0, 0)
@@ -106,7 +106,7 @@ def postProcessFbo(app, data_fbo = None):
     if data_fbo is None:
         data_fbo = app.ctx.screen
     image = _fboToImage(data_fbo)
-    canny = canny(image)
+    canny = doCanny(image)
 
     overlay = np.zeros((canny.shape[0],canny.shape[1],4),dtype=np.uint8)
     if app.SHOW_HOUGH:
@@ -126,6 +126,8 @@ def postProcessCubesFbo(app, data_fbo = None, camera_trans = None, display = Fal
     #image = cv.blur(image, (3,3))
     trans = getCubes(lsd(image, 2, scale=0.5))
     drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=False, doAxis=True, doFaces=True)
+    drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=True, doAxis=False, doFaces=True)
+    drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=False, doAxis=False, doFaces=True)
     print("trans:", trans)
     if camera_trans is None:
         cubes = transToCubes(trans, threshold=0.97)
@@ -303,7 +305,7 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
             rvec = np.array(rvec)
             cv.drawFrameAxes(image, camera_matrix, None, rvec, tvec, 0.5)
 
-    cv.imshow("drawPipeline", image)
+    cv.imshow("drawPipeline" + str(np.random.randint(0,99)), image)
 
 
 def drawLines(image, lines):
@@ -312,21 +314,24 @@ def drawLines(image, lines):
         cv.line(image, np.array(line[0],dtype=np.uint32), np.array(line[1],dtype=np.uint32), (255,255,255), 1)
     cv.imshow("lines", image)
 
-def drawLinesColorful(image, lines):
+def drawLinesColorful(image, lines, name = "lines"):
     image = cv.addWeighted(image, 0.5, np.zeros(image.shape, image.dtype), 0.5, 0)
     for line in lines:
         red = 255*np.random.random()
         blue = 255 - red
         green = 255*np.random.random()
         cv.line(image, np.array(line[0],dtype=np.uint32), np.array(line[1],dtype=np.uint32), (blue, green, red), 2)
-    cv.imshow("lines", image)
+    cv.imshow(name, image)
 
 
 if __name__ == "__main__":
-    file = "sc_scarce_3.png"
+    file = "sc_rgb.png"
     image = cv.imread(file)
+    cv.imshow("base", image)
     drawGraphPipeline(image.copy(), lsd(image), True, False, False)
-    drawLinesColorful(image,lsd(image))
+    drawLinesColorful(image,lsd(image), name = "lsd")
+    drawLinesColorful(image,prob(image), name = "prob")
+    postProcessImage(image.copy())
 
     cv.waitKey(0)
     cv.destroyAllWindows()
