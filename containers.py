@@ -52,7 +52,7 @@ class Scene:
                 if random() < 0.3:
                     height -= 1
                 height = clamp(height, 0, 2)
-                if(random()< 0.2):
+                if(random()< 0.7):
                     y = (random()>0.5)
                     add(Cube(app, tex_id=int(0.8+1.4*random()),pos=(x, y, z)))
                         
