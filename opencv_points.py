@@ -65,6 +65,7 @@ def alignTrans(trans, threshold = 0.97, stop_early_percent = 0.8):
     # Overly complicated
     for i in range(len(mats)):
         mat_size = len(mats)
+        average_mat = orient_up(average_mat)
         new_mats = [(sorted(get_options(t[0]),key=get_comp(average_mat))[-1], t[1]) for t in mats]
         filtered_mats = [(m[0], m[1]) for m in new_mats if get_comp(average_mat)(m[0]) > threshold]
         if len(filtered_mats) >= stop_early_percent * mat_size:

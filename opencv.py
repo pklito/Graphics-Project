@@ -304,6 +304,8 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
     mats, excluded_mats = alignTrans(trans)
     # cubes = matsToCubes(mats)
 
+    print(trans)
+
     camera_matrix = np.array([
             [300, 0, 300],
             [0, 300, 200],
@@ -327,6 +329,7 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
 
     
     if doNewAxis:
+        drawFixedAxes(trans, mats, excluded_mats)
         for mat, tvec in mats:
             drawFrameAxesMat(image, mat, tvec, camera_matrix, 0.5, 3)
         for mat, tvec in excluded_mats:
@@ -352,6 +355,41 @@ def drawLinesColorful(image, lines, name = "lines"):
         cv.line(image, np.array(line[0],dtype=np.uint32), np.array(line[1],dtype=np.uint32), (blue, green, red), 2)
     cv.imshow(name, image)
 
+def draw_tris(ax, mat, r = 'r', g = 'g', b = 'b', offset = (0,0,0), linestyle = ''):
+    o = offset
+    ax.quiver(o[0], o[1], o[2], mat[0,0] + o[0],mat[1,0] + o[1],mat[2,0] + o[2],color=r, linestyle=linestyle)
+    ax.quiver(o[0], o[1], o[2], mat[0,1] + o[0],mat[1,1] + o[1],mat[2,1] + o[2],color=g, linestyle=linestyle)
+    ax.quiver(o[0], o[1], o[2], mat[0,2] + o[0],mat[1,2] + o[1],mat[2,2] + o[2],color=b, linestyle=linestyle)
+
+import matplotlib.pyplot as plt
+def drawFixedAxes(trans, mats, excluded_mats):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    fig2 = plt.figure()
+    ax2 = fig2.add_subplot(111, projection='3d')
+    
+    for rvec, tvec in trans:
+        mat = cv.Rodrigues(np.array(rvec))[0]
+        draw_tris(ax2, mat)
+        
+    for mat, trans in mats:
+        draw_tris(ax, mat)
+    for mat, trans in excluded_mats:
+        draw_tris(ax, mat, r = (0.5,0,0), g = (0,0.5,0), b = (0,0,0.5), linestyle='--')
+    ax.set_xlim([-1, 1])
+    ax.set_ylim([-1, 1])
+    ax.set_zlim([-1, 1])
+    ax2.set_xlim([-1, 1])
+    ax2.set_ylim([-1, 1])
+    ax2.set_zlim([-1, 1])
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('Reoriented rotation matrices')
+    ax2.set_title('Input rotation matrices')
+
+
+    plt.show()
 
 if __name__ == "__main__":
     file = "sc_pres.png"
