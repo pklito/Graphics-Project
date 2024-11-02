@@ -71,6 +71,32 @@ def get_camera_angles(file, iterations = 500):
     lines = cv.HoughLines(canny, 1, np.pi / 180, 50, None, 0, 0)
     return regress_lines(lines, image.shape[1], image.shape[0], iterations=iterations)
 
+def draw_vanishing_waves(file, iterations = 500):
+    # Load the image
+    image = cv.imread(file, cv.IMREAD_COLOR)
+    # Flip the image along the x and y axis
+    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+
+    def get_edges_image(image, blur = (5, 5),thresh1 = 5, thresh2 = 10):
+        blurred = cv.GaussianBlur(image, blur, 0)
+        return cv.Canny(blurred, thresh1, thresh2)
+    
+    canny = get_edges_image(gray)
+
+    #image = cv.merge([get_edges_image(blue_channel),get_edges_image(red_channel),get_edges_image(green_channel)])
+    lines = cv.HoughLines(canny, 1, np.pi / 180, 50, None, 0, 0)
+    import matplotlib.pyplot as plt
+    lines = np.array(lines)
+    print(lines)
+    plt.scatter(lines[:,0,1], lines[:,0,0])
+    plt.xlabel("phi")
+    plt.ylabel("rho")
+    plt.title("Hough lines in polar coordinates (rho phi)")
+
+    # plt.imshow(cv.cvtColor(image, cv.COLOR_BGR2RGB))
+    plt.show()
+    angles = regress_lines(lines, image.shape[1], image.shape[0], iterations=iterations)
 
 if __name__ == "__main__":
     print(get_camera_angles('sc_rgb.png', iterations = 1000))
+    draw_vanishing_waves('sc_rgb.png', iterations = 1000)
