@@ -22,10 +22,6 @@ def toRange(v, min, max, newmin, newmax):
         return (v-min)*(newmax-newmin) + newmin
     return (v - min)*(newmax - newmin)/(max-min)+newmin
 
-def angToScreen(image, rho,theta, max_rho, min_rho, max_theta, min_theta):
-    return (int(toRange(theta,min_theta,max_theta,0,image.shape[1])), int(toRange(rho,min_rho,max_rho,0,image.shape[0])))
-    
-
 def regress_lines(lines, screen_width, screen_height, iterations = 500):
     lines = lines[:,0,:]
     def min_loss(points, lines):
@@ -47,7 +43,7 @@ def regress_lines(lines, screen_width, screen_height, iterations = 500):
     best_phi_theta = (0, 0)
     for i in range(0,iterations):
         phi = np.random.rand()*np.pi
-        theta = np.random.rand()*np.pi
+        theta = 2*np.random.rand()*np.pi - np.pi
         if sum_loss(phi, theta, lines) < best_loss:
             best_loss = sum_loss(phi, theta, lines)
             best_phi_theta = (phi, theta)
@@ -70,6 +66,13 @@ def get_camera_angles(file, iterations = 500):
     #image = cv.merge([get_edges_image(blue_channel),get_edges_image(red_channel),get_edges_image(green_channel)])
     lines = cv.HoughLines(canny, 1, np.pi / 180, 50, None, 0, 0)
     return regress_lines(lines, image.shape[1], image.shape[0], iterations=iterations)
+
+def get_focal_points(phi, theta):
+    sc_points = [(1/(np.tan(theta)*np.sin(phi)), 1/np.tan(phi)),
+            (0,        - np.tan(phi)),
+            (np.tan(theta)/np.sin(phi),     1/np.tan(phi))]
+    
+    return [np.array([300 * p[0] + 300,  200 * p[1] + 200]) for p in sc_points]
 
 def draw_vanishing_waves(file, iterations = 500):
     # Load the image
@@ -94,8 +97,20 @@ def draw_vanishing_waves(file, iterations = 500):
     plt.title("Hough lines in polar coordinates (rho phi)")
 
     # plt.imshow(cv.cvtColor(image, cv.COLOR_BGR2RGB))
+    
+    def draw_point(point, color = 'r'):
+        points = np.array([(point[0]*np.sin(np.deg2rad(phi)) + point[1]*np.cos(np.deg2rad(phi)), np.deg2rad(phi)) for phi in range(180)])
+        points = np.array([p for p in points if np.abs(p[0]) < np.linalg.norm(np.array([600,400]))])
+        plt.plot(points[:, 1], points[:, 0], color)
+    
+    
+    # angles = regress_lines(lines, image.shape[1], image.shape[0], iterations=iterations)
+    fc = get_focal_points(np.deg2rad(70),np.deg2rad(-5))
+    draw_point(fc[0], color='r')
+    draw_point(fc[1], color='g')
+    draw_point(fc[2], color='b')
+
     plt.show()
-    angles = regress_lines(lines, image.shape[1], image.shape[0], iterations=iterations)
 
 if __name__ == "__main__":
     print(get_camera_angles('sc_rgb.png', iterations = 1000))
