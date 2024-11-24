@@ -1,22 +1,6 @@
 import cv2 as cv
 import numpy as np
 
-
-def _polarToLine(rho, theta):
-    """
-    Converts vector to line to two points, which are off screen."""
-    max_rho, min_rho, max_theta, min_theta = np.sqrt(600*600+400*400), -np.sqrt(600*600+400*400), np.pi, 0
-    if rho < min_rho or rho > max_rho or theta < min_theta or theta > max_theta:
-        return None, None
-    a = np.cos(theta)
-    b = np.sin(theta)
-    x0 = a * rho
-    y0 = b * rho
-    pt1 = (int(x0 + 1800*(-b)), int(y0 + 1800*(a)))
-    pt2 = (int(x0 - 1800*(-b)), int(y0 - 1800*(a)))
-    return pt1, pt2
-
-
 def toRange(v, min, max, newmin, newmax):
     if max == min:
         return (v-min)*(newmax-newmin) + newmin
@@ -74,7 +58,7 @@ def get_focal_points(phi, theta):
     
     return [np.array([300 * p[0] + 300,  200 * p[1] + 200]) for p in sc_points]
 
-def draw_vanishing_waves(file, iterations = 500):
+def draw_vanishing_waves(file, phi, theta):
     # Load the image
     image = cv.imread(file, cv.IMREAD_COLOR)
     # Flip the image along the x and y axis
@@ -90,7 +74,7 @@ def draw_vanishing_waves(file, iterations = 500):
     lines = cv.HoughLines(canny, 1, np.pi / 180, 50, None, 0, 0)
     import matplotlib.pyplot as plt
     lines = np.array(lines)
-    print(lines)
+    
     plt.scatter(lines[:,0,1], lines[:,0,0])
     plt.xlabel("phi")
     plt.ylabel("rho")
@@ -103,9 +87,7 @@ def draw_vanishing_waves(file, iterations = 500):
         points = np.array([p for p in points if np.abs(p[0]) < np.linalg.norm(np.array([600,400]))])
         plt.plot(points[:, 1], points[:, 0], color)
     
-    
-    # angles = regress_lines(lines, image.shape[1], image.shape[0], iterations=iterations)
-    fc = get_focal_points(np.deg2rad(70),np.deg2rad(-5))
+    fc = get_focal_points(phi, theta)
     draw_point(fc[0], color='r')
     draw_point(fc[1], color='g')
     draw_point(fc[2], color='b')
@@ -113,5 +95,5 @@ def draw_vanishing_waves(file, iterations = 500):
     plt.show()
 
 if __name__ == "__main__":
-    print(get_camera_angles('sc_rgb.png', iterations = 1000))
-    draw_vanishing_waves('sc_rgb.png', iterations = 1000)
+    print(get_camera_angles('sc_rgb.png', iterations = 100))
+    draw_vanishing_waves('sc_rgb.png', 0.9277301344864572, 2.009863182359205)
