@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+from opencv import lsd
 
 def toRange(v, min, max, newmin, newmax):
     if max == min:
@@ -7,7 +8,7 @@ def toRange(v, min, max, newmin, newmax):
     return (v - min)*(newmax - newmin)/(max-min)+newmin
 
 def regress_lines(lines, screen_width, screen_height, iterations = 500):
-    lines = lines[:,0,:]
+
     def min_loss(points, lines):
         """
         Assumes lines are list of [rho, phi] where rho is offset and phi is radian angle
@@ -35,20 +36,31 @@ def regress_lines(lines, screen_width, screen_height, iterations = 500):
     print(" The loss is ", best_loss)
     return best_phi_theta
 
-def get_camera_angles(file, iterations = 500):
-    # Load the image
-    image = cv.imread(file, cv.IMREAD_COLOR)
-    # Flip the image along the x and y axis
-    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+def get_camera_angles(file, iterations = 500, method = 'hough'):
+    if method == 'hough':
+        # Load the image
+        image = cv.imread(file, cv.IMREAD_COLOR)
+        # Flip the image along the x and y axis
+        gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
-    def get_edges_image(image, blur = (5, 5),thresh1 = 5, thresh2 = 10):
-        blurred = cv.GaussianBlur(image, blur, 0)
-        return cv.Canny(blurred, thresh1, thresh2)
+        def get_edges_image(image, blur = (5, 5),thresh1 = 5, thresh2 = 10):
+            blurred = cv.GaussianBlur(image, blur, 0)
+            return cv.Canny(blurred, thresh1, thresh2)
+        
+        canny = get_edges_image(gray)
+
+        #image = cv.merge([get_edges_image(blue_channel),get_edges_image(red_channel),get_edges_image(green_channel)])
+        lines = cv.HoughLines(canny, 1, np.pi / 180, 50, None, 0, 0)
+        lines = lines[:,0,:]
+    elif method == "lsd":
+        
+        image = cv.imread(file, cv.IMREAD_COLOR)
+        lines = lsd(image)
+
+        lines = [((a[1]*b[0]-b[1]*a[0])/np.linalg.norm(b-a), np.arctan2(b[1] - a[1], b[0] - a[0])) for a, b in lines]
+    else:
+        return None
     
-    canny = get_edges_image(gray)
-
-    #image = cv.merge([get_edges_image(blue_channel),get_edges_image(red_channel),get_edges_image(green_channel)])
-    lines = cv.HoughLines(canny, 1, np.pi / 180, 50, None, 0, 0)
     return regress_lines(lines, image.shape[1], image.shape[0], iterations=iterations)
 
 def get_focal_points(phi, theta):
@@ -95,5 +107,5 @@ def draw_vanishing_waves(file, phi, theta):
     plt.show()
 
 if __name__ == "__main__":
-    print(get_camera_angles('sc_rgb.png', iterations = 100))
-    draw_vanishing_waves('sc_rgb.png', 0.9277301344864572, 2.009863182359205)
+    print(get_camera_angles('sc_pres.png', iterations = 10000, method="lsd"))
+    draw_vanishing_waves('sc_pres.png', 1.180006360236513, 0.6108517412492303)
