@@ -56,8 +56,8 @@ def get_camera_angles(file, iterations = 500, method = 'hough'):
         
         image = cv.imread(file, cv.IMREAD_COLOR)
         lines = lsd(image)
-
-        lines = [((a[1]*b[0]-b[1]*a[0])/np.linalg.norm(b-a), np.arctan2(b[1] - a[1], b[0] - a[0])) for a, b in lines]
+        lines = [(np.sign(np.arctan2(b[0] - a[0], b[1] - a[1]))*(a[1]*b[0]-b[1]*a[0])/np.linalg.norm(b-a), np.fmod(-np.arctan2(b[0] - a[0], b[1] - a[1]) + np.pi,np.pi)) for a, b in lines if np.linalg.norm(b-a) > 10]
+        lines = np.array(lines)
     else:
         return None
     
@@ -69,6 +69,32 @@ def get_focal_points(phi, theta):
             (np.tan(theta)/np.sin(phi),     1/np.tan(phi))]
     
     return [np.array([300 * p[0] + 300,  200 * p[1] + 200]) for p in sc_points]
+
+def show_points_on_image(image, points, lines):
+    
+    for rho, phi in lines:
+        a = np.cos(phi)
+        b = np.sin(phi)
+        x0 = a * rho
+        y0 = b * rho
+        x1 = int(x0 + 1000 * (-b))
+        y1 = int(y0 + 1000 * (a))
+        x2 = int(x0 - 1000 * (-b))
+        y2 = int(y0 - 1000 * (a))
+        cv.line(image, (x1, y1), (x2, y2), (0, 0, 55), 2)
+
+    boundary = 300
+    image = cv.copyMakeBorder(image, boundary, boundary, boundary, boundary, cv.BORDER_CONSTANT, value=(255, 0, 0))
+    cv.circle(image, (int(points[0][0])  + boundary, int(points[0][1])  + boundary), 10, (0, 0, 255), -1)
+    cv.circle(image, (int(points[1][0])  + boundary, int(points[1][1])  + boundary), 10, (0, 255, 0), -1)
+    cv.circle(image, (int(points[2][0])  + boundary, int(points[2][1])  + boundary), 10, (255, 0, 0), -1)
+
+    scale_percent = 65  # percent of original size
+    width = int(image.shape[1] * scale_percent / 100)
+    height = int(image.shape[0] * scale_percent / 100)
+    dim = (width, height)
+    image = cv.resize(image, dim, interpolation=cv.INTER_AREA)
+    cv.imshow('Hough Lines', image)
 
 def draw_vanishing_waves(file, phi, theta):
     # Load the image
@@ -86,7 +112,12 @@ def draw_vanishing_waves(file, phi, theta):
     lines = cv.HoughLines(canny, 1, np.pi / 180, 50, None, 0, 0)
     import matplotlib.pyplot as plt
     lines = np.array(lines)
-    
+
+    lines2 = lsd(image)
+    lines2 = [(np.sign(np.arctan2(b[0] - a[0], b[1] - a[1]))*(a[1]*b[0]-b[1]*a[0])/np.linalg.norm(b-a), np.fmod(-np.arctan2(b[0] - a[0], b[1] - a[1]) + np.pi,np.pi)) for a, b in lines2 if np.linalg.norm(b-a) > 10]
+    lines2 = np.array(lines2)
+    plt.scatter(lines2[:,1], lines2[:,0], color='r')
+
     plt.scatter(lines[:,0,1], lines[:,0,0])
     plt.xlabel("phi")
     plt.ylabel("rho")
@@ -104,8 +135,10 @@ def draw_vanishing_waves(file, phi, theta):
     draw_point(fc[1], color='g')
     draw_point(fc[2], color='b')
 
+    show_points_on_image(image, fc, lines2)
+
     plt.show()
 
 if __name__ == "__main__":
-    print(get_camera_angles('sc_pres.png', iterations = 10000, method="lsd"))
+    print(get_camera_angles('sc_pres.png', iterations = 1000, method="lsd"))
     draw_vanishing_waves('sc_pres.png', 1.180006360236513, 0.6108517412492303)
