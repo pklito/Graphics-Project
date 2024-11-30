@@ -66,12 +66,18 @@ def get_camera_angles(file, iterations = 500, method = 'hough'):
 def get_focal_points(phi, theta):
     sc_points = [(1/(np.tan(theta)*np.sin(phi)), 1/np.tan(phi)),
             (0,        - np.tan(phi)),
-            (np.tan(theta)/np.sin(phi),     1/np.tan(phi))]
+            (-np.tan(theta)/np.sin(phi),     1/np.tan(phi))]
     
-    return [np.array([300 * p[0] + 300,  200 * p[1] + 200]) for p in sc_points]
+    return [np.array([200 * p[0] + 300,  200 * p[1] + 200]) for p in sc_points]
 
 def show_points_on_image(image, points, lines):
+    print("focal points: ", points)
     
+    boundary = 350
+    def convert_coords(point):
+        return (int(point[0] + boundary), int(point[1] + boundary))
+    
+    image = cv.copyMakeBorder(image, boundary, boundary, boundary, boundary, cv.BORDER_CONSTANT, value=(255, 0, 0))
     for rho, phi in lines:
         a = np.cos(phi)
         b = np.sin(phi)
@@ -81,15 +87,13 @@ def show_points_on_image(image, points, lines):
         y1 = int(y0 + 1000 * (a))
         x2 = int(x0 - 1000 * (-b))
         y2 = int(y0 - 1000 * (a))
-        cv.line(image, (x1, y1), (x2, y2), (0, 0, 55), 2)
+        cv.line(image, convert_coords((x1, y1)), convert_coords((x2, y2)), (0, 0, 55), 2)
 
-    boundary = 300
-    image = cv.copyMakeBorder(image, boundary, boundary, boundary, boundary, cv.BORDER_CONSTANT, value=(255, 0, 0))
-    cv.circle(image, (int(points[0][0])  + boundary, int(points[0][1])  + boundary), 10, (0, 0, 255), -1)
-    cv.circle(image, (int(points[1][0])  + boundary, int(points[1][1])  + boundary), 10, (0, 255, 0), -1)
-    cv.circle(image, (int(points[2][0])  + boundary, int(points[2][1])  + boundary), 10, (255, 0, 0), -1)
+    cv.circle(image, convert_coords(points[0]), 10, (0, 0, 255), -1)
+    cv.circle(image, convert_coords(points[1]), 10, (0, 255, 0), -1)
+    cv.circle(image, convert_coords(points[2]), 10, (200, 0, 0), -1)
 
-    scale_percent = 65  # percent of original size
+    scale_percent = 80  # percent of original size
     width = int(image.shape[1] * scale_percent / 100)
     height = int(image.shape[0] * scale_percent / 100)
     dim = (width, height)
@@ -128,6 +132,8 @@ def draw_vanishing_waves(file, phi, theta):
     def draw_point(point, color = 'r'):
         points = np.array([(point[0]*np.sin(np.deg2rad(phi)) + point[1]*np.cos(np.deg2rad(phi)), np.deg2rad(phi)) for phi in range(180)])
         points = np.array([p for p in points if np.abs(p[0]) < np.linalg.norm(np.array([600,400]))])
+        if len(points) == 0:
+            return
         plt.plot(points[:, 1], points[:, 0], color)
     
     fc = get_focal_points(phi, theta)
@@ -136,9 +142,11 @@ def draw_vanishing_waves(file, phi, theta):
     draw_point(fc[2], color='b')
 
     show_points_on_image(image, fc, lines2)
-
+    cv.waitKey(0)
     plt.show()
 
 if __name__ == "__main__":
-    print(get_camera_angles('sc_pres.png', iterations = 1000, method="lsd"))
-    draw_vanishing_waves('sc_pres.png', 1.180006360236513, 0.6108517412492303)
+    #print(get_camera_angles('sc_pres_angles.png', iterations = 10000, method="lsd"))
+    draw_vanishing_waves('sc_scarce.png', -0.932610459142018, 0.7743767313761)
+    print("actual:", np.rad2deg(-0.932610459142018), np.rad2deg(0.7743767313761))
+    print("main", np.rad2deg(0.5326743767313761), np.rad2deg(-0.21432610459142018 ))
