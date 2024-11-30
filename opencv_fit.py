@@ -15,7 +15,7 @@ def regress_lines(lines, screen_width, screen_height, iterations = 500):
         Assumes that the points are actually inverted? like (y, x) instead of (x, y)
         opencv is stupid
         """
-        return sum([min([pow(point[1]*np.sin((phi)) + point[0]*np.cos((phi)) - rho,2) for point in points]) for rho, phi in lines]) / len(lines)
+        return sum([min([pow(point[0]*np.sin((phi)) + point[1]*np.cos((phi)) - rho,2) for point in points]) for rho, phi in lines]) / len(lines)
         
     def sum_loss(phi, theta, lines):
         return min_loss(
@@ -121,8 +121,8 @@ def draw_vanishing_waves(file, phi, theta):
     lines2 = [(np.sign(np.arctan2(b[0] - a[0], b[1] - a[1]))*(a[1]*b[0]-b[1]*a[0])/np.linalg.norm(b-a), np.fmod(-np.arctan2(b[0] - a[0], b[1] - a[1]) + np.pi,np.pi)) for a, b in lines2 if np.linalg.norm(b-a) > 10]
     lines2 = np.array(lines2)
     plt.scatter(lines2[:,1], lines2[:,0], color='r')
-
-    plt.scatter(lines[:,0,1], lines[:,0,0])
+    
+    #plt.scatter(lines[:,0,1], lines[:,0,0])
     plt.xlabel("phi")
     plt.ylabel("rho")
     plt.title("Hough lines in polar coordinates (rho phi)")
@@ -130,7 +130,7 @@ def draw_vanishing_waves(file, phi, theta):
     # plt.imshow(cv.cvtColor(image, cv.COLOR_BGR2RGB))
     
     def draw_point(point, color = 'r'):
-        points = np.array([(point[0]*np.sin(np.deg2rad(phi)) + point[1]*np.cos(np.deg2rad(phi)), np.deg2rad(phi)) for phi in range(180)])
+        points = np.array([(point[1]*np.sin(np.deg2rad(phi)) + point[0]*np.cos(np.deg2rad(phi)), np.deg2rad(phi)) for phi in range(180)])
         points = np.array([p for p in points if np.abs(p[0]) < np.linalg.norm(np.array([600,400]))])
         if len(points) == 0:
             return
@@ -142,7 +142,7 @@ def draw_vanishing_waves(file, phi, theta):
     draw_point(fc[2], color='b')
 
     show_points_on_image(image, fc, lines2)
-    cv.waitKey(0)
+    #cv.waitKey(0)
     plt.show()
 
 if __name__ == "__main__":
