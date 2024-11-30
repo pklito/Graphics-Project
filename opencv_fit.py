@@ -7,28 +7,24 @@ def toRange(v, min, max, newmin, newmax):
         return (v-min)*(newmax-newmin) + newmin
     return (v - min)*(newmax - newmin)/(max-min)+newmin
 
-def regress_lines(lines, screen_width, screen_height, iterations = 500):
+def min_loss(points, lines):
+    """
+    Assumes lines are list of [rho, phi] where rho is offset and phi is radian angle
+    Assumes that the points are actually inverted? like (y, x) instead of (x, y)
+    opencv is stupid
+    """
+    return sum([min([pow(point[1]*np.sin((phi)) + point[0]*np.cos((phi)) - rho,2) for point in points]) for rho, phi in lines]) / len(lines)
+    
+def sum_loss(phi, theta, lines):
+    return min_loss(get_focal_points(phi, theta), lines)
 
-    def min_loss(points, lines):
-        """
-        Assumes lines are list of [rho, phi] where rho is offset and phi is radian angle
-        Assumes that the points are actually inverted? like (y, x) instead of (x, y)
-        opencv is stupid
-        """
-        return sum([min([pow(point[0]*np.sin((phi)) + point[1]*np.cos((phi)) - rho,2) for point in points]) for rho, phi in lines]) / len(lines)
-        
-    def sum_loss(phi, theta, lines):
-        return min_loss(
-            [(toRange(np.cos(phi)*np.tan(theta),-1,1,0,screen_width), toRange(-np.tan(phi),-1,1,0,screen_height)),
-            (toRange(0,-1,1,0,screen_width), toRange(np.cos(phi),-1,1,0,screen_height)), 
-            (toRange(-np.cos(phi)/np.tan(theta),-1,1,0,screen_width), toRange(-np.tan(phi),-1,1,0,screen_height))]
-            , lines)
+def regress_lines(lines, screen_width, screen_height, iterations = 500):
 
     best_loss = 100000
     best_phi_theta = (0, 0)
     for i in range(0,iterations):
         phi = np.random.rand()*np.pi
-        theta = 2*np.random.rand()*np.pi - np.pi
+        theta = np.random.rand()*np.pi/2
         if sum_loss(phi, theta, lines) < best_loss:
             best_loss = sum_loss(phi, theta, lines)
             best_phi_theta = (phi, theta)
@@ -121,8 +117,10 @@ def draw_vanishing_waves(file, phi, theta):
     lines2 = [(np.sign(np.arctan2(b[0] - a[0], b[1] - a[1]))*(a[1]*b[0]-b[1]*a[0])/np.linalg.norm(b-a), np.fmod(-np.arctan2(b[0] - a[0], b[1] - a[1]) + np.pi,np.pi)) for a, b in lines2 if np.linalg.norm(b-a) > 10]
     lines2 = np.array(lines2)
     plt.scatter(lines2[:,1], lines2[:,0], color='r')
+
+    print("drawing loss:", sum_loss(phi, theta, lines2))
     
-    #plt.scatter(lines[:,0,1], lines[:,0,0])
+    plt.scatter(lines[:,0,1], lines[:,0,0])
     plt.xlabel("phi")
     plt.ylabel("rho")
     plt.title("Hough lines in polar coordinates (rho phi)")
@@ -146,7 +144,7 @@ def draw_vanishing_waves(file, phi, theta):
     plt.show()
 
 if __name__ == "__main__":
-    #print(get_camera_angles('sc_pres_angles.png', iterations = 10000, method="lsd"))
-    draw_vanishing_waves('sc_scarce.png', -0.932610459142018, 0.7743767313761)
-    print("actual:", np.rad2deg(-0.932610459142018), np.rad2deg(0.7743767313761))
-    print("main", np.rad2deg(0.5326743767313761), np.rad2deg(-0.21432610459142018 ))
+    file = 'sc_scarce.png'
+    loss = get_camera_angles(file, iterations = 10000, method="lsd")
+    print(loss)
+    draw_vanishing_waves(file, *loss)

@@ -8,6 +8,6 @@ input = [i.split("][") for i in input]
 input = [[float(j.strip().replace('[', '').replace(']', '')) for j in i] for i in input]
 actual_cam_matrix = np.array(input)
 cam_theta = np.arcsin(actual_cam_matrix[0][0])
-cam_phi = np.arccos(actual_cam_matrix[1][1])
+cam_phi = np.arccos(actual_cam_matrix[2][1])
 
-print(cam_phi, cam_theta)
+print(np.rad2deg(cam_phi), np.rad2deg(cam_theta))
