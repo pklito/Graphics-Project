@@ -132,7 +132,7 @@ def show_points_on_image(image, points, lines):
     cv.imshow('Hough Lines', image)
 
 
-def draw_vanishing_points_plots(lines, phi, theta):    
+def draw_vanishing_points_plots(lines, phi, theta, show = True):    
     plt.scatter(lines[:,1], lines[:,0])
     plt.xlabel("phi")
     plt.ylabel("rho")
@@ -149,7 +149,8 @@ def draw_vanishing_points_plots(lines, phi, theta):
     draw_point(fc[0], color='r')
     draw_point(fc[1], color='g')
     draw_point(fc[2], color='b')
-    plt.show()
+    if show:
+        plt.show()
 
 def draw_vanishing_waves(file, phi, theta):
     # Load the image

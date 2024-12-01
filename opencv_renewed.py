@@ -32,11 +32,9 @@ def classifyEdges(edges, threshold_multiplier = 1.2):
     return x_edges, y_edges, z_edges
 
 def smoothEdges(x_edges,y_edges,z_edges):
-    print(len(x_edges), len(y_edges), len(z_edges))
     x_edges = combineParallelLines(x_edges)
     y_edges = combineParallelLines(y_edges)
     z_edges = combineParallelLines(z_edges)
-    print(len(x_edges), len(y_edges), len(z_edges))
     return x_edges, y_edges, z_edges
 
 def drawFocalPointsPipeline(image, edges):
@@ -51,9 +49,9 @@ def drawFocalPointsPipeline(image, edges):
     cv.imshow("Focal points", image)
 
     # # # MatPlotLib sine wave drawing # # #
-    # phi_theta, loss = regress_lines(edges_to_polar_lines(edges), iterations=1000, refinement_iterations=500, refinement_area=np.deg2rad(15))
-    # phi, theta = phi_theta
-    # draw_vanishing_points_plots(edges_to_polar_lines(edges), phi, theta)
+    phi_theta, loss = regress_lines(edges_to_polar_lines(edges), iterations=1000, refinement_iterations=500, refinement_area=np.deg2rad(15))
+    phi, theta = phi_theta
+    draw_vanishing_points_plots(edges_to_polar_lines(edges), phi, theta, show=False)
 
     image = original_image.copy()
     # # # Connected graph drawing # # #
@@ -63,6 +61,7 @@ def drawFocalPointsPipeline(image, edges):
     drawEdges(image, z_edges, (100, 0, 0),2)
 
     cv.imshow("Connected Edges", image)
+    plt.show()
 
 
 
