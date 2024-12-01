@@ -340,11 +340,13 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
     cv.imshow("drawPipeline" + str(np.random.randint(0,99)), image)
 
 
-def drawLines(image, lines):
-    image = cv.addWeighted(image, 0.5, np.zeros(image.shape, image.dtype), 0.5, 0)
+def drawLines(image, lines, color = (255,255,255), dim_screen = 0.5, SHOW = True):
+    if dim_screen > 0:
+        image = cv.addWeighted(image, 1-dim_screen, np.zeros(image.shape, image.dtype), dim_screen, 0)
     for line in lines:
-        cv.line(image, np.array(line[0],dtype=np.uint32), np.array(line[1],dtype=np.uint32), (255,255,255), 1)
-    cv.imshow("lines", image)
+        cv.line(image, np.array(line[0],dtype=np.uint32), np.array(line[1],dtype=np.uint32), color, 2)
+    if SHOW:
+        cv.imshow("lines", image)
 
 def drawLinesColorful(image, lines, name = "lines"):
     image = cv.addWeighted(image, 0.5, np.zeros(image.shape, image.dtype), 0.5, 0)
@@ -396,7 +398,7 @@ if __name__ == "__main__":
     image = cv.imread(file)
     cv.imshow("base", image)
     drawGraphPipeline(image.copy(), lsd(image), True, False, False, True)
-    # drawLinesColorful(image,lsd(image), name = "lsd")
+    drawLinesColorful(image,lsd(image), name = "lsd")
     # drawLinesColorful(image,prob(image), name = "prob")
     # postProcessImage(image.copy())
 
