@@ -21,7 +21,7 @@ def min_loss(points, lines):
 def sum_loss(phi, theta, lines):
     return min_loss(get_focal_points(phi, theta), lines)
 
-def regress_lines(lines, screen_width, screen_height, iterations = 500):
+def regress_lines(lines, screen_width, screen_height, iterations = 500, refinement_iterations = 100, refinement_area=0.3):
 
     best_loss = 100000
     best_phi_theta = (0, 0)
@@ -32,6 +32,13 @@ def regress_lines(lines, screen_width, screen_height, iterations = 500):
             best_loss = sum_loss(phi, theta, lines)
             best_phi_theta = (phi, theta)
 
+    current_phi, current_theta = best_phi_theta
+    for i in range(0,refinement_iterations):
+        phi = np.random.rand()*refinement_area + current_phi - refinement_area/2
+        theta = np.random.rand()*refinement_area + current_theta - refinement_area/2
+        if sum_loss(phi, theta, lines) < best_loss:
+            best_loss = sum_loss(phi, theta, lines)
+            best_phi_theta = (phi, theta)
     print(" The loss is ", best_loss)
     return best_phi_theta
 
@@ -57,7 +64,7 @@ def which_color(line_type):
     else:
         return (100, 20, 20)
 
-def get_camera_angles(file, iterations = 500, method = 'hough'):
+def get_camera_angles(file, iterations = 1000, method = 'hough', refinement_iterations = 500):
     if method == 'hough':
         # Load the image
         image = cv.imread(file, cv.IMREAD_COLOR)
@@ -82,7 +89,7 @@ def get_camera_angles(file, iterations = 500, method = 'hough'):
     else:
         return None
     
-    return regress_lines(lines, image.shape[1], image.shape[0], iterations=iterations)
+    return regress_lines(lines, image.shape[1], image.shape[0], iterations=iterations, refinement_iterations=refinement_iterations)
 
 def get_focal_points(phi, theta):
     sc_points = [(1/(np.tan(theta)*np.sin(phi)), 1/np.tan(phi)),
