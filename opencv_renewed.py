@@ -8,7 +8,7 @@ from graph import *
 from util import *
 from opencv_points import matsToCubes, plot_cubes, alignTrans
 from opencv_fit_color import *
-from opencv import lsd, prob, drawGraphPipeline, drawLines
+from opencv import lsd, prob, drawGraphPipeline, drawEdges
 
 #
 # New pipeline
@@ -31,17 +31,39 @@ def classifyEdges(edges, threshold_multiplier = 1.2):
     
     return x_edges, y_edges, z_edges
 
+def smoothEdges(x_edges,y_edges,z_edges):
+    print(len(x_edges), len(y_edges), len(z_edges))
+    x_edges = combineParallelLines(x_edges)
+    y_edges = combineParallelLines(y_edges)
+    z_edges = combineParallelLines(z_edges)
+    print(len(x_edges), len(y_edges), len(z_edges))
+    return x_edges, y_edges, z_edges
+
 def drawFocalPointsPipeline(image, edges):
+    original_image = image.copy()
+    # # # Colored edges drawing # # #
     x_edges, y_edges, z_edges = classifyEdges(edges, 1.2)
     #image = cv.addWeighted(image, 0.5, np.zeros(image.shape, image.dtype), 0.5, 0)
-    drawLines(image, y_edges, (0, 100, 0), 0, False)
-    drawLines(image, z_edges, (100, 0, 0), 0, False)
-    drawLines(image, x_edges, (0, 0, 200), 0, False)
+    drawEdges(image, x_edges, (0, 0, 200),2)
+    drawEdges(image, y_edges, (0, 100, 0),2)
+    drawEdges(image, z_edges, (100, 0, 0),2)
 
-    phi_theta, loss = regress_lines(edges_to_polar_lines(edges), iterations=1000, refinement_iterations=500, refinement_area=np.deg2rad(15))
-    phi, theta = phi_theta
     cv.imshow("Focal points", image)
-    draw_vanishing_points_plots(edges_to_polar_lines(edges), phi, theta)
+
+    # # # MatPlotLib sine wave drawing # # #
+    # phi_theta, loss = regress_lines(edges_to_polar_lines(edges), iterations=1000, refinement_iterations=500, refinement_area=np.deg2rad(15))
+    # phi, theta = phi_theta
+    # draw_vanishing_points_plots(edges_to_polar_lines(edges), phi, theta)
+
+    image = original_image.copy()
+    # # # Connected graph drawing # # #
+    x_edges, y_edges, z_edges = smoothEdges(x_edges, y_edges, z_edges)
+    drawEdges(image, x_edges, (0, 0, 200),2)
+    drawEdges(image, y_edges, (0, 100, 0),2)
+    drawEdges(image, z_edges, (100, 0, 0),2)
+
+    cv.imshow("Connected Edges", image)
+
 
 
 if __name__ == "__main__":
