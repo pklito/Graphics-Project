@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 from opencv import lsd
+import matplotlib.pyplot as plt
 
 def toRange(v, min, max, newmin, newmax):
     if max == min:
@@ -21,7 +22,7 @@ def min_loss(points, lines):
 def sum_loss(phi, theta, lines):
     return min_loss(get_focal_points(phi, theta), lines)
 
-def regress_lines(lines, screen_width, screen_height, iterations = 500, refinement_iterations = 100, refinement_area=0.3):
+def regress_lines(lines, iterations = 500, refinement_iterations = 100, refinement_area=0.3):
 
     best_loss = 100000
     best_phi_theta = (0, 0)
@@ -40,7 +41,7 @@ def regress_lines(lines, screen_width, screen_height, iterations = 500, refineme
             best_loss = sum_loss(phi, theta, lines)
             best_phi_theta = (phi, theta)
     print(" The loss is ", best_loss)
-    return best_phi_theta
+    return best_phi_theta, best_loss
 
 def which_line(focal_points, line, threshold = 700):
     x_loss, y_loss, z_loss = loss_function(focal_points[0], *line), loss_function(focal_points[1], *line), loss_function(focal_points[2], *line)
@@ -89,7 +90,7 @@ def get_camera_angles(file, iterations = 1000, method = 'hough', refinement_iter
     else:
         return None
     
-    return regress_lines(lines, image.shape[1], image.shape[0], iterations=iterations, refinement_iterations=refinement_iterations)
+    return regress_lines(lines, iterations=iterations, refinement_iterations=refinement_iterations)[0]
 
 def get_focal_points(phi, theta):
     sc_points = [(1/(np.tan(theta)*np.sin(phi)), 1/np.tan(phi)),
@@ -130,6 +131,26 @@ def show_points_on_image(image, points, lines):
     image = cv.resize(image, dim, interpolation=cv.INTER_AREA)
     cv.imshow('Hough Lines', image)
 
+
+def draw_vanishing_points_plots(lines, phi, theta):    
+    plt.scatter(lines[:,1], lines[:,0])
+    plt.xlabel("phi")
+    plt.ylabel("rho")
+    plt.title("Hough lines in polar coordinates (rho phi)")
+    
+    def draw_point(point, color = 'r'):
+        points = np.array([(point[1]*np.sin(np.deg2rad(phi)) + point[0]*np.cos(np.deg2rad(phi)), np.deg2rad(phi)) for phi in range(180)])
+        points = np.array([p for p in points if np.abs(p[0]) < np.linalg.norm(np.array([600,400]))])
+        if len(points) == 0:
+            return
+        plt.plot(points[:, 1], points[:, 0], color)
+    
+    fc = get_focal_points(phi, theta)
+    draw_point(fc[0], color='r')
+    draw_point(fc[1], color='g')
+    draw_point(fc[2], color='b')
+    plt.show()
+
 def draw_vanishing_waves(file, phi, theta):
     # Load the image
     image = cv.imread(file, cv.IMREAD_COLOR)
@@ -144,8 +165,9 @@ def draw_vanishing_waves(file, phi, theta):
 
     #image = cv.merge([get_edges_image(blue_channel),get_edges_image(red_channel),get_edges_image(green_channel)])
     lines = cv.HoughLines(canny, 1, np.pi / 180, 50, None, 0, 0)
-    import matplotlib.pyplot as plt
+
     lines = np.array(lines)
+    lines = lines[:,0,:]
 
     lines2 = lsd(image)
     lines2 = [(np.sign(np.arctan2(b[0] - a[0], b[1] - a[1]))*(a[1]*b[0]-b[1]*a[0])/np.linalg.norm(b-a), np.fmod(-np.arctan2(b[0] - a[0], b[1] - a[1]) + np.pi,np.pi)) for a, b in lines2 if np.linalg.norm(b-a) > 10]
@@ -154,7 +176,7 @@ def draw_vanishing_waves(file, phi, theta):
 
     print("drawing loss:", sum_loss(phi, theta, lines2))
     
-    plt.scatter(lines[:,0,1], lines[:,0,0])
+    plt.scatter(lines[:,1], lines[:,0])
     plt.xlabel("phi")
     plt.ylabel("rho")
     plt.title("Hough lines in polar coordinates (rho phi)")
