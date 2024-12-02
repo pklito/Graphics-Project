@@ -114,10 +114,10 @@ def drawFocalPointsPipeline(image, edges):
     drawFaces(image, xfaces, (0, 0, 255))
     drawFaces(image, yfaces, (0, 255, 0))
     drawFaces(image, zfaces, (255, 0, 0))
-    
-    handleClassifiedFaces(original_image.copy(), phi, theta, x_edges, y_edges, z_edges)
-    drawEdgeNumbers(original_image.copy(), x_edges, y_edges, z_edges)
     cv.imshow("Connected Edges", image)
+    
+    handleClassifiedFaces(original_image.copy(), phi, theta, zfaces, 10000)
+    drawEdgeNumbers(original_image.copy(), x_edges, y_edges, z_edges)
     plt.show()
 
 def drawEdgeNumbers(image, x_edges, y_edges, z_edges ):
@@ -129,14 +129,21 @@ def drawEdgeNumbers(image, x_edges, y_edges, z_edges ):
         cv.putText(image, str(i), (int((edge[0][0] + edge[1][0])/2), int((edge[0][1] + edge[1][1])/2)), cv.FONT_HERSHEY_SIMPLEX, 0.5, (150, 0, 0), 1)
     cv.imshow("Edge numbers", image)
 
-def handleClassifiedFaces(image, phi, theta, x_edges, y_edges, z_edges):
-    lookat_matrix = getCameraTransformationMatrix(phi, theta)
+def handleClassifiedFaces(image, phi, theta, zfaces, LENGTH = 100000):
     camera_matrix = getIntrinsicsMatrix()
-
     focal_points = get_focal_points(phi, theta)
-    object_points = np.array([[10000,0,0],[0,10000,0],[0,0,10000]])
-    image_points = np.array(focal_points)
-    ret, rvec, tvec = cv.solveP3P(object_points, image_points, camera_matrix, None, flags=cv.SOLVEPNP_P3P)
+    length = LENGTH
+    object_points = np.array([[-length,0,0],[0,-length,0],[0,0,length], [0,0,0],[0,1,0],[1,1,0],[1,0,0]], dtype=np.float32)
+    for face in zfaces:
+        # Face needs to be clockwise!!
+        image_points = np.array(focal_points + face,dtype=np.float32)
+        ret, rvec, tvec = cv.solvePnP(object_points, image_points, camera_matrix, None)
+        tvec = np.array(tvec)
+        rvec = np.array(rvec)
+        cv.drawFrameAxes(image, camera_matrix, None, rvec, tvec, 1)
+
+
+    cv.imshow("3D", image)
     return None
 
 if __name__ == "__main__":
