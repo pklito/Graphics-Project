@@ -103,6 +103,13 @@ def get_focal_points(phi, theta):
     # Its (1/ASPECT_RATIO * width/2 * p[0] + width/2, height/2 * p[1] + height) so height is used in both multiplications
     return [np.array([HEIGHT/2 * p[0] + WIDTH/2,  HEIGHT/2 * p[1] + HEIGHT/2]) for p in sc_points]
 
+def get_focal_points_projection(phi, theta):
+    # estimated method, use get_focal_points(phi,theta) for the analytical, more accurate solution
+    # I used this function to debug my lookAt matrix and camera matrix
+    cam_mat = getCameraMatrix(phi, theta) # lookAt
+    proj_mat = getProjectionMatrix()      # camera intrinsics (the function names are bad im sorry)
+    return [proj_mat @ toEuclidian((cam_mat @ np.array([1000000,0,0,1]))), proj_mat @ toEuclidian((cam_mat @ np.array([0,1000000,0,1]))),proj_mat @ toEuclidian((cam_mat @ np.array([0,0,1000000,1])))]
+
 def show_points_on_image(image, points, lines, cam_phi, cam_theta):
     print("focal points: ", points)
     

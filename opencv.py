@@ -227,11 +227,7 @@ def pointToScreen(rvec,tvec, world_point, camera_matrix = None):
     rvec = np.array(rvec)
     world_point = np.array(world_point)
     if camera_matrix is None:
-        camera_matrix = np.array([
-            [WIDTH/2, 0, WIDTH/2],
-            [0, WIDTH/2, HEIGHT/2],
-            [0, 0, 1]
-        ])
+        camera_matrix = getProjectionMatrix()
     rotation_matrix, _ = cv.Rodrigues(rvec)
     return _pointToScreen(rotation_matrix, tvec, world_point, camera_matrix)
 
@@ -244,13 +240,8 @@ def handleFaces(faces):
 
 
     # Define the camera matrix for a perspective camera with resolution 600x400 and FOV of 90 degrees
-    focal_length_x = WIDTH / 2
-    focal_length_y = WIDTH / 2
-    camera_matrix = np.array([
-        [focal_length_x, 0, WIDTH/2],
-        [0, focal_length_y, HEIGHT/2],
-        [0, 0, 1]
-    ])
+
+    camera_matrix = getProjectionMatrix()
 
     
     trans = []
@@ -309,11 +300,7 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
 
     print(trans)
 
-    camera_matrix = np.array([
-            [WIDTH/2, 0, WIDTH/2],
-            [0, WIDTH/2, HEIGHT/2],
-            [0, 0, 1]
-        ])
+    camera_matrix = getProjectionMatrix()
 
     if doGraph:
         graph.draw_graph(image, edge_width=1,vertex_size=3)
