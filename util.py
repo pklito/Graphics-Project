@@ -171,7 +171,7 @@ def pointInConvexPolygon(point, polygon):
 def faceCircumference(face):
     return sum(np.linalg.norm(np.array(face[i])-face[i+1]) for i in range(-1,len(face) - 1))
 
-def toEuclidian(vec4):
+def vec3ToEuclidian(vec4):
     return np.array(vec4[0:3])/vec4[2]
 
 def getIntrinsicsMatrix(focal_length=1, width = WIDTH, height = HEIGHT):

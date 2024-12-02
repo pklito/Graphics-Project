@@ -108,7 +108,7 @@ def get_focal_points_projection(phi, theta):
     # I used this function to debug my lookAt matrix and camera matrix
     lookat_matrix = getCameraTransformationMatrix(phi, theta) # lookAt
     camera_matrix = getIntrinsicsMatrix()      # camera intrinsics (the function names are bad im sorry)
-    return [camera_matrix @ toEuclidian((lookat_matrix @ np.array([1000000,0,0,1]))), camera_matrix @ toEuclidian((lookat_matrix @ np.array([0,1000000,0,1]))),camera_matrix @ toEuclidian((lookat_matrix @ np.array([0,0,1000000,1])))]
+    return [camera_matrix @ vec3ToEuclidian((lookat_matrix @ np.array([1000000,0,0,1]))), camera_matrix @ vec3ToEuclidian((lookat_matrix @ np.array([0,1000000,0,1]))),camera_matrix @ vec3ToEuclidian((lookat_matrix @ np.array([0,0,1000000,1])))]
 
 def show_points_on_image(image, points, lines, cam_phi, cam_theta):
     print("focal points: ", points)
@@ -139,7 +139,7 @@ def show_points_on_image(image, points, lines, cam_phi, cam_theta):
     camera_matrix = getIntrinsicsMatrix()
     focal_points = get_focal_points(cam_phi, cam_theta)
 
-    projected_focal_points = [camera_matrix @ toEuclidian((lookat_matrix @ np.array([1000000,0,0,1]))), camera_matrix @ toEuclidian((lookat_matrix @ np.array([0,1000000,0,1]))),camera_matrix @ toEuclidian((lookat_matrix @ np.array([0,0,1000000,1])))]
+    projected_focal_points = [camera_matrix @ vec3ToEuclidian((lookat_matrix @ np.array([1000000,0,0,1]))), camera_matrix @ vec3ToEuclidian((lookat_matrix @ np.array([0,1000000,0,1]))),camera_matrix @ vec3ToEuclidian((lookat_matrix @ np.array([0,0,1000000,1])))]
     projected_focal_points = [[int(p[0]), int(p[1])] for p in projected_focal_points]
     focal_points = [[int(p[0]), int(p[1])] for p in focal_points] 
     
