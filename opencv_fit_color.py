@@ -106,9 +106,9 @@ def get_focal_points(phi, theta):
 def get_focal_points_projection(phi, theta):
     # estimated method, use get_focal_points(phi,theta) for the analytical, more accurate solution
     # I used this function to debug my lookAt matrix and camera matrix
-    cam_mat = getCameraMatrix(phi, theta) # lookAt
-    proj_mat = getProjectionMatrix()      # camera intrinsics (the function names are bad im sorry)
-    return [proj_mat @ toEuclidian((cam_mat @ np.array([1000000,0,0,1]))), proj_mat @ toEuclidian((cam_mat @ np.array([0,1000000,0,1]))),proj_mat @ toEuclidian((cam_mat @ np.array([0,0,1000000,1])))]
+    lookat_matrix = getCameraTransformationMatrix(phi, theta) # lookAt
+    camera_matrix = getIntrinsicsMatrix()      # camera intrinsics (the function names are bad im sorry)
+    return [camera_matrix @ toEuclidian((lookat_matrix @ np.array([1000000,0,0,1]))), camera_matrix @ toEuclidian((lookat_matrix @ np.array([0,1000000,0,1]))),camera_matrix @ toEuclidian((lookat_matrix @ np.array([0,0,1000000,1])))]
 
 def show_points_on_image(image, points, lines, cam_phi, cam_theta):
     print("focal points: ", points)
@@ -135,11 +135,11 @@ def show_points_on_image(image, points, lines, cam_phi, cam_theta):
     cv.circle(image, convert_coords(points[1]), 10, (0, 255, 0), -1)
     cv.circle(image, convert_coords(points[2]), 10, (200, 0, 0), -1)
 
-    cam_mat = getCameraMatrix(cam_phi, cam_theta)
-    proj_mat = getProjectionMatrix()
+    lookat_matrix = getCameraTransformationMatrix(cam_phi, cam_theta)
+    camera_matrix = getIntrinsicsMatrix()
     focal_points = get_focal_points(cam_phi, cam_theta)
 
-    projected_focal_points = [proj_mat @ toEuclidian((cam_mat @ np.array([1000000,0,0,1]))), proj_mat @ toEuclidian((cam_mat @ np.array([0,1000000,0,1]))),proj_mat @ toEuclidian((cam_mat @ np.array([0,0,1000000,1])))]
+    projected_focal_points = [camera_matrix @ toEuclidian((lookat_matrix @ np.array([1000000,0,0,1]))), camera_matrix @ toEuclidian((lookat_matrix @ np.array([0,1000000,0,1]))),camera_matrix @ toEuclidian((lookat_matrix @ np.array([0,0,1000000,1])))]
     projected_focal_points = [[int(p[0]), int(p[1])] for p in projected_focal_points]
     focal_points = [[int(p[0]), int(p[1])] for p in focal_points] 
     

@@ -174,7 +174,7 @@ def faceCircumference(face):
 def toEuclidian(vec4):
     return np.array(vec4[0:3])/vec4[2]
 
-def getProjectionMatrix(focal_length=1, width = WIDTH, height = HEIGHT):
+def getIntrinsicsMatrix(focal_length=1, width = WIDTH, height = HEIGHT):
     focal_length_x = HEIGHT / 2
     focal_length_y = HEIGHT / 2
     camera_matrix = np.array([
@@ -184,7 +184,7 @@ def getProjectionMatrix(focal_length=1, width = WIDTH, height = HEIGHT):
     ])
     return camera_matrix
 
-def getCameraMatrix(pitch, yaw):
+def getCameraTransformationMatrix(pitch, yaw):
     # pitch 0: looking straight up,
     # pitch pi/2: looking straight ahead
     pitch = np.pi/2-pitch

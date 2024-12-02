@@ -130,10 +130,13 @@ def drawEdgeNumbers(image, x_edges, y_edges, z_edges ):
     cv.imshow("Edge numbers", image)
 
 def handleClassifiedFaces(image, phi, theta, x_edges, y_edges, z_edges):
-    cam_mat = getCameraMatrix(phi, theta)
-    proj_mat = getProjectionMatrix()
+    lookat_matrix = getCameraTransformationMatrix(phi, theta)
+    camera_matrix = getIntrinsicsMatrix()
+
     focal_points = get_focal_points(phi, theta)
-    object_points = []
+    object_points = np.array([[10000,0,0],[0,10000,0],[0,0,10000]])
+    image_points = np.array(focal_points)
+    ret, rvec, tvec = cv.solveP3P(object_points, image_points, camera_matrix, None, flags=cv.SOLVEPNP_P3P)
     return None
 
 if __name__ == "__main__":
