@@ -37,12 +37,12 @@ def smoothEdges(x_edges,y_edges,z_edges):
     z_edges = combineParallelLines(z_edges)
     return x_edges, y_edges, z_edges
 
-def get_faces_from_pairs(edges1, edges2):
+def get_faces_from_pairs(edges1, edges2, threshold = 25):
     faces = []
-    for e1, e2 in list(itertools.combinations(edges1, 2)):
-        for e3, e4 in list(itertools.combinations(edges2, 2)):
-            if 
-            faces.append([e1, e2, e3, e4])         
+    for e1, e3 in list(itertools.combinations(edges1, 2)):
+        for e2, e4 in list(itertools.combinations(edges2, 2)):
+            if segmentDistance(*e1, *e2) < threshold and segmentDistance(*e2, *e3) < threshold and segmentDistance(*e3, *e4) < threshold and segmentDistance(*e4, *e1) < threshold:
+                faces.append([lineIntersection(*e1, *e2), lineIntersection(*e2, *e3), lineIntersection(*e3, *e4), lineIntersection(*e4, *e1)])         
     return faces
 
 def drawFocalPointsPipeline(image, edges):
@@ -68,15 +68,25 @@ def drawFocalPointsPipeline(image, edges):
     drawEdges(image, y_edges, (0, 255, 0),3)
     drawEdges(image, z_edges, (255, 0, 0),3)
 
+    faces=get_faces_from_pairs(x_edges, y_edges)
+    for face in faces:
+        cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (100,0,0))
+    faces = get_faces_from_pairs(x_edges, z_edges)
+    
+    for face in faces:
+        cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (0,100,0))
+    faces = get_faces_from_pairs(z_edges, y_edges)
+    for face in faces:
+        cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (0,0,100))
     cv.imshow("Connected Edges", image)
     plt.show()
 
 
 
 if __name__ == "__main__":
-    file = "sc_7x7_doctored.png"
+    file = "sc_pres.png"
     image = cv.imread(file)
-    drawFocalPointsPipeline(image, lsd(image,0,0.9))
+    drawFocalPointsPipeline(image, lsd(image))
 
     cv.waitKey(0)
     cv.destroyAllWindows()
