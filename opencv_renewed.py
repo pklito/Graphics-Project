@@ -104,15 +104,21 @@ def drawFocalPointsPipeline(image, edges):
 
     faces=get_faces_from_pairs(x_edges, y_edges)
     for face in faces:
-        cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), offset=(np.random.randint(-10,10),np.random.randint(-50,50)))
-    print(faces)
+        cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (100,0,0))
+    faces=get_faces_from_pairs(z_edges, x_edges)
+    for face in faces:
+        cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (0,100,0))
+    faces=get_faces_from_pairs(z_edges, y_edges)
+    for face in faces:
+        cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (0,0,100))
+    
     cv.imshow("Connected Edges", image)
     plt.show()
 
 
 
 if __name__ == "__main__":
-    file = "sc_pres.png"
+    file = "sc_7x7_doctored.png"
     image = cv.imread(file)
     drawFocalPointsPipeline(image, lsd(image))
 
