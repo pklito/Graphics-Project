@@ -39,11 +39,45 @@ def smoothEdges(x_edges,y_edges,z_edges):
 
 def get_faces_from_pairs(edges1, edges2, threshold = 25):
     faces = []
-    for e1, e3 in list(itertools.combinations(edges1, 2)):
-        for e2, e4 in list(itertools.combinations(edges2, 2)):
-            if segmentDistance(*e1, *e2) < threshold and segmentDistance(*e2, *e3) < threshold and segmentDistance(*e3, *e4) < threshold and segmentDistance(*e4, *e1) < threshold:
-                faces.append([lineIntersection(*e1, *e2), lineIntersection(*e2, *e3), lineIntersection(*e3, *e4), lineIntersection(*e4, *e1)])         
-    return faces
+    indices = []
+    for i in range(len(edges1)):
+        e1 = edges1[i]
+        for j in range(len(edges2)):
+            e2 = edges2[j]
+            if segmentDistance(e1, e2) > threshold:
+                continue
+            for k in range(i + 1, len(edges1)):
+                e3 = edges1[k]
+                if segmentDistance(e2, e3) > threshold:
+                    continue
+                for l in range(j + 1, len(edges2)):
+                    e4 = edges2[l]
+                    if segmentDistance(e3, e4) > threshold or segmentDistance(e4, e1) > threshold:
+                        continue
+
+                    # Eliminate duplicate faces:
+                    indices.append((i, j, k, l))
+                    faces.append([lineIntersection(*e1, *e2), lineIntersection(*e2, *e3), lineIntersection(*e3, *e4), lineIntersection(*e4, *e1)])         
+    new_faces = []
+    banned_faces = []
+    for a, edge_numbers, face in zip(range(len(faces)), indices, faces):
+        if edge_numbers in banned_faces:
+            continue
+        accepted = True
+        for b, edge_numbers2, face2 in list(zip(range(len(faces)), indices, faces))[a+1:]:
+            # Two faces share two edges.
+            if (edge_numbers[0], edge_numbers[2]) == (edge_numbers2[0], edge_numbers2[2]) or (edge_numbers[1], edge_numbers[3]) == (edge_numbers2[1], edge_numbers2[3]):
+                # They overlap (significantly)
+                if pointInConvexPolygon(sum([np.array(f) for f in face])/4, face2) or pointInConvexPolygon(sum([np.array(f) for f in face2])/4, face):
+                    
+                    if faceCircumference(face) > faceCircumference(face2):
+                        accepted = False
+                        break
+                    else:
+                        banned_faces.append(face2)
+        if accepted:
+            new_faces.append(face)
+    return new_faces
 
 def drawFocalPointsPipeline(image, edges):
     original_image = image.copy()
@@ -70,14 +104,8 @@ def drawFocalPointsPipeline(image, edges):
 
     faces=get_faces_from_pairs(x_edges, y_edges)
     for face in faces:
-        cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (100,0,0))
-    faces = get_faces_from_pairs(x_edges, z_edges)
-    
-    for face in faces:
-        cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (0,100,0))
-    faces = get_faces_from_pairs(z_edges, y_edges)
-    for face in faces:
-        cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (0,0,100))
+        cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)), offset=(np.random.randint(-10,10),np.random.randint(-50,50)))
+    print(faces)
     cv.imshow("Connected Edges", image)
     plt.show()
 

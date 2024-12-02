@@ -74,7 +74,9 @@ def pointSegmentDistance(point, a1, a2):
         return np.linalg.norm(np.array(point) - np.array(a2))
     return np.linalg.norm(np.array(a1 + u * (np.array(a2)-a1)) - point)
 
-def segmentDistance(a1, a2, b1, b2):
+def segmentDistance(segment1, segment2):
+    a1, a2 = segment1
+    b1, b2 = segment2
     intersection, t, u, a_len, b_len = _segmentIntersection(a1, a2, b1, b2)
     if intersection is not None:
         return 0
@@ -156,5 +158,20 @@ def combineParallelLines(lines, max_distance = 5, max_angle = 3):
         return combineParallelLines(new_lines)
     return new_lines
 
+
+def pointInConvexPolygon(point, polygon):
+    def get_side(p1, edge):
+        return (p1[0] - edge[0][0]) * (edge[1][1] - edge[0][1]) - (p1[1] - edge[0][1]) * (edge[1][0] - edge[0][0])
+    sign = get_side(point, [polygon[0], polygon[1]])
+    if sign == 0:
+        return True
+    return all(0 <= sign * get_side(point, [polygon[i], polygon[i+1]]) for i in range(1, len(polygon) - 1))
+
+def faceCircumference(face):
+    return sum(np.linalg.norm(np.array(face[i])-face[i+1]) for i in range(-1,len(face) - 1))
+
 if __name__ == "__main__":
-    print(segmentDistance((0,0), (1,1), (1,0), (0,4)))
+    p = [0.5, 0.5]
+    poly = [(0,0), (0,1), (1,1), (1,0)]
+    print(pointInConvexPolygon(p, poly))
+    print(faceCircumference(poly))
