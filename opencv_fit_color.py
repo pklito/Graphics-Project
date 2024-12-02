@@ -2,7 +2,8 @@ import cv2 as cv
 import numpy as np
 from opencv import lsd
 import matplotlib.pyplot as plt
-
+HEIGHT = 400
+WIDTH = 600
 def toRange(v, min, max, newmin, newmax):
     if max == min:
         return (v-min)*(newmax-newmin) + newmin
@@ -97,7 +98,8 @@ def get_focal_points(phi, theta):
             (0,        - np.tan(phi)),
             (-np.tan(theta)/np.sin(phi),     1/np.tan(phi))]
     
-    return [np.array([200 * p[0] + 300,  200 * p[1] + 200]) for p in sc_points]
+    # Its (1/ASPECT_RATIO * width/2 * p[0] + width/2, height/2 * p[1] + height) so height is used in both multiplications
+    return [np.array([HEIGHT/2 * p[0] + WIDTH/2,  HEIGHT/2 * p[1] + HEIGHT/2]) for p in sc_points]
 
 def show_points_on_image(image, points, lines):
     print("focal points: ", points)
@@ -140,7 +142,7 @@ def draw_vanishing_points_plots(lines, phi, theta, show = True):
     
     def draw_point(point, color = 'r'):
         points = np.array([(point[1]*np.sin(np.deg2rad(phi)) + point[0]*np.cos(np.deg2rad(phi)), np.deg2rad(phi)) for phi in range(180)])
-        points = np.array([p for p in points if np.abs(p[0]) < np.linalg.norm(np.array([600,400]))])
+        points = np.array([p for p in points if np.abs(p[0]) < np.linalg.norm(np.array([WIDTH,HEIGHT]))])
         if len(points) == 0:
             return
         plt.plot(points[:, 1], points[:, 0], color)
@@ -186,7 +188,7 @@ def draw_vanishing_waves(file, phi, theta):
     
     def draw_point(point, color = 'r'):
         points = np.array([(point[1]*np.sin(np.deg2rad(phi)) + point[0]*np.cos(np.deg2rad(phi)), np.deg2rad(phi)) for phi in range(180)])
-        points = np.array([p for p in points if np.abs(p[0]) < np.linalg.norm(np.array([600,400]))])
+        points = np.array([p for p in points if np.abs(p[0]) < np.linalg.norm(np.array([WIDTH,HEIGHT]))])
         if len(points) == 0:
             return
         plt.plot(points[:, 1], points[:, 0], color)

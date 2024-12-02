@@ -1,15 +1,16 @@
 import numpy as np
-
+WIDTH = 600
+HEIGHT = 400
 def toRange(v, min, max, newmin, newmax):
             if max == min:
                 return (v-min)*(newmax-newmin) + newmin
             return (v - min)*(newmax - newmin)/(max-min)+newmin
 
-def polarToLine(rho, theta):
+def polarToLine(rho, theta, width = WIDTH, height = HEIGHT):
     """
     Used for drawing polar lines on screen
     Converts vector to line to two points, which are off screen."""
-    max_rho, min_rho, max_theta, min_theta = np.sqrt(600*600+400*400), -np.sqrt(600*600+400*400), np.pi, 0
+    max_rho, min_rho, max_theta, min_theta = np.sqrt(width*width + height*height), -np.sqrt(width*width + height*height), np.pi, 0
     if rho < min_rho or rho > max_rho or theta < min_theta or theta > max_theta:
         return None, None
     a = np.cos(theta)

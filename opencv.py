@@ -13,6 +13,9 @@ from opencv_points import matsToCubes, plot_cubes, alignTrans
 #   Old post processing, hough lines, with constants.json
 #
 
+WIDTH = 600
+HEIGHT = 400
+
 def doCanny(image):
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
@@ -48,7 +51,7 @@ def drawHoughLines(overlay, lines, linewidth = 1):
 
 
 def drawHoughBuckets(overlay, lines):
-    max_rho, min_rho, max_theta, min_theta = np.sqrt(600*600+400*400), -np.sqrt(600*600+400*400), np.pi, 0
+    max_rho, min_rho, max_theta, min_theta = np.sqrt(WIDTH*WIDTH+HEIGHT*HEIGHT), -np.sqrt(WIDTH*WIDTH+HEIGHT*HEIGHT), np.pi, 0
     if lines is None:
         return
     
@@ -58,7 +61,7 @@ def drawHoughBuckets(overlay, lines):
         pt1, pt2 = polarToLine(rho, theta)
         if pt1 is None or pt2 is None:
             continue
-        cv.circle(overlay,(int(toRange(theta,min_theta,max_theta,0,600)), int(toRange(rho,min_rho,max_rho,0,400))), 2, (255,255,0,255))
+        cv.circle(overlay,(int(toRange(theta,min_theta,max_theta,0,WIDTH)), int(toRange(rho,min_rho,max_rho,0,HEIGHT))), 2, (255,255,0,255))
 
 
 fps = 0.0
@@ -225,8 +228,8 @@ def pointToScreen(rvec,tvec, world_point, camera_matrix = None):
     world_point = np.array(world_point)
     if camera_matrix is None:
         camera_matrix = np.array([
-            [300, 0, 300],
-            [0, 300, 200],
+            [WIDTH/2, 0, WIDTH/2],
+            [0, WIDTH/2, HEIGHT/2],
             [0, 0, 1]
         ])
     rotation_matrix, _ = cv.Rodrigues(rvec)
@@ -241,11 +244,11 @@ def handleFaces(faces):
 
 
     # Define the camera matrix for a perspective camera with resolution 600x400 and FOV of 90 degrees
-    focal_length_x = 600 / 2
-    focal_length_y = 600 / 2
+    focal_length_x = WIDTH / 2
+    focal_length_y = WIDTH / 2
     camera_matrix = np.array([
-        [focal_length_x, 0, 300],
-        [0, focal_length_y, 200],
+        [focal_length_x, 0, WIDTH/2],
+        [0, focal_length_y, HEIGHT/2],
         [0, 0, 1]
     ])
 
@@ -307,10 +310,10 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
     print(trans)
 
     camera_matrix = np.array([
-            [300, 0, 300],
-            [0, 300, 200],
+            [WIDTH/2, 0, WIDTH/2],
+            [0, WIDTH/2, HEIGHT/2],
             [0, 0, 1]
-        ], dtype=np.float32)
+        ])
 
     if doGraph:
         graph.draw_graph(image, edge_width=1,vertex_size=3)

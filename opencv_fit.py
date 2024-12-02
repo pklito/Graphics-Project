@@ -2,6 +2,9 @@ import cv2 as cv
 import numpy as np
 from opencv import lsd
 
+WIDTH = 600
+HEIGHT = 400
+
 def toRange(v, min, max, newmin, newmax):
     if max == min:
         return (v-min)*(newmax-newmin) + newmin
@@ -64,7 +67,7 @@ def get_focal_points(phi, theta):
             (0,        - np.tan(phi)),
             (-np.tan(theta)/np.sin(phi),     1/np.tan(phi))]
     
-    return [np.array([200 * p[0] + 300,  200 * p[1] + 200]) for p in sc_points]
+    return [np.array([HEIGHT/2 * p[0] + WIDTH/2,  HEIGHT/2 * p[1] + HEIGHT/2]) for p in sc_points]
 
 def show_points_on_image(image, points, lines):
     print("focal points: ", points)
