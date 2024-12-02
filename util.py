@@ -171,6 +171,32 @@ def pointInConvexPolygon(point, polygon):
 def faceCircumference(face):
     return sum(np.linalg.norm(np.array(face[i])-face[i+1]) for i in range(-1,len(face) - 1))
 
+def toEuclidian(vec4):
+    return np.array(vec4[0:3])/vec4[2]
+
+def getProjectionMatrix(focal_length=1, width = WIDTH, height = HEIGHT):
+    return np.array([[focal_length*width/2, 0, width/2],
+                     [0, focal_length*width/2, height/2],
+                     [0, 0, 1]])
+
+def getCameraMatrix(pitch, yaw):
+    # self.forward.x = glm.cos(yaw) * glm.cos(pitch)
+    #     self.forward.y = glm.sin(pitch)
+    #     self.forward.z = glm.sin(yaw) * glm.cos(pitch)
+
+    #     self.right.x = glm.cos(yaw + glm.pi() / 2)
+    #     self.right.y = 0
+    #     self.right.z = glm.sin(yaw + glm.pi() / 2)
+
+    #     self.up.x = -glm.cos(yaw) * glm.sin(pitch)
+    #     self.up.y = glm.cos(pitch)
+    #     self.up.z = -glm.sin(yaw) * glm.sin(pitch)
+    
+    matrix = np.array([[np.cos(yaw + np.pi / 2), 0, np.sin(yaw + np.pi / 2), 0],
+                       [-np.cos(yaw)*np.sin(pitch), np.cos(pitch), -np.sin(yaw)*np.sin(pitch), 0],
+                       [-np.cos(yaw)*np.cos(pitch), -np.sin(pitch), -np.sin(yaw)*np.cos(pitch), 0],
+                       [0, 0, 0, 1]])
+    return matrix
 if __name__ == "__main__":
     p = [0.5, 0.5]
     poly = [(0,0), (0,1), (1,1), (1,0)]

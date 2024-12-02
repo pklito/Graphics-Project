@@ -37,7 +37,7 @@ def smoothEdges(x_edges,y_edges,z_edges):
     z_edges = combineParallelLines(z_edges)
     return x_edges, y_edges, z_edges
 
-def get_faces_from_pairs(edges1, edges2, threshold = 25):
+def get_faces_from_pairs(edges1, edges2, threshold = 30):
     faces = []
     indices = []
     for i in range(len(edges1)):
@@ -108,17 +108,29 @@ def drawFocalPointsPipeline(image, edges):
     drawEdges(image, z_edges, (255, 0, 0),3)
 
     zfaces=get_faces_from_pairs(x_edges, y_edges)
-    yfaces=get_faces_from_pairs(z_edges, x_edges)
+    yfaces=get_faces_from_pairs(x_edges, z_edges)
     xfaces=get_faces_from_pairs(z_edges, y_edges)
     
     drawFaces(image, xfaces, (0, 0, 255))
     drawFaces(image, yfaces, (0, 255, 0))
     drawFaces(image, zfaces, (255, 0, 0))
     
+    handleClassifiedFaces(original_image.copy(), phi, theta, x_edges, y_edges, z_edges)
+
     cv.imshow("Connected Edges", image)
     plt.show()
 
+def handleClassifiedFaces(image, phi, theta, x_edges, y_edges, z_edges):
+    cam_mat = getCameraMatrix(phi, theta)
+    proj_mat = getProjectionMatrix(1, WIDTH, HEIGHT)
+    focal_points = get_focal_points(phi, theta)
 
+    projected_focal_points = [toEuclidian(proj_mat @ (cam_mat @ np.array([10000,0,0,1]))), toEuclidian(proj_mat @ (cam_mat @ np.array([0,10000,0,1]))),toEuclidian(proj_mat @ (cam_mat @ np.array([0,0,10000,1])))]
+    projected_focal_points = [[int(p[0]), int(p[1])] for p in projected_focal_points]
+    focal_points = [[int(p[0]), int(p[1])] for p in focal_points]   
+    print("focal points", focal_points)
+    print("projected focal points", projected_focal_points)
+    return None
 
 if __name__ == "__main__":
     file = "sc_pres.png"

@@ -2,6 +2,8 @@ import cv2 as cv
 import numpy as np
 from opencv import lsd
 import matplotlib.pyplot as plt
+from util import *
+
 HEIGHT = 400
 WIDTH = 600
 def toRange(v, min, max, newmin, newmax):
@@ -101,7 +103,7 @@ def get_focal_points(phi, theta):
     # Its (1/ASPECT_RATIO * width/2 * p[0] + width/2, height/2 * p[1] + height) so height is used in both multiplications
     return [np.array([HEIGHT/2 * p[0] + WIDTH/2,  HEIGHT/2 * p[1] + HEIGHT/2]) for p in sc_points]
 
-def show_points_on_image(image, points, lines):
+def show_points_on_image(image, points, lines, cam_phi, cam_theta):
     print("focal points: ", points)
     
     boundary = 350
@@ -126,11 +128,28 @@ def show_points_on_image(image, points, lines):
     cv.circle(image, convert_coords(points[1]), 10, (0, 255, 0), -1)
     cv.circle(image, convert_coords(points[2]), 10, (200, 0, 0), -1)
 
+    cam_mat = getCameraMatrix(cam_phi, cam_theta)
+    proj_mat = getProjectionMatrix(1, WIDTH, HEIGHT)
+    focal_points = get_focal_points(cam_phi, cam_theta)
+
+    projected_focal_points = [proj_mat @ toEuclidian((cam_mat @ np.array([100000,0,0,1]))), proj_mat @ toEuclidian((cam_mat @ np.array([0,100000,0,1]))),proj_mat @ toEuclidian((cam_mat @ np.array([0,0,100000,1])))]
+    projected_focal_points = [[int(p[0]), int(p[1])] for p in projected_focal_points]
+    focal_points = [[int(p[0]), int(p[1])] for p in focal_points] 
+    print("theta, phi", cam_theta, cam_phi)  
+    print("focal points", focal_points)
+    print("projected focal points", projected_focal_points)
+    print(convert_coords(projected_focal_points[1]))
+    cv.circle(image, convert_coords(projected_focal_points[0]), 15, (0, 0, 200), -1)
+    cv.circle(image, convert_coords(projected_focal_points[1]), 15, (0, 200, 0), -1)
+    cv.circle(image, convert_coords(projected_focal_points[2]), 15, (200, 0, 0), -1)
+
+
     scale_percent = 80  # percent of original size
     width = int(image.shape[1] * scale_percent / 100)
     height = int(image.shape[0] * scale_percent / 100)
     dim = (width, height)
     image = cv.resize(image, dim, interpolation=cv.INTER_AREA)
+
     cv.imshow('Hough Lines', image)
 
 
@@ -198,7 +217,7 @@ def draw_vanishing_waves(file, phi, theta):
     draw_point(fc[1], color='g')
     draw_point(fc[2], color='b')
 
-    show_points_on_image(image, fc, lines2)
+    show_points_on_image(image, fc, lines2, phi, theta)
     #cv.waitKey(0)
     plt.show()
 
