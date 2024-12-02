@@ -79,6 +79,11 @@ def get_faces_from_pairs(edges1, edges2, threshold = 25):
             new_faces.append(face)
     return new_faces
 
+def drawFaces(image, faces, color, shrink_factor = 0.75):
+    for face in faces:
+        center = sum(np.array(p) for p in face)/4
+        cv.fillPoly(image, [np.asarray([shrink_factor * np.array(p) + (1-shrink_factor) * center for p in face],dtype=np.int32)], color)
+
 def drawFocalPointsPipeline(image, edges):
     original_image = image.copy()
     # # # Colored edges drawing # # #
@@ -102,15 +107,13 @@ def drawFocalPointsPipeline(image, edges):
     drawEdges(image, y_edges, (0, 255, 0),3)
     drawEdges(image, z_edges, (255, 0, 0),3)
 
-    faces=get_faces_from_pairs(x_edges, y_edges)
-    for face in faces:
-        cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (100,0,0))
-    faces=get_faces_from_pairs(z_edges, x_edges)
-    for face in faces:
-        cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (0,100,0))
-    faces=get_faces_from_pairs(z_edges, y_edges)
-    for face in faces:
-        cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (0,0,100))
+    zfaces=get_faces_from_pairs(x_edges, y_edges)
+    yfaces=get_faces_from_pairs(z_edges, x_edges)
+    xfaces=get_faces_from_pairs(z_edges, y_edges)
+    
+    drawFaces(image, xfaces, (0, 0, 255))
+    drawFaces(image, yfaces, (0, 255, 0))
+    drawFaces(image, zfaces, (255, 0, 0))
     
     cv.imshow("Connected Edges", image)
     plt.show()
@@ -118,7 +121,7 @@ def drawFocalPointsPipeline(image, edges):
 
 
 if __name__ == "__main__":
-    file = "sc_7x7_doctored.png"
+    file = "sc_pres.png"
     image = cv.imread(file)
     drawFocalPointsPipeline(image, lsd(image))
 
