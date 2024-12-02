@@ -66,6 +66,20 @@ def lineIntersection(a1, a2, b1, b2):
     y = det(d, ydiff) / div
     return x, y
 
+def pointSegmentDistance(point, a1, a2):
+    u = ((point[0] - a1[0]) * (a2[0] - a1[0]) + (point[1] - a1[1]) * (a2[1] - a1[1])) / np.linalg.norm(np.array(a2) - a1)
+    if u < 0:
+        return np.linalg.norm(np.array(point) - np.array(a1))
+    if u > 1:
+        return np.linalg.norm(np.array(point) - np.array(a2))
+    return np.linalg.norm(np.array(a1 + u * (np.array(a2)-a1)) - point)
+
+def segmentDistance(a1, a2, b1, b2):
+    intersection, t, u, a_len, b_len = _segmentIntersection(a1, a2, b1, b2)
+    if intersection is not None:
+        return 0
+    return min(pointSegmentDistance(a1, b1, b2), pointSegmentDistance(a2, b1, b2), pointSegmentDistance(b1, a1, a2), pointSegmentDistance(b2, a1, a2))
+
 def _segmentIntersection(a1, a2, b1, b2, threshold = 0):
     top = (b2[0] - b1[0]) * (a1[1] - b1[1]) - (b2[1] - b1[1]) * (a1[0] - b1[0])
     utop = (a2[1] - a1[1]) * (b1[0] - a1[0]) - (a2[0] - a1[0]) * (b1[1] - a1[1])
@@ -78,9 +92,8 @@ def _segmentIntersection(a1, a2, b1, b2, threshold = 0):
     
     a_len = np.linalg.norm(np.array(a2) - a1)
     b_len = np.linalg.norm(np.array(b2) - b1)
-
-    if t < 0 - threshold / a_len or t > 1 + threshold / a_len or u < 0 - threshold / b_len or u > 1 + threshold / b_len:
-        return None, None, None, a_len, b_len
+    if threshold is not None and (t < 0 - threshold / a_len or t > 1 + threshold / a_len or u < 0 - threshold / b_len or u > 1 + threshold / b_len):
+        return None, t, u, a_len, b_len
     
     return a1 + t * (np.asarray(a2) - a1), t, u, a_len, b_len
 
@@ -142,3 +155,6 @@ def combineParallelLines(lines, max_distance = 5, max_angle = 3):
     if cancel:
         return combineParallelLines(new_lines)
     return new_lines
+
+if __name__ == "__main__":
+    print(segmentDistance((0,0), (1,1), (1,0), (0,4)))
