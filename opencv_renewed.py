@@ -116,20 +116,24 @@ def drawFocalPointsPipeline(image, edges):
     drawFaces(image, zfaces, (255, 0, 0))
     
     handleClassifiedFaces(original_image.copy(), phi, theta, x_edges, y_edges, z_edges)
-
+    drawEdgeNumbers(original_image.copy(), x_edges, y_edges, z_edges)
     cv.imshow("Connected Edges", image)
     plt.show()
 
+def drawEdgeNumbers(image, x_edges, y_edges, z_edges ):
+    for i, edge in enumerate(x_edges):
+        cv.putText(image, str(i), (int((edge[0][0] + edge[1][0])/2), int((edge[0][1] + edge[1][1])/2)), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 150), 1)
+    for i, edge in enumerate(y_edges):
+        cv.putText(image, str(i), (int((edge[0][0] + edge[1][0])/2), int((edge[0][1] + edge[1][1])/2)), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0, 150, 0), 1)
+    for i, edge in enumerate(z_edges):
+        cv.putText(image, str(i), (int((edge[0][0] + edge[1][0])/2), int((edge[0][1] + edge[1][1])/2)), cv.FONT_HERSHEY_SIMPLEX, 0.5, (150, 0, 0), 1)
+    cv.imshow("Edge numbers", image)
+
 def handleClassifiedFaces(image, phi, theta, x_edges, y_edges, z_edges):
     cam_mat = getCameraMatrix(phi, theta)
-    proj_mat = getProjectionMatrix(1, WIDTH, HEIGHT)
+    proj_mat = getProjectionMatrix()
     focal_points = get_focal_points(phi, theta)
-
-    projected_focal_points = [toEuclidian(proj_mat @ (cam_mat @ np.array([10000,0,0,1]))), toEuclidian(proj_mat @ (cam_mat @ np.array([0,10000,0,1]))),toEuclidian(proj_mat @ (cam_mat @ np.array([0,0,10000,1])))]
-    projected_focal_points = [[int(p[0]), int(p[1])] for p in projected_focal_points]
-    focal_points = [[int(p[0]), int(p[1])] for p in focal_points]   
-    print("focal points", focal_points)
-    print("projected focal points", projected_focal_points)
+    object_points = []
     return None
 
 if __name__ == "__main__":
