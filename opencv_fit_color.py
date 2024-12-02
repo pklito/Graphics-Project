@@ -129,16 +129,13 @@ def show_points_on_image(image, points, lines, cam_phi, cam_theta):
     cv.circle(image, convert_coords(points[2]), 10, (200, 0, 0), -1)
 
     cam_mat = getCameraMatrix(cam_phi, cam_theta)
-    proj_mat = getProjectionMatrix(1, WIDTH, HEIGHT)
+    proj_mat = getProjectionMatrix()
     focal_points = get_focal_points(cam_phi, cam_theta)
 
-    projected_focal_points = [proj_mat @ toEuclidian((cam_mat @ np.array([100000,0,0,1]))), proj_mat @ toEuclidian((cam_mat @ np.array([0,100000,0,1]))),proj_mat @ toEuclidian((cam_mat @ np.array([0,0,100000,1])))]
+    projected_focal_points = [proj_mat @ toEuclidian((cam_mat @ np.array([1000000,0,0,1]))), proj_mat @ toEuclidian((cam_mat @ np.array([0,1000000,0,1]))),proj_mat @ toEuclidian((cam_mat @ np.array([0,0,1000000,1])))]
     projected_focal_points = [[int(p[0]), int(p[1])] for p in projected_focal_points]
     focal_points = [[int(p[0]), int(p[1])] for p in focal_points] 
-    print("theta, phi", cam_theta, cam_phi)  
-    print("focal points", focal_points)
-    print("projected focal points", projected_focal_points)
-    print(convert_coords(projected_focal_points[1]))
+    
     cv.circle(image, convert_coords(projected_focal_points[0]), 15, (0, 0, 200), -1)
     cv.circle(image, convert_coords(projected_focal_points[1]), 15, (0, 200, 0), -1)
     cv.circle(image, convert_coords(projected_focal_points[2]), 15, (200, 0, 0), -1)

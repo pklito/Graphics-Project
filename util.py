@@ -175,24 +175,21 @@ def toEuclidian(vec4):
     return np.array(vec4[0:3])/vec4[2]
 
 def getProjectionMatrix(focal_length=1, width = WIDTH, height = HEIGHT):
-    return np.array([[focal_length*width/2, 0, width/2],
-                     [0, focal_length*width/2, height/2],
-                     [0, 0, 1]])
+    focal_length_x = HEIGHT / 2
+    focal_length_y = HEIGHT / 2
+    camera_matrix = np.array([
+        [focal_length_x, 0, WIDTH/2],
+        [0, focal_length_y, HEIGHT/2],
+        [0, 0, 1]
+    ])
+    return camera_matrix
 
 def getCameraMatrix(pitch, yaw):
-    # self.forward.x = glm.cos(yaw) * glm.cos(pitch)
-    #     self.forward.y = glm.sin(pitch)
-    #     self.forward.z = glm.sin(yaw) * glm.cos(pitch)
-
-    #     self.right.x = glm.cos(yaw + glm.pi() / 2)
-    #     self.right.y = 0
-    #     self.right.z = glm.sin(yaw + glm.pi() / 2)
-
-    #     self.up.x = -glm.cos(yaw) * glm.sin(pitch)
-    #     self.up.y = glm.cos(pitch)
-    #     self.up.z = -glm.sin(yaw) * glm.sin(pitch)
-    
-    matrix = np.array([[np.cos(yaw + np.pi / 2), 0, np.sin(yaw + np.pi / 2), 0],
+    # pitch 0: looking straight up,
+    # pitch pi/2: looking straight ahead
+    pitch = np.pi/2-pitch
+    yaw = yaw + np.pi/2
+    matrix = np.array([[np.sin(yaw), 0, -np.cos(yaw), 0],
                        [-np.cos(yaw)*np.sin(pitch), np.cos(pitch), -np.sin(yaw)*np.sin(pitch), 0],
                        [-np.cos(yaw)*np.cos(pitch), -np.sin(pitch), -np.sin(yaw)*np.cos(pitch), 0],
                        [0, 0, 0, 1]])
