@@ -166,6 +166,11 @@ class Mesh:
         self.buffers.fb_render_tex_depth = ctx.depth_renderbuffer(ctx.screen.size)
         self.buffers.fb_render = ctx.framebuffer(color_attachments=self.buffers.fb_render_tex,depth_attachment=self.buffers.fb_render_tex_depth)
         
+        ssaa_size = (ctx.screen.width*2, ctx.screen.height*2)
+        self.buffers.fb_ssaa_render_tex = ctx.texture(ssaa_size,4)
+        self.buffers.fb_ssaa_render_tex_depth = ctx.depth_renderbuffer(ssaa_size)
+        self.buffers.fb_ssaa_render = ctx.framebuffer(color_attachments=self.buffers.fb_ssaa_render_tex,depth_attachment=self.buffers.fb_ssaa_render_tex_depth)
+        
         self.buffers.fb_aux_tex = ctx.texture((ctx.screen.size),4)
         self.buffers.fb_aux = ctx.framebuffer(color_attachments=self.buffers.fb_aux_tex)
 

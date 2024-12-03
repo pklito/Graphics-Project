@@ -83,6 +83,9 @@ class GraphicsEngine:
     def clear_buffers(self):
         # clear framebuffers
         self.ctx.clear(red=0.5, green=0.6, blue=0.95)
+        
+        self.buffers.fb_ssaa_render.clear(color=(0.5,0.6,0.96))
+
         self.buffers.fb_render.clear(color=(1,1,1))
         self.buffers.fb_aux.clear()
         self.buffers.fb_binary.clear()
@@ -140,6 +143,13 @@ class GraphicsEngine:
         #self.render_shaders(source=self.buffers.fb_render, target=self.buffers.screen)
         self.flip_buffers()
 
+    def antialiasing_pipeline(self):
+        self.clear_buffers()
+        self.render(target=self.buffers.fb_ssaa_render)
+        do_pass(self.buffers.screen, self.buffers.fb_ssaa_render, self.mesh.vaos['blit'])
+        self.flip_buffers()
+
+
     def opencv_pipeline(self):
         self.clear_buffers()
         self.render()
@@ -170,7 +180,7 @@ class GraphicsEngine:
                 if GLOBAL_CONSTANTS.opencv.DO_POST_PROCESS:
                     self.opencv_pipeline()
                 else:
-                    self.render_pipeline()
+                    self.antialiasing_pipeline()
             
             self.delta_time = self.clock.tick(60)
 
