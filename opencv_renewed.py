@@ -37,22 +37,22 @@ def smoothEdges(x_edges,y_edges,z_edges):
     z_edges = combineParallelLines(z_edges)
     return x_edges, y_edges, z_edges
 
-def get_faces_from_pairs(edges1, edges2, threshold = 30):
+def get_faces_from_pairs(edges1, edges2, threshold = 15):
     faces = []
     indices = []
     for i in range(len(edges1)):
         e1 = edges1[i]
         for j in range(len(edges2)):
             e2 = edges2[j]
-            if segmentDistance(e1, e2) > threshold:
+            if segments_distance(*e1, *e2) > threshold:
                 continue
             for k in range(i + 1, len(edges1)):
                 e3 = edges1[k]
-                if segmentDistance(e2, e3) > threshold:
+                if segments_distance(*e2, *e3) > threshold:
                     continue
                 for l in range(j + 1, len(edges2)):
                     e4 = edges2[l]
-                    if segmentDistance(e3, e4) > threshold or segmentDistance(e4, e1) > threshold:
+                    if segments_distance(*e3, *e4) > threshold or segments_distance(*e4, *e1) > threshold:
                         continue
 
                     # Eliminate duplicate faces:
