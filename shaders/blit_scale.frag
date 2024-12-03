@@ -11,7 +11,7 @@ uniform int outputHeight = 400;
 layout (location = 0) out vec4 out_color;
 
 ivec2 convertCoord(ivec2 coord) {
-    return ivec2(2*coord);
+    return ivec2(textureSize(Texture,0).x*coord.x/outputWidth, textureSize(Texture,0).y*coord.y/outputHeight);
 }   
 
 void main() {

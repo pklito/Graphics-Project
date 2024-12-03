@@ -146,7 +146,7 @@ class GraphicsEngine:
     def antialiasing_pipeline(self):
         self.clear_buffers()
         self.render(target=self.buffers.fb_ssaa_render)
-        do_pass(self.buffers.screen, self.buffers.fb_ssaa_render, self.mesh.vaos['blit_scale'])
+        do_pass(self.buffers.screen, self.buffers.fb_ssaa_render, self.mesh.vaos['blit_scale'], {'outputWidth': self.buffers.screen.width, 'outputHeight': self.buffers.screen.height})
         self.flip_buffers()
 
 
