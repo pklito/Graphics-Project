@@ -96,6 +96,11 @@ def drawFaces(image, faces, color, shrink_factor = 0.75):
         cv.line(image, np.array(face[1],dtype=np.uint32), np.array((np.array(face[2])+face[1])/2,dtype=np.uint32), (0.5*color[0],0.5*color[1],0.5*color[2]), 3)
         cv.fillPoly(image, [np.asarray([shrink_factor * np.array(p) + (1-shrink_factor) * center for p in face],dtype=np.int32)], color)
 
+def drawMats(image, mats):
+    for rvec, tvec in mats:
+        cv.drawFrameAxes(image, getIntrinsicsMatrix(), None, rvec, tvec, 1)
+    cv.imshow("Mats"+str(np.random.rand()), image)
+
 def drawFocalPointsPipeline(image, edges):
     original_image = image.copy()
     # # # Colored edges drawing # # #
@@ -126,10 +131,9 @@ def drawFocalPointsPipeline(image, edges):
     drawFaces(image, zfaces, (255, 0, 0))
     cv.imshow("Connected Edges", image)
     
-    handleClassifiedFaces(phi, theta, zfaces, "z", 9000000, image_target=original_image.copy())
-    handleClassifiedFaces(phi, theta, xfaces, "x", 9000000, image_target=original_image.copy())
-    handleClassifiedFaces(phi, theta, yfaces, "y", 9000000, image_target=original_image.copy())
-    
+    drawMats(original_image.copy(), handleClassifiedFaces(phi, theta, zfaces, "z", 9000000))
+    drawMats(original_image.copy(), handleClassifiedFaces(phi, theta, xfaces, "x", 9000000))
+    drawMats(original_image.copy(), handleClassifiedFaces(phi, theta, yfaces, "y", 9000000))
     drawEdgeNumbers(original_image.copy(), x_edges, y_edges, z_edges)
     plt.show()
 
@@ -142,7 +146,9 @@ def drawEdgeNumbers(image, x_edges, y_edges, z_edges ):
         cv.putText(image, str(i), (int((edge[0][0] + edge[1][0])/2), int((edge[0][1] + edge[1][1])/2)), cv.FONT_HERSHEY_SIMPLEX, 0.5, (150, 0, 0), 1)
     cv.imshow("Edge numbers", image)
 
-def handleClassifiedFaces(phi, theta, zfaces, axis, LENGTH = 9000000, image_target = None):
+def handleClassifiedFaces(phi, theta, zfaces, axis, LENGTH = 9000000):
+    def randomsign():
+        return 1 if np.random.rand() > 0.5 else -1
     if axis == "z":
         shape = [[0,0,0],[0,1,0],[1,1,0],[1,0,0]]
     elif axis == "y":
@@ -155,18 +161,20 @@ def handleClassifiedFaces(phi, theta, zfaces, axis, LENGTH = 9000000, image_targ
     object_points = np.array([[-length,0,0],[0,length,0],[0,0,length]] + shape, dtype=np.float32)
     mats = []
     for face in zfaces:
-        # Face needs to be clockwise!!
-        image_points = np.array(focal_points + face,dtype=np.float32)
-        ret, rvec, tvec = cv.solvePnP(object_points, image_points, camera_matrix, None)
-        tvec = np.array(tvec)
-        rvec = np.array(rvec)
-        if image_target is not None:
-            cv.drawFrameAxes(image_target, camera_matrix, None, rvec, tvec, 1)
-            print(rvec, tvec)
+        for iter in range(50):
+            # Face needs to be clockwise!!
+            image_points = [focal_points + face]
+            rand_object_point =  np.array([[randomsign()*a for a in p] for p in [[-length,0,0],[0,length,0],[0,0,length]]] + shape,dtype=np.float32)
+            rand_image_point = image_points[::randomsign()]
+            offset = np.random.randint(0,3)
+            rand_image_point = np.array(image_points[offset:] + image_points[:offset],dtype=np.float32)
+            ret, rvec, tvec = cv.solvePnP(rand_object_point, rand_image_point, camera_matrix, None)
+            tvec = np.array(tvec)
+            rvec = np.array(rvec)
+            if np.linalg.norm(tvec) < 1000 and np.linalg.norm(tvec) > 0.01:
+                break
         mats.append((rvec, tvec))
 
-    if image_target is not None:
-        cv.imshow("3d"+axis, image_target)
     return mats
 
 def justMatPlotPipeline(image, edges):
@@ -189,6 +197,7 @@ def facesToTrans(xfaces, yfaces,zfaces, phi, theta):
         points.append(max(transformPoint([0.5,0.5,0.5], *mat), transformPoint([0.5,-0.5,0.5], *mat), key = lambda x: np.linalg.norm(x)))
     for mat in zmats:
         points.append(max(transformPoint([0.5,0.5,0.5], *mat), transformPoint([0.5,0.5,-0.5], *mat), key = lambda x: np.linalg.norm(x)))
+
     return points
 
 
@@ -202,7 +211,7 @@ def getCubesVP(edges):
     return centers
 
 if __name__ == "__main__":
-    file = "sc_pres.png"
+    file = "sc_bugged.png"
     image = cv.imread(file)
     drawFocalPointsPipeline(image, lsd(image))
 
