@@ -121,13 +121,15 @@ def postProcessFbo(app, data_fbo = None):
 
     drawOverlays(app, overlay)
 
-def postProcessCubesFbo(app, data_fbo = None, camera_trans = None, display = False):
+def postProcessCubesFbo(app, data_fbo = None, camera_trans = None, display = False, pipelineFunc = None):
+    if pipelineFunc is None:
+        pipelineFunc = getCubes
     if data_fbo is None:
         data_fbo = app.ctx.screen
     image = _fboToImage(data_fbo)
     image = (image * 255).astype(np.uint8)
     #image = cv.blur(image, (3,3))
-    trans = getCubes(lsd(image, 2, scale=0.5))
+    trans = pipelineFunc(lsd(image, 2, scale=0.5))
     if display:
         drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=False, doAxis=True, doFaces=True)
         drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=True, doAxis=False, doFaces=True)

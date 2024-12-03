@@ -8,6 +8,7 @@ from opencv import postProcessFbo, postProcessCubesFbo, exportFbo
 from constants import loadConstants
 from texture import do_pass
 import itertools
+from opencv_renewed import getCubesVP
 
 class GraphicsEngine:
     def __init__(self, win_size=(600, 400)):
@@ -122,7 +123,7 @@ class GraphicsEngine:
                 exportFbo(self.buffers.screen, "output.png")
             elif self.EXPORT_REASON == "process":
                 print(self.camera.m_view)
-                newcubes = postProcessCubesFbo(self, self.buffers.screen, display=True)
+                newcubes = postProcessCubesFbo(self, self.buffers.screen, display=True, pipelineFunc=None)
                 # for a1,a2,a3 in itertools.product([-1, 1], repeat=3):
                     
                 #     newcubes = [[a1*b[0], a2*b[1], a3*b[2]] for b in cubes]

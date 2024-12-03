@@ -152,6 +152,19 @@ def justMatPlotPipeline(image, edges):
     draw_vanishing_points_plots(edges_to_polar_lines(edges), phi, theta, show=False)
     plt.show()
 
+from opencv import handleFaces
+def facesToTrans(xfaces, yfaces,zfaces):
+    return handleFaces(np.array(xfaces + yfaces + zfaces))
+
+def getCubesVP(edges):
+    x_edges, y_edges, z_edges = classifyEdges(edges, 1.2)
+    x_edges, y_edges, z_edges = smoothEdges(x_edges, y_edges, z_edges)
+    zfaces=get_faces_from_pairs(x_edges, y_edges)
+    yfaces=get_faces_from_pairs(x_edges, z_edges)
+    xfaces=get_faces_from_pairs(z_edges, y_edges)
+    trans = facesToTrans(xfaces, yfaces, zfaces)
+    return trans
+
 if __name__ == "__main__":
     file = "sc_pres.png"
     image = cv.imread(file)
