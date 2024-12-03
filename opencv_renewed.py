@@ -77,11 +77,23 @@ def get_faces_from_pairs(edges1, edges2, threshold = 15):
                         banned_faces.append(face2)
         if accepted:
             new_faces.append(face)
-    return new_faces
+
+    # Orient clockwise
+    new_new_faces = []
+    for face in new_faces:
+        e1 = [face[1][0] - face[0][0], face[1][1] - face[0][1]]
+        e2 = [face[2][0] - face[1][0], face[2][1] - face[1][1]]
+        if e1[0]*e2[0] - e1[1]*e2[0] < 0:
+            new_new_faces.append(face)
+        else:
+            new_new_faces.append(face[::-1])
+    return new_new_faces
 
 def drawFaces(image, faces, color, shrink_factor = 0.75):
     for face in faces:
         center = sum(np.array(p) for p in face)/4
+        cv.line(image, np.array(face[0],dtype=np.uint32), np.array(face[1],dtype=np.uint32), (0.5*color[0],0.5*color[1],0.5*color[2]), 3)
+        cv.line(image, np.array(face[1],dtype=np.uint32), np.array((np.array(face[2])+face[1])/2,dtype=np.uint32), (0.5*color[0],0.5*color[1],0.5*color[2]), 3)
         cv.fillPoly(image, [np.asarray([shrink_factor * np.array(p) + (1-shrink_factor) * center for p in face],dtype=np.int32)], color)
 
 def drawFocalPointsPipeline(image, edges):
@@ -108,15 +120,18 @@ def drawFocalPointsPipeline(image, edges):
     drawEdges(image, z_edges, (255, 0, 0),3)
 
     zfaces=get_faces_from_pairs(x_edges, y_edges)
-    yfaces=get_faces_from_pairs(x_edges, z_edges)
-    xfaces=get_faces_from_pairs(z_edges, y_edges)
+    yfaces=get_faces_from_pairs(z_edges, x_edges)
+    xfaces=get_faces_from_pairs(y_edges, z_edges)
     
     drawFaces(image, xfaces, (0, 0, 255))
     drawFaces(image, yfaces, (0, 255, 0))
     drawFaces(image, zfaces, (255, 0, 0))
     cv.imshow("Connected Edges", image)
     
-    handleClassifiedFaces(original_image.copy(), phi, theta, zfaces, 10000)
+    handleClassifiedFaces(original_image.copy(), phi, theta, zfaces, "z", 9000000)
+    handleClassifiedFaces(original_image.copy(), phi, theta, xfaces, "x", 9000000)
+    handleClassifiedFaces(original_image.copy(), phi, theta, yfaces, "y", 9000000)
+    
     drawEdgeNumbers(original_image.copy(), x_edges, y_edges, z_edges)
     plt.show()
 
@@ -129,21 +144,28 @@ def drawEdgeNumbers(image, x_edges, y_edges, z_edges ):
         cv.putText(image, str(i), (int((edge[0][0] + edge[1][0])/2), int((edge[0][1] + edge[1][1])/2)), cv.FONT_HERSHEY_SIMPLEX, 0.5, (150, 0, 0), 1)
     cv.imshow("Edge numbers", image)
 
-def handleClassifiedFaces(image, phi, theta, zfaces, LENGTH = 100000):
+def handleClassifiedFaces(image, phi, theta, zfaces, axis, LENGTH = 100000):
+    if axis == "z":
+        shape = [[0,0,0],[0,1,0],[1,1,0],[1,0,0]]
+    elif axis == "y":
+        shape = [[0,0,0],[1,0,0],[1,0,1],[0,0,1]]
+    else:
+        shape = [[0,0,0],[0,0,1],[0,1,1],[0,1,0]]
     camera_matrix = getIntrinsicsMatrix()
     focal_points = get_focal_points(phi, theta)
     length = LENGTH
-    object_points = np.array([[-length,0,0],[0,-length,0],[0,0,length], [0,0,0],[0,1,0],[1,1,0],[1,0,0]], dtype=np.float32)
+    object_points = np.array([[-length,0,0],[0,length,0],[0,0,length]] + shape, dtype=np.float32)
     for face in zfaces:
         # Face needs to be clockwise!!
         image_points = np.array(focal_points + face,dtype=np.float32)
         ret, rvec, tvec = cv.solvePnP(object_points, image_points, camera_matrix, None)
         tvec = np.array(tvec)
         rvec = np.array(rvec)
+        rotation_matrix, _ = cv.Rodrigues(rvec)
         cv.drawFrameAxes(image, camera_matrix, None, rvec, tvec, 1)
+        print(rvec, tvec)
 
-
-    cv.imshow("3D", image)
+    cv.imshow("3d"+axis, image)
     return None
 
 def justMatPlotPipeline(image, edges):
