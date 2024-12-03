@@ -146,6 +146,12 @@ def handleClassifiedFaces(image, phi, theta, zfaces, LENGTH = 100000):
     cv.imshow("3D", image)
     return None
 
+def justMatPlotPipeline(image, edges):
+    phi_theta, loss = regress_lines(edges_to_polar_lines(edges), iterations=1000, refinement_iterations=500, refinement_area=np.deg2rad(15))
+    phi, theta = phi_theta
+    draw_vanishing_points_plots(edges_to_polar_lines(edges), phi, theta, show=False)
+    plt.show()
+
 if __name__ == "__main__":
     file = "sc_pres.png"
     image = cv.imread(file)
