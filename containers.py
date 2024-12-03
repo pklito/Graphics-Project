@@ -118,6 +118,7 @@ class Mesh:
         self.programs['alpha'] = get_program(ctx, 'default', 'default_alpha')
         self.programs['skybox'] = get_program(ctx, 'skybox')
         self.programs['advanced_skybox'] = get_program(ctx, 'advanced_skybox')
+        self.programs['blit_scale'] = get_program(ctx, 'screen', 'blit_scale')
         self.programs['blit'] = get_program(ctx, 'screen')    #draw texture on screen for opencv.
         self.programs['sobel'] = get_program(ctx, 'screen', 'processing/sobel')
         self.programs['1d_gaussian'] = get_program(ctx, 'screen', 'processing/1d_gaussian')
@@ -150,6 +151,9 @@ class Mesh:
         
         self.vaos['blit'] = ctx.vertex_array(self.programs['blit'], [])
         self.vaos['blit'].vertices = 3
+        
+        self.vaos['blit_scale'] = ctx.vertex_array(self.programs['blit_scale'], [])
+        self.vaos['blit_scale'].vertices = 3
 
         self.vaos['sobel'] = ctx.vertex_array(self.programs['sobel'], [])
         self.vaos['sobel'].vertices = 3

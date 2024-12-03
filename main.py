@@ -146,7 +146,7 @@ class GraphicsEngine:
     def antialiasing_pipeline(self):
         self.clear_buffers()
         self.render(target=self.buffers.fb_ssaa_render)
-        do_pass(self.buffers.screen, self.buffers.fb_ssaa_render, self.mesh.vaos['blit'])
+        do_pass(self.buffers.screen, self.buffers.fb_ssaa_render, self.mesh.vaos['blit_scale'])
         self.flip_buffers()
 
 
@@ -180,7 +180,7 @@ class GraphicsEngine:
                 if GLOBAL_CONSTANTS.opencv.DO_POST_PROCESS:
                     self.opencv_pipeline()
                 else:
-                    self.render_pipeline()
+                    self.antialiasing_pipeline()
             
             self.delta_time = self.clock.tick(60)
 
