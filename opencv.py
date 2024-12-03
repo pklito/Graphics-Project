@@ -138,6 +138,7 @@ def postProcessCubesFbo(app, data_fbo = None, camera_trans = None, display = Fal
         mats, excluded = alignTrans(trans, threshold=0.97)
         cubes = matsToCubes(mats)
     else:
+        print("This shouldn't work (faces aren't oriented right)")
         cubes = [(np.linalg.inv(camera_trans) @ np.array([-x for x in t[1]] + [1])).ravel() for t in trans]
     
     if display:

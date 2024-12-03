@@ -86,6 +86,33 @@ def matsToCubesWithCamera(mats, camera_mat):
     cam_inv = np.linalg.inv(camera_mat)
     return [(cam_inv @ m[1]).ravel() for m in mats]
 
+def alignCubes(points):
+    
+    average_fract = [np.average([i - np.floor(i) for i in points[:,0]]), np.average([i - np.floor(i) for i in points[:,1]]),np.average([i - np.floor(i) for i in points[:,2]])]
+    print("average fractions:", average_fract)
+    # Define the vertices of the cube centered at (1, 2, 1) with side length 2
+    points = [[i+(0.5 - j) for i, j in zip(p,average_fract)] for p in points]
+    return points
+
+def alignCubesStochastic(points, iterations = 100):
+    best_fracts = [0, 0, 0]
+    best_losses = [100000, 100000, 100000]
+
+
+    for iter in range(iterations):
+        average_fract = [0,0,0]
+        for axis in range(3):
+            average_fract[axis] = np.random.rand()-0.5
+            new_points = [p[axis] + average_fract[axis] for p in points]
+            loss = sum([pow(p - np.floor(p) - 0.5, 2) for p in new_points])/len(new_points)
+            if loss < best_losses[axis]:
+                best_losses[axis] = loss
+                best_fracts[axis] = average_fract[axis]
+    print("best fractions:", best_fracts)
+    print("best losses:", best_losses)
+    return [[i+j for i, j in zip(p,best_fracts)] for p in points]
+
+
 def matsToCubes(mats):
     """
     Rotate all the cubes around the origin based on the rotation matrices of each,
@@ -102,12 +129,9 @@ def matsToCubes(mats):
     points = np.array(points)
 
     # Cubing
-    average_fract = [np.average([i - np.floor(i) for i in points[:,0]]), np.average([i - np.floor(i) for i in points[:,1]]),np.average([i - np.floor(i) for i in points[:,2]])]
-    print("average fractions:", average_fract)
-    # Define the vertices of the cube centered at (1, 2, 1) with side length 2
-    points = [[i+(0.5 - j) for i, j in zip(p,average_fract)] for p in points]
+    aligned_points = alignCubesStochastic(points)
 
-    points = np.array(points)
+    points = np.array(aligned_points)
     return points
 
 def plot_cubes(points):
@@ -164,7 +188,7 @@ def plot_cubes(points):
     plt.pause(.001)
 if __name__ == "__main__":
 
-    trans = [[[-1.95, -1.83, -0.85], [-1.98, 0.74, 3.02]], [[-1.93, -1.79, -0.85], [-1.99, -0.03, 2.41]], [[-1.69, 1.82, 0.46], [3.06, -0.62, 3.2]], [[1.85, 1.37, -0.57], [1.05, -0.39, 2.95]], [[-1.93, -1.82, -0.88], [0.99, -0.38, 2.86]], [[0.57, -1.64, -0.69], [0.96, -0.41, 2.64]], [[2.28, -0.16, 0.13], [-2.04, -0.02, 2.45]], [[1.57, 0.63, 1.67], [-1.99, 0.01, 2.42]], [[0.16, 2.84, 1.1], [2.0, -0.5, 2.98]], [[2.2, -0.26, 0.04], [1.88, -0.44, 2.82]]]
+    trans = [[[-2.36, 0.02, -0.0], [-2.27, -0.4, 3.1]], [[0.04, 2.77, 1.25], [-2.52, 0.29, 4.12]], [[1.78, -1.75, 0.76], [0.7, -0.49, 3.22]], [[-1.77, 1.79, 0.72], [0.73, -0.52, 3.38]], [[-1.8, -1.69, -0.76], [1.77, -0.54, 3.33]], [[1.72, 1.82, -0.8], [1.65, -0.53, 3.18]], [[-1.74, 1.78, 0.69], [2.85, -0.58, 3.46]], [[1.74, 0.7, 1.73], [-2.35, -0.39, 3.19]], [[0.62, 1.43, 0.65], [-2.51, 0.27, 4.22]], [[-0.05, -2.91, 1.16], [2.96, -0.64, 3.56]]]
     mats, excluded = alignTrans(trans)
     points = matsToCubes(mats)
     plot_cubes(points)
