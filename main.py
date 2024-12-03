@@ -4,7 +4,7 @@ import sys
 from model import *
 from camera import Camera
 from containers import *
-from opencv import postProcessFbo, postProcessCubesFbo, exportFbo, cubesToWorld
+from opencv import postProcessFbo, postProcessCubesFbo, exportFbo, cubesToWorld, getCubes
 from constants import loadConstants
 from texture import do_pass
 import itertools
@@ -126,7 +126,7 @@ class GraphicsEngine:
                 exportFbo(self.buffers.screen, "output.png")
             elif self.EXPORT_REASON == "process":
                 print(self.camera.m_view)
-                newcubes = postProcessCubesFbo(self, self.buffers.screen, display=True, pipelineFunc=None)
+                newcubes = postProcessCubesFbo(self, self.buffers.screen, display=True, pipelineFunc=getCubesVP)
                 # for a1,a2,a3 in itertools.product([-1, 1], repeat=3):
                     
                 #     newcubes = [[a1*b[0], a2*b[1], a3*b[2]] for b in cubes]

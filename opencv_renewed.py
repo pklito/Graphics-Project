@@ -29,7 +29,7 @@ def classifyEdges(edges, threshold_multiplier = 1.2):
     y_edges = [line for line, which in pairs if which == "y"]
     z_edges = [line for line, which in pairs if which == "z"]
     
-    return x_edges, y_edges, z_edges
+    return x_edges, y_edges, z_edges, phi, theta
 
 def smoothEdges(x_edges,y_edges,z_edges):
     x_edges = combineParallelLines(x_edges)
@@ -99,7 +99,7 @@ def drawFaces(image, faces, color, shrink_factor = 0.75):
 def drawFocalPointsPipeline(image, edges):
     original_image = image.copy()
     # # # Colored edges drawing # # #
-    x_edges, y_edges, z_edges = classifyEdges(edges, 1.2)
+    x_edges, y_edges, z_edges, phi, theta = classifyEdges(edges, 1.2)
     #image = cv.addWeighted(image, 0.5, np.zeros(image.shape, image.dtype), 0.5, 0)
     drawEdges(image, x_edges, (0, 0, 200),1)
     drawEdges(image, y_edges, (0, 100, 0),1)
@@ -108,8 +108,6 @@ def drawFocalPointsPipeline(image, edges):
     cv.imshow("Focal points", image)
 
     # # # MatPlotLib sine wave drawing # # #
-    phi_theta, loss = regress_lines(edges_to_polar_lines(edges), iterations=1000, refinement_iterations=500, refinement_area=np.deg2rad(15))
-    phi, theta = phi_theta
     draw_vanishing_points_plots(edges_to_polar_lines(edges), phi, theta, show=False)
 
     image = original_image.copy()
@@ -128,9 +126,9 @@ def drawFocalPointsPipeline(image, edges):
     drawFaces(image, zfaces, (255, 0, 0))
     cv.imshow("Connected Edges", image)
     
-    handleClassifiedFaces(original_image.copy(), phi, theta, zfaces, "z", 9000000)
-    handleClassifiedFaces(original_image.copy(), phi, theta, xfaces, "x", 9000000)
-    handleClassifiedFaces(original_image.copy(), phi, theta, yfaces, "y", 9000000)
+    handleClassifiedFaces(phi, theta, zfaces, "z", 9000000, image_target=original_image.copy())
+    handleClassifiedFaces(phi, theta, xfaces, "x", 9000000, image_target=original_image.copy())
+    handleClassifiedFaces(phi, theta, yfaces, "y", 9000000, image_target=original_image.copy())
     
     drawEdgeNumbers(original_image.copy(), x_edges, y_edges, z_edges)
     plt.show()
@@ -144,7 +142,7 @@ def drawEdgeNumbers(image, x_edges, y_edges, z_edges ):
         cv.putText(image, str(i), (int((edge[0][0] + edge[1][0])/2), int((edge[0][1] + edge[1][1])/2)), cv.FONT_HERSHEY_SIMPLEX, 0.5, (150, 0, 0), 1)
     cv.imshow("Edge numbers", image)
 
-def handleClassifiedFaces(image, phi, theta, zfaces, axis, LENGTH = 100000):
+def handleClassifiedFaces(phi, theta, zfaces, axis, LENGTH = 9000000, image_target = None):
     if axis == "z":
         shape = [[0,0,0],[0,1,0],[1,1,0],[1,0,0]]
     elif axis == "y":
@@ -155,18 +153,21 @@ def handleClassifiedFaces(image, phi, theta, zfaces, axis, LENGTH = 100000):
     focal_points = get_focal_points(phi, theta)
     length = LENGTH
     object_points = np.array([[-length,0,0],[0,length,0],[0,0,length]] + shape, dtype=np.float32)
+    mats = []
     for face in zfaces:
         # Face needs to be clockwise!!
         image_points = np.array(focal_points + face,dtype=np.float32)
         ret, rvec, tvec = cv.solvePnP(object_points, image_points, camera_matrix, None)
         tvec = np.array(tvec)
         rvec = np.array(rvec)
-        rotation_matrix, _ = cv.Rodrigues(rvec)
-        cv.drawFrameAxes(image, camera_matrix, None, rvec, tvec, 1)
-        print(rvec, tvec)
+        if image_target is not None:
+            cv.drawFrameAxes(image_target, camera_matrix, None, rvec, tvec, 1)
+            print(rvec, tvec)
+        mats.append((rvec, tvec))
 
-    cv.imshow("3d"+axis, image)
-    return None
+    if image_target is not None:
+        cv.imshow("3d"+axis, image_target)
+    return mats
 
 def justMatPlotPipeline(image, edges):
     phi_theta, loss = regress_lines(edges_to_polar_lines(edges), iterations=1000, refinement_iterations=500, refinement_area=np.deg2rad(15))
@@ -174,18 +175,31 @@ def justMatPlotPipeline(image, edges):
     draw_vanishing_points_plots(edges_to_polar_lines(edges), phi, theta, show=False)
     plt.show()
 
-from opencv import handleFaces
-def facesToTrans(xfaces, yfaces,zfaces):
-    return handleFaces(np.array(xfaces + yfaces + zfaces))
+def facesToTrans(xfaces, yfaces,zfaces, phi, theta):
+    xmats = handleClassifiedFaces(phi, theta, xfaces, "x")
+    ymats = handleClassifiedFaces(phi, theta, yfaces, "y")
+    zmats = handleClassifiedFaces(phi, theta, zfaces, "z")
+    def transformPoint(point, rvec, tvec):
+        return cv.Rodrigues(rvec)[0] @ np.array(point) + tvec
+    points = []
+    for mat in xmats:
+        points.append(max(transformPoint([0.5,0.5,0.5], *mat), transformPoint([-0.5,0.5,0.5], *mat), key = lambda x: np.linalg.norm(x)))
+        
+    for mat in ymats:
+        points.append(max(transformPoint([0.5,0.5,0.5], *mat), transformPoint([0.5,-0.5,0.5], *mat), key = lambda x: np.linalg.norm(x)))
+    for mat in zmats:
+        points.append(max(transformPoint([0.5,0.5,0.5], *mat), transformPoint([0.5,0.5,-0.5], *mat), key = lambda x: np.linalg.norm(x)))
+    return points
+
 
 def getCubesVP(edges):
-    x_edges, y_edges, z_edges = classifyEdges(edges, 1.2)
+    x_edges, y_edges, z_edges, phi, theta = classifyEdges(edges, 1.2)
     x_edges, y_edges, z_edges = smoothEdges(x_edges, y_edges, z_edges)
     zfaces=get_faces_from_pairs(x_edges, y_edges)
     yfaces=get_faces_from_pairs(x_edges, z_edges)
     xfaces=get_faces_from_pairs(z_edges, y_edges)
-    trans = facesToTrans(xfaces, yfaces, zfaces)
-    return trans
+    centers = facesToTrans(xfaces, yfaces, zfaces, phi, theta)
+    return centers
 
 if __name__ == "__main__":
     file = "sc_pres.png"
