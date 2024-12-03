@@ -123,6 +123,8 @@ def matsToCubes(mats):
     y_temp = average_mat[:,1]/np.linalg.norm(average_mat[:,1])
     average_mat = np.array([x_temp, y_temp, np.cross(x_temp, y_temp)]).T
 
+    average_mat = sorted(sorted(get_options(average_mat),key=lambda x: -x[2][2])[0:4],key=lambda x: x[0][0])[0]
+
     points = [t[1] for t in mats]
     points = [(average_mat.T @ np.array(p)).ravel() for p in points]
 

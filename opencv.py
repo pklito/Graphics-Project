@@ -121,6 +121,14 @@ def postProcessFbo(app, data_fbo = None):
 
     drawOverlays(app, overlay)
 
+def cubesToWorld(cubes, camera):
+    rounded_yaw = - np.round(2*camera.yaw/np.pi,0)
+    rounded_yaw = rounded_yaw * np.pi/2
+    cubes = [[c[0]*np.cos(rounded_yaw), c[1], np.sin(rounded_yaw)*c[2]] for c in cubes]
+
+    return [[np.floor(x1)+np.floor(x2) for x1,x2 in zip(c,camera.position)] for c in cubes]
+
+
 def postProcessCubesFbo(app, data_fbo = None, camera_trans = None, display = False, pipelineFunc = None):
     if pipelineFunc is None:
         pipelineFunc = getCubes
