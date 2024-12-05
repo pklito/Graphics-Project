@@ -101,6 +101,15 @@ def drawMats(image, mats):
         cv.drawFrameAxes(image, getIntrinsicsMatrix(), None, rvec, tvec, 1)
     cv.imshow("Mats"+str(np.random.rand()), image)
 
+import matplotlib.pyplot as plt
+def draw3dEdges(edges_3d):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    plt.title("Hough lines in polar coordinates (rho phi)")
+    for edge in edges_3d:
+        plt.plot(edge[0], edge[1])
+    plt.show()
+
 def drawFocalPointsPipeline(image, edges):
     original_image = image.copy()
     # # # Colored edges drawing # # #
@@ -113,7 +122,7 @@ def drawFocalPointsPipeline(image, edges):
     cv.imshow("Focal points", image)
 
     # # # MatPlotLib sine wave drawing # # #
-    draw_vanishing_points_plots(edges_to_polar_lines(edges), phi, theta, show=False)
+    # draw_vanishing_points_plots(edges_to_polar_lines(edges), phi, theta, show=False)
 
     image = original_image.copy()
     # # # Connected graph drawing # # #
@@ -131,10 +140,17 @@ def drawFocalPointsPipeline(image, edges):
     drawFaces(image, zfaces, (255, 0, 0))
     cv.imshow("Connected Edges", image)
     
-    drawMats(original_image.copy(), handleClassifiedFaces(phi, theta, zfaces, "z", 9000000))
-    drawMats(original_image.copy(), handleClassifiedFaces(phi, theta, xfaces, "x", 9000000))
-    drawMats(original_image.copy(), handleClassifiedFaces(phi, theta, yfaces, "y", 9000000))
-    drawEdgeNumbers(original_image.copy(), x_edges, y_edges, z_edges)
+    edges_3d = edgesTo3D(phi, theta, x_edges, y_edges, z_edges)
+    draw3dEdges(edges_3d)
+
+    print(edges_3d)
+    # MAts method
+    # drawMats(original_image.copy(), handleClassifiedFaces(phi, theta, zfaces, "z", 9000000))
+    # drawMats(original_image.copy(), handleClassifiedFaces(phi, theta, xfaces, "x", 9000000))
+    # drawMats(original_image.copy(), handleClassifiedFaces(phi, theta, yfaces, "y", 9000000))
+
+     # Edge numbers
+    # drawEdgeNumbers(original_image.copy(), x_edges, y_edges, z_edges)
     plt.show()
 
 def drawEdgeNumbers(image, x_edges, y_edges, z_edges ):
@@ -210,10 +226,43 @@ def getCubesVP(edges):
     centers = facesToTrans(xfaces, yfaces, zfaces, phi, theta)
     return centers
 
+def get_view_angles(point, screen_width=WIDTH, screen_height=HEIGHT, x_fov = 90):
+    x_angle = np.deg2rad(x_fov)*(point[0]/screen_width - 1/2)
+    y_angle = np.deg2rad(screen_height*x_fov/screen_width)*(point[1]/screen_height - 1/2)
+    return x_angle, y_angle
+
+def edgesTo3D(camera_phi, camera_theta, x_edges, y_edges, z_edges):
+    camera_phi = camera_phi - np.pi/2
+    edges_3d = []
+    for edge in y_edges:
+        # Triangle ORIGIN A B
+        p1_phi, p1_theta = get_view_angles(edge[0])
+        p2_phi, p2_theta = get_view_angles(edge[1])
+        p1_phi, p1_theta = p1_phi + camera_phi, p1_theta + camera_theta
+        p2_phi, p2_theta = p2_phi + camera_phi, p2_theta + camera_theta
+
+        # y_edges specific:
+        angle_origin = abs(p1_phi - p2_phi)
+        angle_a = p1_phi + np.pi/2
+        angle_b = p2_phi + np.pi/2
+
+        A_length = np.sin(angle_a) / np.sin(angle_origin)
+        B_length = np.sin(angle_b) / np.sin(angle_origin)
+        p1_3d = A_length*np.array([np.cos(p1_theta) * np.cos(p1_phi), -np.sin(p1_phi), np.sin(p1_theta) * np.cos(p1_phi)])
+        p2_3d = B_length*np.array([np.cos(p2_theta) * np.cos(p2_phi), -np.sin(p2_phi), np.sin(p2_theta) * np.cos(p2_phi)])
+        edges_3d.append((p1_3d, p2_3d))
+    return edges_3d
+
+def getEdgesVP(edges):
+    x_edges, y_edges, z_edges, phi, theta = classifyEdges(edges, 1.2)
+    x_edges, y_edges, z_edges = smoothEdges(x_edges, y_edges, z_edges)
+    edges_3d = edgesTo3D(phi, theta, x_edges, y_edges, z_edges)
+    return edges_3d
+
 if __name__ == "__main__":
     file = "sc_bugged.png"
     image = cv.imread(file)
     drawFocalPointsPipeline(image, lsd(image))
-
+    
     cv.waitKey(0)
     cv.destroyAllWindows()
