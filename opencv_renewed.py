@@ -273,20 +273,23 @@ def get_angle_between_vectors(p1, p2):
 
 def edgeTo3D(edge, axis, camera_phi, camera_theta):
     if axis == "x":
-        dir = np.array([1,0,0])
+        third_side = np.array([-1,0,0])
     elif axis == "y":
-        dir = np.array([0,1,0])
+        third_side = np.array([0,1,0])
     else:
-        dir = np.array([0,0,1])
+        third_side = np.array([0,0,1])
     p1 = rotateScreen(pixelToPlane(edge[0]), -camera_phi, -camera_theta)
     p2 = rotateScreen(pixelToPlane(edge[1]), -camera_phi, -camera_theta)
     original_angle = np.arccos( np.dot(p1, p2) / (np.linalg.norm(p1) * np.linalg.norm(p2)) )
-    p1_angle = get_angle_between_vectors(p1, np.array(dir))
-    p2_angle = get_angle_between_vectors(p2, np.array(dir))
+    p1_angle = get_angle_between_vectors(p1, np.array(third_side))
+    p2_angle = get_angle_between_vectors(p2, np.array(third_side))
     p2_length = np.sin(p1_angle) / np.sin(original_angle) * 1
     p2 = p2_length * p2 / np.linalg.norm(p2)
     p1_length =np.sin(p2_angle) / np.sin(original_angle) * 1
     p1 = p1_length * p1 / np.linalg.norm(p1)
+    # print("OFFSET:", min(np.linalg.norm(p2 - p1 - third_side),np.linalg.norm(p1 - p2 - third_side)))
+    if p1_length > 10 or p2_length > 10:
+        return None
     return [p1, p2]
 
 def edgesTo3D(camera_phi, camera_theta, x_edges, y_edges, z_edges):
@@ -294,14 +297,22 @@ def edgesTo3D(camera_phi, camera_theta, x_edges, y_edges, z_edges):
     edges_3d = []
     for edge in y_edges:
         # Triangle ORIGIN A B
-        edges_3d.append(edgeTo3D(edge, "y", camera_phi, camera_theta))
+        edge = edgeTo3D(edge, "y", camera_phi, camera_theta)
+        if edge is not None:
+            edges_3d.append(edge)
         
     for edge in x_edges:
         # Triangle ORIGIN A B
-        edges_3d.append(edgeTo3D(edge, "x", camera_phi, camera_theta))
+        edge = edgeTo3D(edge, "x", camera_phi, camera_theta)
+        if edge is not None:
+            edges_3d.append(edge)
+
     for edge in z_edges:
-        # Triangle ORIGIN A B
-        edges_3d.append(edgeTo3D(edge, "z", camera_phi, camera_theta))
+        #Triangle ORIGIN A B
+        edge = edgeTo3D(edge, "z", camera_phi, camera_theta)
+        if edge is not None:
+            edge = [edge[0]/1.5, edge[1]/1.5]
+            edges_3d.append(edge)
     return edges_3d
 
 def getEdgesVP(edges):
