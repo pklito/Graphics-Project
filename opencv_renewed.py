@@ -133,16 +133,22 @@ def draw3dEdges(edges_3d):
     ax.set_ylabel("x")
     ax.set_zlabel("y")
     for edge in edges_3d:
-        ax.plot([edge[0][2], edge[1][2]], [edge[0][0], edge[1][0]], [edge[0][1], edge[1][1]])
+        color = 'k'
+        length =  np.linalg.norm(np.array(edge[1]) - edge[0])
+        if abs(np.dot(np.array(edge[1]) - edge[0], np.array([0,0,1]))) / length > 0.93:
+            color = 'b'
+        elif abs(np.dot(np.array(edge[1]) - edge[0], np.array([0,1,0]))) / length > 0.93:
+            color = 'g'
+        elif abs(np.dot(np.array(edge[1]) - edge[0], np.array([1,0,0]))) / length > 0.93:
+            color = 'r'
+        ax.plot([edge[0][2], edge[1][2]], [edge[0][0], edge[1][0]], [edge[0][1], edge[1][1]], color = color)
     plt.show()
 
 def drawFocalPointsPipeline(image, edges):
     original_image = image.copy()
     # # # Colored edges drawing # # #
     x_edges, y_edges, z_edges, phi, theta = classifyEdges(edges, 1.2)
-    o = z_edges.copy()
-    z_edges = x_edges
-    x_edges = o
+
     #image = cv.addWeighted(image, 0.5, np.zeros(image.shape, image.dtype), 0.5, 0)
     drawEdges(image, x_edges, (0, 0, 200),1)
     drawEdges(image, y_edges, (0, 100, 0),1)
@@ -352,7 +358,7 @@ def getEdgesVP(edges):
     return edges_3d
 
 if __name__ == "__main__":
-    file = "sc_floating.png"
+    file = "sc_scarce_new.png"
     image = cv.imread(file)
     drawFocalPointsPipeline(image, lsd(image))
 
