@@ -225,18 +225,18 @@ def get_segments_intersection(a1,a2,b1,b2):
   dx2 = x22 - x21
   dy2 = y22 - y21
   delta = dx2 * dy1 - dy2 * dx1
-  if delta == 0: return False  # parallel segments
+  if delta == 0: return None, None  # parallel segments
   s = (dx1 * (y21 - y11) + dy1 * (x11 - x21)) / delta
   t = (dx2 * (y11 - y21) + dy2 * (x21 - x11)) / (-delta)
-  return s, t
+  return t, s
 
 def segments_intersect(a1,a2,b1,b2):
   """ whether two segments in the plane intersect:
       one segment is (x11, y11) to (x12, y12)
       the other is   (x21, y21) to (x22, y22)
   """
-  s, t = get_segments_intersection(a1,a2,b1,b2)
-  return (0 <= s <= 1) and (0 <= t <= 1)
+  t, s = get_segments_intersection(a1,a2,b1,b2)
+  return s is not None and t is not None and (0 <= s <= 1) and (0 <= t <= 1)
 
 import math
 def point_segment_distance(point, a1, a2):
@@ -270,7 +270,9 @@ def point_segment_distance(point, a1, a2):
 
 
 if __name__ == "__main__":
-    line1 =np.array([[518.19946, 148.91809], [578.2626,  143.341  ]])
-    line2 =np.array([[522.5416, 147.06061], [450.69067, 117.44134]])
-    get_segments_intersection(*line1, *line2)
+    line1 =np.array([[0, 0], [0, 5 ]])
+    line2 =np.array([[1, 2], [4, 2 ]])
+    print(line1)
+    print(line2)
+    print(get_segments_intersection(*line1, *line2))
     print(segments_distance(*line1, *line2))
