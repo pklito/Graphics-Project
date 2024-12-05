@@ -197,24 +197,25 @@ def getCameraTransformationMatrix(pitch, yaw):
 
 
 def segments_distance(a1,a2,b1,b2):
-  x11, y11 = a1
-  x12, y12 = a2
-  x21, y21 = b1
-  x22, y22 = b2
   """ distance between two segments in the plane:
       one segment is (x11, y11) to (x12, y12)
       the other is   (x21, y21) to (x22, y22)
   """
-  if segments_intersect(x11, y11, x12, y12, x21, y21, x22, y22): return 0
+  if segments_intersect(a1,a2,b1,b2): return 0
   # try each of the 4 vertices w/the other segment
   distances = []
-  distances.append(point_segment_distance(x11, y11, x21, y21, x22, y22))
-  distances.append(point_segment_distance(x12, y12, x21, y21, x22, y22))
-  distances.append(point_segment_distance(x21, y21, x11, y11, x12, y12))
-  distances.append(point_segment_distance(x22, y22, x11, y11, x12, y12))
+  distances.append(point_segment_distance(a1, b1, b2))
+  distances.append(point_segment_distance(a2, b1, b2))
+  distances.append(point_segment_distance(b1, a1, a2))
+  distances.append(point_segment_distance(b2, a1, a2))
   return min(distances)
 
-def segments_intersect(x11, y11, x12, y12, x21, y21, x22, y22):
+
+def get_segments_intersection(a1,a2,b1,b2):
+  x11, y11 = a1
+  x12, y12 = a2
+  x21, y21 = b1
+  x22, y22 = b2
   """ whether two segments in the plane intersect:
       one segment is (x11, y11) to (x12, y12)
       the other is   (x21, y21) to (x22, y22)
@@ -227,10 +228,21 @@ def segments_intersect(x11, y11, x12, y12, x21, y21, x22, y22):
   if delta == 0: return False  # parallel segments
   s = (dx1 * (y21 - y11) + dy1 * (x11 - x21)) / delta
   t = (dx2 * (y11 - y21) + dy2 * (x21 - x11)) / (-delta)
+  return s, t
+
+def segments_intersect(a1,a2,b1,b2):
+  """ whether two segments in the plane intersect:
+      one segment is (x11, y11) to (x12, y12)
+      the other is   (x21, y21) to (x22, y22)
+  """
+  s, t = get_segments_intersection(a1,a2,b1,b2)
   return (0 <= s <= 1) and (0 <= t <= 1)
 
 import math
-def point_segment_distance(px, py, x1, y1, x2, y2):
+def point_segment_distance(point, a1, a2):
+  px, py = point 
+  x1, y1 = a1
+  x2, y2 = a2
   dx = x2 - x1
   dy = y2 - y1
   if dx == dy == 0:  # the segment's just a point
@@ -260,4 +272,5 @@ def point_segment_distance(px, py, x1, y1, x2, y2):
 if __name__ == "__main__":
     line1 =np.array([[518.19946, 148.91809], [578.2626,  143.341  ]])
     line2 =np.array([[522.5416, 147.06061], [450.69067, 117.44134]])
+    get_segments_intersection(*line1, *line2)
     print(segments_distance(*line1, *line2))
