@@ -8,7 +8,7 @@ from graph import *
 from util import *
 from opencv_points import matsToCubes, plot_cubes, alignTrans
 from opencv_fit_color import *
-from opencv import lsd, prob, drawGraphPipeline, drawEdges
+from opencv import lsd, prob, drawGraphPipeline, drawEdges, drawLinesColorful
 import itertools
 #
 # New pipeline
@@ -31,10 +31,32 @@ def classifyEdges(edges, threshold_multiplier = 1.2):
     
     return x_edges, y_edges, z_edges, phi, theta
 
+def _splitEdges(base, cutters, threshold = 0.1):
+    new_edges = []
+    for edge in base:
+        intersection = None
+        for other_edge in cutters:
+            t, s = get_segments_intersection(*edge, *other_edge)
+            if s is None or t is None:
+                continue
+            if s > -threshold and s < 1 + threshold and t >= 0.19 and t <= 0.81:
+                intersection = edge[0] + t * (edge[1] - edge[0])
+                break
+    
+        if intersection is not None:
+            new_edges.append([edge[0], intersection])
+            new_edges.append([intersection, edge[1]])
+            continue
+        new_edges.append(edge)
+    return new_edges
+
+def splitEdges(x_edges, y_edges, z_edges, threshold = 0.1):
+    return _splitEdges(x_edges, y_edges+z_edges, threshold), _splitEdges(y_edges, z_edges+x_edges, threshold), _splitEdges(z_edges, x_edges+y_edges, threshold)
+        
 def smoothEdges(x_edges,y_edges,z_edges):
     x_edges = combineParallelLines(x_edges)
     y_edges = combineParallelLines(y_edges)
-    z_edges = combineParallelLines(z_edges)
+    z_edges = combineParallelLines(z_edges)         
     return x_edges, y_edges, z_edges
 
 def get_faces_from_pairs(edges1, edges2, threshold = 15):
@@ -92,8 +114,8 @@ def get_faces_from_pairs(edges1, edges2, threshold = 15):
 def drawFaces(image, faces, color, shrink_factor = 0.75):
     for face in faces:
         center = sum(np.array(p) for p in face)/4
-        cv.line(image, np.array(face[0],dtype=np.uint32), np.array(face[1],dtype=np.uint32), (0.5*color[0],0.5*color[1],0.5*color[2]), 3)
-        cv.line(image, np.array(face[1],dtype=np.uint32), np.array((np.array(face[2])+face[1])/2,dtype=np.uint32), (0.5*color[0],0.5*color[1],0.5*color[2]), 3)
+        # cv.line(image, np.array(face[0],dtype=np.uint32), np.array(face[1],dtype=np.uint32), (0.5*color[0],0.5*color[1],0.5*color[2]), 3)
+        # cv.line(image, np.array(face[1],dtype=np.uint32), np.array((np.array(face[2])+face[1])/2,dtype=np.uint32), (0.5*color[0],0.5*color[1],0.5*color[2]), 3)
         cv.fillPoly(image, [np.asarray([shrink_factor * np.array(p) + (1-shrink_factor) * center for p in face],dtype=np.int32)], color)
 
 def drawMats(image, mats):
@@ -118,11 +140,14 @@ def drawFocalPointsPipeline(image, edges):
     original_image = image.copy()
     # # # Colored edges drawing # # #
     x_edges, y_edges, z_edges, phi, theta = classifyEdges(edges, 1.2)
+    o = z_edges.copy()
+    z_edges = x_edges
+    x_edges = o
     #image = cv.addWeighted(image, 0.5, np.zeros(image.shape, image.dtype), 0.5, 0)
     drawEdges(image, x_edges, (0, 0, 200),1)
     drawEdges(image, y_edges, (0, 100, 0),1)
     drawEdges(image, z_edges, (100, 0, 0),1)
-
+    
     cv.imshow("Focal points", image)
 
     # # # MatPlotLib sine wave drawing # # #
@@ -134,14 +159,19 @@ def drawFocalPointsPipeline(image, edges):
     drawEdges(image, x_edges, (0, 0, 255),3)
     drawEdges(image, y_edges, (0, 255, 0),3)
     drawEdges(image, z_edges, (255, 0, 0),3)
+    drawLinesColorful(original_image.copy(), x_edges + y_edges + z_edges, "colorful")
 
+    threshold = 0.1
+    x_edges, y_edges, z_edges = splitEdges(x_edges, y_edges, z_edges, threshold)   
+    drawLinesColorful(original_image.copy(), x_edges + y_edges + z_edges, "colorful_split")
+    
     zfaces=get_faces_from_pairs(x_edges, y_edges)
     yfaces=get_faces_from_pairs(z_edges, x_edges)
     xfaces=get_faces_from_pairs(y_edges, z_edges)
     
-    drawFaces(image, xfaces, (0, 0, 255))
-    drawFaces(image, yfaces, (0, 255, 0))
-    drawFaces(image, zfaces, (255, 0, 0))
+    # drawFaces(image, xfaces, (0, 0, 255))
+    # drawFaces(image, yfaces, (0, 255, 0))
+    # drawFaces(image, zfaces, (255, 0, 0))
     cv.imshow("Connected Edges", image)
     
     edges_3d = edgesTo3D(phi, theta, x_edges, y_edges, z_edges)
@@ -322,7 +352,7 @@ def getEdgesVP(edges):
     return edges_3d
 
 if __name__ == "__main__":
-    file = "sc_bugged.png"
+    file = "sc_floating.png"
     image = cv.imread(file)
     drawFocalPointsPipeline(image, lsd(image))
 
