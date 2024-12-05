@@ -302,7 +302,7 @@ def drawFrameAxesMat(image, mat, tvec, camera_intrinsics, length = 1, width = 3)
 
 
 
-def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = False, doNewAxis = False):
+def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = False, doNewAxis = False, doCubes = False):
     graph = linesToPlanarGraph(lines)
     faces = getFaces(graph)
     trans = handleFaces(faces)
@@ -337,7 +337,9 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
             pass
             # drawFrameAxesMat(image, mat, tvec, camera_matrix, 0.5, 3)
 
-
+    if doCubes:
+        points = matsToCubes(mats)
+        plot_cubes(points)
     cv.imshow("drawPipeline" + str(np.random.randint(0,99)), image)
 
 def drawEdges(image, edges, color = (255,255,255), width = 1):
@@ -398,10 +400,10 @@ def drawFixedAxes(trans, mats, excluded_mats):
     plt.show()
 
 if __name__ == "__main__":
-    file = "sc_pres.png"
+    file = "sc_scarce_new.png"
     image = cv.imread(file)
     cv.imshow("base", image)
-    drawGraphPipeline(image.copy(), lsd(image), True, False, False, True)
+    drawGraphPipeline(image.copy(), lsd(image), True, False, False, True,True)
     drawLinesColorful(image,lsd(image), name = "lsd")
     # drawLinesColorful(image,prob(image), name = "prob")
     # postProcessImage(image.copy())
