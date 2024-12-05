@@ -105,13 +105,13 @@ import matplotlib.pyplot as plt
 def draw3dEdges(edges_3d):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    plt.title("Hough lines in polar coordinates (rho phi)")
+    plt.title("Y axis edges in 3D")
     ax.scatter([0],[0],[0],c='b')
-    ax.set_xlabel("x")
-    ax.set_ylabel("y")
-    ax.set_zlabel("z")
+    ax.set_xlabel("z")
+    ax.set_ylabel("x")
+    ax.set_zlabel("y")
     for edge in edges_3d:
-        ax.plot([edge[0][0], edge[1][0]], [edge[0][1], edge[1][1]], [edge[0][2], edge[1][2]])
+        ax.plot([edge[0][2], edge[1][2]], [edge[0][0], edge[1][0]], [edge[0][1], edge[1][1]])
     plt.show()
 
 def drawFocalPointsPipeline(image, edges):
