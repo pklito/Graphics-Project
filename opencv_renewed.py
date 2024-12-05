@@ -106,8 +106,12 @@ def draw3dEdges(edges_3d):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     plt.title("Hough lines in polar coordinates (rho phi)")
+    ax.scatter([0],[0],[0],c='b')
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+    ax.set_zlabel("z")
     for edge in edges_3d:
-        plt.plot(edge[0], edge[1])
+        ax.plot([edge[0][0], edge[1][0]], [edge[0][1], edge[1][1]], [edge[0][2], edge[1][2]])
     plt.show()
 
 def drawFocalPointsPipeline(image, edges):
@@ -140,9 +144,12 @@ def drawFocalPointsPipeline(image, edges):
     drawFaces(image, zfaces, (255, 0, 0))
     cv.imshow("Connected Edges", image)
     
-    edges_3d = edgesTo3D(phi, theta, x_edges, y_edges, z_edges)
-    draw3dEdges(edges_3d)
+    edges_3d, original_3d = edgesTo3D(phi, theta, x_edges, y_edges, z_edges)
+    # d1, _ = edgesTo3D(phi, 0, x_edges, y_edges, z_edges)
+    # d3, _ = edgesTo3D(np.pi/2, theta, x_edges, y_edges, z_edges)
 
+# + [(0.3* a, 0.3*b) for a,b in original_3d] + [(0.5* a, 0.5*b) for a,b in d1] + [(0.7* a, 0.7*b) for a,b in d3]
+    draw3dEdges(edges_3d)
     print(edges_3d)
     # MAts method
     # drawMats(original_image.copy(), handleClassifiedFaces(phi, theta, zfaces, "z", 9000000))
@@ -226,32 +233,54 @@ def getCubesVP(edges):
     centers = facesToTrans(xfaces, yfaces, zfaces, phi, theta)
     return centers
 
+
+# # # NEW METHOD # # #
+def pixelToPlane(pixel,camera_intrinsics = None, projection_matrix = None):
+    if camera_intrinsics == None:
+        camera_intrinsics = getIntrinsicsMatrix()
+    if projection_matrix == None:
+        projection_matrix = np.eye(3)
+        projection_matrix[0,0] = camera_intrinsics[0,2] / camera_intrinsics[1,2]
+    screen_point = np.linalg.inv(projection_matrix) @ np.linalg.inv(camera_intrinsics) @ np.array([pixel[0], pixel[1], 1])
+    return np.array([-screen_point[0], -screen_point[1], 1])
+
+def rotateScreen(screen_point, phi, theta):
+    
+    rotation_matrix = np.array([
+        [np.cos(theta), 0, np.sin(theta)],
+        [0, 1, 0],
+        [-np.sin(theta), 0, np.cos(theta)]
+    ]) @    np.array([
+        [1, 0, 0],
+        [0,np.cos(phi), -np.sin(phi)],
+        [0,np.sin(phi), np.cos(phi)]
+    ])
+    return rotation_matrix @ screen_point
+
+def cartesianToPolar(vector):
+    phi = np.arctan2(vector[1], vector[0])
+    theta = np.arctan2(vector[2],vector[0])
+    
+    return phi, theta, np.linalg.norm(vector)
+
 def get_view_angles(point, screen_width=WIDTH, screen_height=HEIGHT, x_fov = 90):
     x_angle = np.deg2rad(x_fov)*(point[0]/screen_width - 1/2)
     y_angle = np.deg2rad(screen_height*x_fov/screen_width)*(point[1]/screen_height - 1/2)
     return x_angle, y_angle
 
 def edgesTo3D(camera_phi, camera_theta, x_edges, y_edges, z_edges):
-    camera_phi = camera_phi - np.pi/2
+    camera_phi = np.pi/2 - camera_phi
     edges_3d = []
+    original_3d = []
     for edge in y_edges:
         # Triangle ORIGIN A B
-        p1_phi, p1_theta = get_view_angles(edge[0])
-        p2_phi, p2_theta = get_view_angles(edge[1])
-        p1_phi, p1_theta = p1_phi + camera_phi, p1_theta + camera_theta
-        p2_phi, p2_theta = p2_phi + camera_phi, p2_theta + camera_theta
+        p1 = rotateScreen(pixelToPlane(edge[0]), -camera_phi, -camera_theta)
+        p2 = rotateScreen(pixelToPlane(edge[1]), -camera_phi, -camera_theta)
+        print(cartesianToPolar(p1), cartesianToPolar(p2))
+        edges_3d.append([p1, p2])
+        original_3d.append([pixelToPlane(edge[0]),pixelToPlane(edge[1])])
 
-        # y_edges specific:
-        angle_origin = abs(p1_phi - p2_phi)
-        angle_a = p1_phi + np.pi/2
-        angle_b = p2_phi + np.pi/2
-
-        A_length = np.sin(angle_a) / np.sin(angle_origin)
-        B_length = np.sin(angle_b) / np.sin(angle_origin)
-        p1_3d = A_length*np.array([np.cos(p1_theta) * np.cos(p1_phi), -np.sin(p1_phi), np.sin(p1_theta) * np.cos(p1_phi)])
-        p2_3d = B_length*np.array([np.cos(p2_theta) * np.cos(p2_phi), -np.sin(p2_phi), np.sin(p2_theta) * np.cos(p2_phi)])
-        edges_3d.append((p1_3d, p2_3d))
-    return edges_3d
+    return edges_3d, original_3d
 
 def getEdgesVP(edges):
     x_edges, y_edges, z_edges, phi, theta = classifyEdges(edges, 1.2)
@@ -263,6 +292,6 @@ if __name__ == "__main__":
     file = "sc_bugged.png"
     image = cv.imread(file)
     drawFocalPointsPipeline(image, lsd(image))
-    
+
     cv.waitKey(0)
     cv.destroyAllWindows()
