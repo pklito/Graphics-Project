@@ -4,9 +4,11 @@ import sys
 from model import *
 from camera import Camera
 from containers import *
-from opencv import opencv_process_fbo
+from opencv import postProcessFbo, postProcessCubesFbo, exportFbo, cubesToWorld, getCubes
 from constants import loadConstants
 from texture import do_pass
+import itertools
+from opencv_renewed import getCubesVP
 
 class GraphicsEngine:
     def __init__(self, win_size=(600, 400)):
@@ -27,6 +29,8 @@ class GraphicsEngine:
         self.ctx = mgl.create_context()
         # self.ctx.front_face = 'cw'
         self.ctx.enable(flags=mgl.DEPTH_TEST | mgl.CULL_FACE)
+
+        #self.ctx.enable(flags=mgl.AA)
         # increase line width
         self.ctx.line_width = 3.0
         # create an object to help track time
@@ -36,6 +40,8 @@ class GraphicsEngine:
 
         # configs
         self.SHOW_HOUGH = True
+        self.PAUSED = False
+        self.EXPORT = False
 
         # light
         self.light = Light()
@@ -53,6 +59,17 @@ class GraphicsEngine:
             self.SHOW_HOUGH = not self.SHOW_HOUGH
         if event.key == pg.K_r:
             loadConstants()
+        if event.key == pg.K_t:
+            self.EXPORT = True
+            self.EXPORT_REASON = "file"
+        if event.key == pg.K_g:
+            self.EXPORT = True
+            self.EXPORT_REASON = "process"
+        if event.key == pg.K_b:
+            self.scene.clear_objects(MarkerCube(self))
+        if event.key == pg.K_p:
+            self.PAUSED = not self.PAUSED
+            self.opencv_pipeline()
 
     def check_events(self):
         for event in pg.event.get():
@@ -63,35 +80,91 @@ class GraphicsEngine:
             if event.type == pg.KEYDOWN:
                 self.key_down(event)
 
-    def render(self):
+    def clear_buffers(self):
         # clear framebuffers
-        self.ctx.clear()
-        self.buffers.fb_render.clear(color=(0.1,0.1,0.2))
+        self.ctx.clear(red=0.5, green=0.6, blue=0.95)
+        
+        self.buffers.fb_ssaa_render.clear(color=(0.5,0.6,0.96))
+
+        self.buffers.fb_render.clear(color=(1,1,1))
         self.buffers.fb_aux.clear()
         self.buffers.fb_binary.clear()
 
+    def render(self, target = None):
+        if target is None:
+            target = self.buffers.fb_render
         # Render world
-        self.buffers.fb_render.use()
+        target.use()
         self.ctx.enable(flags=mgl.DEPTH_TEST | mgl.CULL_FACE)
         self.scene.render()
+
+    def render_shaders(self, source = None, target = None):
+        if(source is None):
+            source = self.buffers.fb_render
+        if(target is None):
+            target = self.ctx.screen
+        
+        #blit
+        do_pass(self.buffers.fb_screen_mix, source, self.mesh.vaos['blit'])
 
         # Do gaussian blur:
         do_pass(self.buffers.fb_aux, self.buffers.fb_render, self.mesh.vaos['1d_gaussian'], {"is_x" : 1})
         do_pass(self.buffers.fb_render, self.buffers.fb_aux, self.mesh.vaos['1d_gaussian'], {"is_x" : 0})
 
         do_pass(self.buffers.fb_binary, self.buffers.fb_render, self.mesh.vaos['sobel'])
-        do_pass(self.ctx.screen, self.buffers.fb_binary, self.mesh.vaos['np2fbo'])
+        do_pass(self.buffers.fb_screen_mix, self.buffers.fb_binary, self.mesh.vaos['draw_over'])
 
-        # blit
-        # self.buffers.screen.use()
-        # self.buffers.fb_render_tex.use()
-        # self.ctx.copy_framebuffer(self.buffers.screen,self.buffers.fb_render)
+        do_pass(target, self.buffers.fb_screen_mix, self.mesh.vaos['blit'])
 
-        # do overlay
-        #self.buffers.screen.use()
-        #opencv_process_fbo(self, self.buffers.fb_render)
-        # swap buffers
+    def flip_buffers(self):
+        """Flip the buffers, useful if you want to do something before the flip (like exporting)"""
+        if self.EXPORT:
+            self.EXPORT = False
+            if self.EXPORT_REASON == "file":
+                print("camera proj:", self.camera.m_view)
+                print("cubes (and rabbit):" + str([[x/2 for x in b.pos] for b in self.scene.objects]))
+                exportFbo(self.buffers.screen, "output.png")
+            elif self.EXPORT_REASON == "process":
+                print(self.camera.m_view)
+                newcubes = postProcessCubesFbo(self, self.buffers.screen, display=True, pipelineFunc=getCubesVP)
+                # for a1,a2,a3 in itertools.product([-1, 1], repeat=3):
+                    
+                #     newcubes = [[a1*b[0], a2*b[1], a3*b[2]] for b in cubes]
+                newcubes = cubesToWorld(newcubes, self.camera)
+                print("new cubes: " + str(newcubes))
+
+                for c in newcubes:
+                    self.scene.add_object(MarkerCube(self, pos=c))
         pg.display.flip()
+
+    def render_pipeline(self):
+        self.clear_buffers()
+        self.render(target=self.buffers.screen)
+        #self.render_shaders(source=self.buffers.fb_render, target=self.buffers.screen)
+        self.flip_buffers()
+
+    def antialiasing_pipeline(self):
+        self.clear_buffers()
+        self.render(target=self.buffers.fb_ssaa_render)
+        do_pass(self.buffers.screen, self.buffers.fb_ssaa_render, self.mesh.vaos['blit_scale'], {'outputWidth': self.buffers.screen.width, 'outputHeight': self.buffers.screen.height})
+        self.flip_buffers()
+
+
+    def opencv_pipeline(self):
+        self.clear_buffers()
+        self.render()
+        self.do_overlay(source=self.buffers.fb_render)
+        
+        self.flip_buffers()
+
+    def do_overlay(self, target = None, source = None):
+        if source is None:
+            source = self.buffers.screen
+        if target is None:
+            target = self.buffers.screen
+                # do overlay
+        postProcessFbo(self, source)
+        do_pass(target, self.buffers.opencv, self.mesh.vaos['blit'], {"flip_y": 1})
 
 
 
@@ -102,8 +175,13 @@ class GraphicsEngine:
         while True:
             self.get_time()
             self.check_events()
-            self.camera.update()
-            self.render()
+            if not self.PAUSED:
+                self.camera.update()
+                if GLOBAL_CONSTANTS.opencv.DO_POST_PROCESS:
+                    self.opencv_pipeline()
+                else:
+                    self.antialiasing_pipeline()
+            
             self.delta_time = self.clock.tick(60)
 
 

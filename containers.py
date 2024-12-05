@@ -36,11 +36,14 @@ class Scene:
     def add_object(self, obj):
         self.objects.append(obj)
 
+    def clear_objects(self, obj):
+        self.objects = [o for o in self.objects if type(o) != type(obj)]
+
     def load(self):
         app = self.app
         add = self.add_object
 
-        n, s = 10, 1
+        n, s = 3, 1
         height = 0
         for x in range(-n, n, s):
             for z in range(-n, n, s):
@@ -49,9 +52,28 @@ class Scene:
                 if random() < 0.3:
                     height -= 1
                 height = clamp(height, 0, 2)
-                add(Cube(app, tex_id=int(0.8+1.4*random()),pos=(2*x, 2*height -s, 2*z)))
+                if(random()< 0.1):
+                    y = (random()>0.5)
+                    add(Cube(app, tex_id=int(0.8+1.4*random()),pos=(x, y, z)))
+                        
+        add(Cube(app, tex_id=1,pos=(10, 0, 0)))
+        add(Cube(app, tex_id=1,pos=(0, 0, 10)))
+        add(Cube(app, tex_id=1,pos=(10, 1, 0)))
+        add(Cube(app, tex_id=1,pos=(0, -1, 0)))
+        add(Cube(app, tex_id=1,pos=(10, 1, 3)))
+        add(Cube(app, tex_id=1,pos=(10, 1, 5)))
+        add(Cube(app, tex_id=1,pos=(10, 1, 4)))
 
-        add(Cat(app, pos=(0, -2, -10)))
+
+                
+        # for x in range(n):
+        #     add(Cube(app, tex_id=1,pos=(x**3+50, 0, 0)))
+        #     add(Cube(app, tex_id=1,pos=(0, 0, x**3+50)))
+        #     add(Cube(app, tex_id=1,pos=(0, -x**3-50, 0)))
+
+
+
+        # add(Cat(app, pos=(0, 0, 0)))
 
     def render(self):
         for obj in self.objects:
@@ -80,6 +102,7 @@ class Mesh:
         self.textures[0] = get_texture(ctx, path='textures/img.png')
         self.textures[1] = get_texture(ctx, path='textures/img_1.png')
         self.textures[2] = get_texture(ctx, path='textures/img_2.png')
+        self.textures[3] = get_texture(ctx, path='textures/img_3.png')
         self.textures['cat'] = get_texture(ctx, path='objects/bunny/UVMap.png')
         self.textures['skybox'] = get_texture_cube(ctx, dir_path='textures/skybox1/', ext='png')
     
@@ -92,17 +115,24 @@ class Mesh:
     def gen_programs(self, ctx: mgl.Context):
         self.programs['default'] = get_program(ctx, 'default')
         self.programs['flat'] = get_program(ctx, 'default', 'default_flat')
+        self.programs['alpha'] = get_program(ctx, 'default', 'default_alpha')
         self.programs['skybox'] = get_program(ctx, 'skybox')
         self.programs['advanced_skybox'] = get_program(ctx, 'advanced_skybox')
-        self.programs['np2fbo'] = get_program(ctx, 'screen')    #draw texture on screen for opencv.
+        self.programs['blit_scale'] = get_program(ctx, 'screen', 'blit_scale')
+        self.programs['blit'] = get_program(ctx, 'screen')    #draw texture on screen for opencv.
         self.programs['sobel'] = get_program(ctx, 'screen', 'processing/sobel')
         self.programs['1d_gaussian'] = get_program(ctx, 'screen', 'processing/1d_gaussian')
+        self.programs['draw_over'] = get_program(ctx, 'screen', 'draw_over')
 
     def gen_vaos(self, ctx: mgl.Context):
         # cube vao
-        self.vaos['cube'] = get_vao(ctx, 
+        self.vaos['flat_cube'] = get_vao(ctx, 
             program=self.programs['flat'],
             vbo = self.vbos['cube'])
+        
+        self.vaos['cube'] = get_vao(ctx, program=self.programs['default'], vbo=self.vbos['cube'])
+
+        self.vaos['alpha_cube'] = get_vao(ctx, program=self.programs['alpha'], vbo=self.vbos['cube'])
 
         # cat vao
         self.vaos['cat'] = get_vao(ctx, 
@@ -119,8 +149,11 @@ class Mesh:
             program=self.programs['advanced_skybox'],
             vbo=self.vbos['advanced_skybox'])
         
-        self.vaos['np2fbo'] = ctx.vertex_array(self.programs['np2fbo'], [])
-        self.vaos['np2fbo'].vertices = 3
+        self.vaos['blit'] = ctx.vertex_array(self.programs['blit'], [])
+        self.vaos['blit'].vertices = 3
+        
+        self.vaos['blit_scale'] = ctx.vertex_array(self.programs['blit_scale'], [])
+        self.vaos['blit_scale'].vertices = 3
 
         self.vaos['sobel'] = ctx.vertex_array(self.programs['sobel'], [])
         self.vaos['sobel'].vertices = 3
@@ -128,11 +161,19 @@ class Mesh:
         self.vaos['1d_gaussian'] = ctx.vertex_array(self.programs['1d_gaussian'], [])
         self.vaos['1d_gaussian'].vertices = 3
 
+        self.vaos['draw_over'] = ctx.vertex_array(self.programs['draw_over'], [])
+        self.vaos['draw_over'].vertices = 3
+
     def gen_buffers(self, ctx: mgl.Context):
         self.buffers.screen = ctx.screen
         self.buffers.fb_render_tex = ctx.texture((ctx.screen.size),4)
         self.buffers.fb_render_tex_depth = ctx.depth_renderbuffer(ctx.screen.size)
         self.buffers.fb_render = ctx.framebuffer(color_attachments=self.buffers.fb_render_tex,depth_attachment=self.buffers.fb_render_tex_depth)
+        
+        ssaa_size = (ctx.screen.width*2, ctx.screen.height*2)
+        self.buffers.fb_ssaa_render_tex = ctx.texture(ssaa_size,4)
+        self.buffers.fb_ssaa_render_tex_depth = ctx.depth_renderbuffer(ssaa_size)
+        self.buffers.fb_ssaa_render = ctx.framebuffer(color_attachments=self.buffers.fb_ssaa_render_tex,depth_attachment=self.buffers.fb_ssaa_render_tex_depth)
         
         self.buffers.fb_aux_tex = ctx.texture((ctx.screen.size),4)
         self.buffers.fb_aux = ctx.framebuffer(color_attachments=self.buffers.fb_aux_tex)
@@ -140,7 +181,12 @@ class Mesh:
         self.buffers.fb_binary_tex = ctx.texture((ctx.screen.size),1)
         self.buffers.fb_binary = ctx.framebuffer(color_attachments=self.buffers.fb_binary_tex)
 
+        self.buffers.fb_screen_mix_tex = ctx.texture((ctx.screen.size),4)
+        self.buffers.fb_screen_mix = ctx.framebuffer(color_attachments=self.buffers.fb_aux_tex)
+
         self.buffers.opencv_tex = ctx.texture((ctx.screen.width,ctx.screen.height),4)
+        self.buffers.opencv = ctx.framebuffer(color_attachments=self.buffers.opencv_tex)
+
 
     def destroy(self):
         [vbo.destroy() for vbo in self.vbos.values()]
