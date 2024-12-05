@@ -144,7 +144,7 @@ def drawFocalPointsPipeline(image, edges):
     drawFaces(image, zfaces, (255, 0, 0))
     cv.imshow("Connected Edges", image)
     
-    edges_3d, original_3d = edgesTo3D(phi, theta, x_edges, y_edges, z_edges)
+    edges_3d = edgesTo3D(phi, theta, x_edges, y_edges, z_edges)
     # d1, _ = edgesTo3D(phi, 0, x_edges, y_edges, z_edges)
     # d3, _ = edgesTo3D(np.pi/2, theta, x_edges, y_edges, z_edges)
 
@@ -247,9 +247,9 @@ def pixelToPlane(pixel,camera_intrinsics = None, projection_matrix = None):
 def rotateScreen(screen_point, phi, theta):
     
     rotation_matrix = np.array([
-        [np.cos(theta), 0, np.sin(theta)],
+        [np.cos(theta), 0, -np.sin(theta)],
         [0, 1, 0],
-        [-np.sin(theta), 0, np.cos(theta)]
+        [np.sin(theta), 0, np.cos(theta)]
     ]) @    np.array([
         [1, 0, 0],
         [0,np.cos(phi), -np.sin(phi)],
@@ -268,19 +268,25 @@ def get_view_angles(point, screen_width=WIDTH, screen_height=HEIGHT, x_fov = 90)
     y_angle = np.deg2rad(screen_height*x_fov/screen_width)*(point[1]/screen_height - 1/2)
     return x_angle, y_angle
 
+def get_angle_between_vectors(p1, p2):
+    return np.arccos( np.dot(p1, p2) / (np.linalg.norm(p1) * np.linalg.norm(p2)) )
+
 def edgesTo3D(camera_phi, camera_theta, x_edges, y_edges, z_edges):
     camera_phi = np.pi/2 - camera_phi
     edges_3d = []
-    original_3d = []
     for edge in y_edges:
         # Triangle ORIGIN A B
         p1 = rotateScreen(pixelToPlane(edge[0]), -camera_phi, -camera_theta)
         p2 = rotateScreen(pixelToPlane(edge[1]), -camera_phi, -camera_theta)
-        print(cartesianToPolar(p1), cartesianToPolar(p2))
+        original_angle = np.arccos( np.dot(p1, p2) / (np.linalg.norm(p1) * np.linalg.norm(p2)) )
+        p1_angle = get_angle_between_vectors(p1, np.array([0,1,0]))
+        p2_angle = get_angle_between_vectors(p2, np.array([0,1,0]))
+        p2_length = np.sin(p1_angle) / np.sin(original_angle) * 1
+        p2 = p2_length * p2 / np.linalg.norm(p2)
+        p1_length =np.sin(p2_angle) / np.sin(original_angle) * 1
+        p1 = p1_length * p1 / np.linalg.norm(p1)
         edges_3d.append([p1, p2])
-        original_3d.append([pixelToPlane(edge[0]),pixelToPlane(edge[1])])
-
-    return edges_3d, original_3d
+    return edges_3d
 
 def getEdgesVP(edges):
     x_edges, y_edges, z_edges, phi, theta = classifyEdges(edges, 1.2)
