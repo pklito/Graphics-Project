@@ -42,7 +42,8 @@ vec3 getLight(vec3 color) {
 void main() {
     float gamma = 2.2;
     vec2 uv_jump = uv_0;
-    float band = 0.01;
+    vec3 viewDir = normalize(camPos - fragPos);
+    float band = (max(0.03*(1.-gl_FragCoord.w),0.005)) + 0.03*(1.-abs(dot(viewDir, normalize(normal))))*(1.-abs(dot(viewDir, normalize(normal))));
     if(uv_jump.x < 1-band && uv_jump.x > band && uv_jump.y < 1-band && uv_jump.y > band){
         uv_jump = vec2(0.5,0.5);
     
@@ -56,7 +57,7 @@ void main() {
     }
 
     else{
-        fragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        fragColor = vec4(gl_FragCoord.xyz, 1.0);
     }
 }
 
