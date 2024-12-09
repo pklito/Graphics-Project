@@ -147,7 +147,7 @@ def draw_vanishing_waves(file, phi, theta):
     plt.show()
 
 if __name__ == "__main__":
-    file = 'sc_scarce.png'
+    file = 'generated_images/demo_scarce.png'
     loss = get_camera_angles(file, iterations = 10000, method="lsd")
     print(loss)
     draw_vanishing_waves(file, *loss)

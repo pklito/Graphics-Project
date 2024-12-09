@@ -358,7 +358,7 @@ def getEdgesVP(edges):
     return edges_3d
 
 if __name__ == "__main__":
-    file = "sc_scarce_new.png"
+    file = 'generated_images/demo_scarce.png'
     image = cv.imread(file)
     drawFocalPointsPipeline(image, lsd(image))
 

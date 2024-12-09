@@ -400,7 +400,7 @@ def drawFixedAxes(trans, mats, excluded_mats):
     plt.show()
 
 if __name__ == "__main__":
-    file = "sc_scarce_new.png"
+    file = 'generated_images/demo_scarce.png'
     image = cv.imread(file)
     cv.imshow("base", image)
     drawGraphPipeline(image.copy(), lsd(image), True, False, False, True,True)
