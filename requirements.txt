@@ -1,0 +1,6 @@
+pygame==2.6.0
+opencv-python==4.10.0.84
+opencv-contrib-python==4.7.0.68
+numpy==1.26.4
+moderngl==5.10.0
+matplotlib==3.9.0
