@@ -184,7 +184,8 @@ class GraphicsEngine:
             
             self.delta_time = self.clock.tick(60)
 
-
-if __name__ == '__main__':
+def run():
     app = GraphicsEngine()
     app.run()
+if __name__ == '__main__':
+    run()

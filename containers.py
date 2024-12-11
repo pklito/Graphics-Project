@@ -55,7 +55,20 @@ class Scene:
                 if(random()< 0.1):
                     y = (random()>0.5)
                     add(Cube(app, tex_id=int(0.8+1.4*random()),pos=(x, y, z)))
-                        
+
+        offset = (-10, 0, 0)       
+        density = 0.9    
+        for x in range(-n, n, s):
+            for z in range(-n, n, s):
+                if random() < 0.3:
+                    height += 1
+                if random() < 0.3:
+                    height -= 1
+                height = clamp(height, 0, 2)
+                if(random()< density):
+                    y = (random()>0.5)
+                    add(Cube(app, tex_id=int(0.8+1.4*random()),pos=(x + offset[0], y + offset[1], z + offset[2])))
+
         add(Cube(app, tex_id=1,pos=(10, 0, 0)))
         add(Cube(app, tex_id=1,pos=(0, 0, 10)))
         add(Cube(app, tex_id=1,pos=(10, 1, 0)))
