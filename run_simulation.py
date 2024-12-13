@@ -126,13 +126,12 @@ class GraphicsEngine:
             if self.EXPORT_REASON == "file":
                 exportFbo(self.buffers.screen, "generated_images/output.png")
             elif self.EXPORT_REASON == "process":
-                print(self.camera.m_view)
-                newcubes = postProcessCubesFbo(self, self.buffers.screen, display=True, pipelineFunc=getCubesVP)
+                newcubes = postProcessCubesFbo(self, self.buffers.screen, display=True, pipelineFunc=getCubes)
                 # for a1,a2,a3 in itertools.product([-1, 1], repeat=3):
                     
                 #     newcubes = [[a1*b[0], a2*b[1], a3*b[2]] for b in cubes]
                 newcubes = cubesToWorld(newcubes, self.camera)
-                print("new cubes: " + str(newcubes))
+                print("guessing cube positions (relative to camera): " + str(newcubes))
 
                 # for c in newcubes:
                 #     self.scene.add_object(MarkerCube(self, pos=c))

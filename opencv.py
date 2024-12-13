@@ -16,6 +16,8 @@ from opencv_points import matsToCubes, plot_cubes, alignTrans
 WIDTH = 600
 HEIGHT = 400
 
+DEBUG = False
+
 def doCanny(image):
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
@@ -141,12 +143,14 @@ def postProcessCubesFbo(app, data_fbo = None, camera_trans = None, display = Fal
     if display:
         drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=False, doAxis=True, doFaces=True)
         drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=True, doAxis=False, doFaces=True)
-        print("trans:", trans)
+        if DEBUG:
+            print("trans:", trans)
     if camera_trans is None:
         mats, excluded = alignTrans(trans, threshold=0.97)
         cubes = matsToCubes(mats)
     else:
-        print("This shouldn't work (faces aren't oriented right)")
+        if DEBUG:
+            print("This shouldn't work (faces aren't oriented right)")
         cubes = [(np.linalg.inv(camera_trans) @ np.array([-x for x in t[1]] + [1])).ravel() for t in trans]
     
     if display:

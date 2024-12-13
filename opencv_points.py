@@ -16,6 +16,7 @@ from itertools import combinations
 # [2.26, 0.16, 6.08], [2.26, 0.16, 6.08],
 # [-4.55, 0.6, 6.34], [-4.55, 0.6, 6.34]]
 
+DEBUG = False
 
 def get_options(mat):
     vx = mat[:,0]
@@ -73,7 +74,8 @@ def alignTrans(trans, threshold = 0.97, stop_early_percent = 0.8):
             not_in = [(m[0], m[1]) for m in new_mats if get_comp(average_mat)(m[0]) <= threshold]
             max_amount = len(new_mats)
             break
-        print("Failed to find good average_matrix, ", len(filtered_mats) / mat_size)
+        if DEBUG:
+            print("Failed to find good average_matrix, ", len(filtered_mats) / mat_size)
         if len(filtered_mats) > max_amount:
             max_list = new_mats
             not_in = [(m[0], m[1]) for m in new_mats if get_comp(average_mat)(m[0]) <= threshold]
@@ -89,7 +91,8 @@ def matsToCubesWithCamera(mats, camera_mat):
 def alignCubes(points):
     
     average_fract = [np.average([i - np.floor(i) for i in points[:,0]]), np.average([i - np.floor(i) for i in points[:,1]]),np.average([i - np.floor(i) for i in points[:,2]])]
-    print("average fractions:", average_fract)
+    if DEBUG:
+        print("average fractions:", average_fract)
     # Define the vertices of the cube centered at (1, 2, 1) with side length 2
     points = [[i+(0.5 - j) for i, j in zip(p,average_fract)] for p in points]
     return points
