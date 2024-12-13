@@ -55,13 +55,16 @@ class GraphicsEngine:
         self.scene = Scene(self)
 
     def key_down(self, event):
-        if event.key == pg.K_v:
-            self.SHOW_HOUGH = not self.SHOW_HOUGH
+        # if event.key == pg.K_v:
+        #     self.SHOW_HOUGH = not self.SHOW_HOUGH
         if event.key == pg.K_r:
             loadConstants()
         if event.key == pg.K_t:
             self.EXPORT = True
             self.EXPORT_REASON = "file"
+        if event.key == pg.K_y:
+            print("camera view matrix:", self.camera.m_view)
+            print("cube positions in the world:" + str([[x/2 for x in b.pos] for b in self.scene.objects]))
         if event.key == pg.K_g:
             self.EXPORT = True
             self.EXPORT_REASON = "process"
@@ -121,9 +124,7 @@ class GraphicsEngine:
         if self.EXPORT:
             self.EXPORT = False
             if self.EXPORT_REASON == "file":
-                print("camera proj:", self.camera.m_view)
-                print("cubes (and rabbit):" + str([[x/2 for x in b.pos] for b in self.scene.objects]))
-                exportFbo(self.buffers.screen, "output.png")
+                exportFbo(self.buffers.screen, "generated_images/output.png")
             elif self.EXPORT_REASON == "process":
                 print(self.camera.m_view)
                 newcubes = postProcessCubesFbo(self, self.buffers.screen, display=True, pipelineFunc=getCubesVP)
@@ -133,8 +134,8 @@ class GraphicsEngine:
                 newcubes = cubesToWorld(newcubes, self.camera)
                 print("new cubes: " + str(newcubes))
 
-                for c in newcubes:
-                    self.scene.add_object(MarkerCube(self, pos=c))
+                # for c in newcubes:
+                #     self.scene.add_object(MarkerCube(self, pos=c))
         pg.display.flip()
 
     def render_pipeline(self):
@@ -185,6 +186,15 @@ class GraphicsEngine:
             self.delta_time = self.clock.tick(60)
 
 def run():
+    print("Controls:")
+    print("ESC - exit")
+    print("P - Pause")
+    print("WASD - move around")
+    print("Q/E - move down/up")
+    print("Mouse - turn camera")
+    print("T - export current frame as 'generated_images/output.png'")
+    print("Y - Print camera matrix and cube positions")
+    print("G - Process the current frame directly")
     app = GraphicsEngine()
     app.run()
 if __name__ == '__main__':
