@@ -1,4 +1,9 @@
-# Installation
+# Traditional cube detecting graphics project
+
+## Writeup
+Read [here](present/graphics%20write%20up%20-%20Full.pdf) the full writeup, c
+
+## Installation
 
 The project uses python 3. To install the libraries, enter the main directory and run
 
