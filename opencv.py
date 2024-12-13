@@ -310,7 +310,10 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
     camera_matrix = getIntrinsicsMatrix()
 
     if doGraph:
+        drawLinesColorful(image,lines, name = "detected edges")
+
         graph.draw_graph(image, edge_width=1,vertex_size=3)
+        cv.imshow("Edges graph", image)
     
     if doFaces:
         for face in faces:
@@ -331,8 +334,7 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
         for mat, tvec in excluded_mats:
             pass
             # drawFrameAxesMat(image, mat, tvec, camera_matrix, 0.5, 3)
-    
-    cv.imshow("drawPipeline" + str(np.random.randint(0,99)), image)
+
     if doCubes:
         points = matsToCubes(mats)
         plot_cubes(points)

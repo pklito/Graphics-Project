@@ -30,6 +30,6 @@ if image is None:
     exit()
 
 if verbose:
-    drawGraphPipeline(image.copy(), lsd(image), True, True, True, True ,True)
+    drawGraphPipeline(image.copy(), lsd(image), True, True, False, False ,True)
 else:
     drawGraphPipeline(image.copy(), lsd(image), False, False, True, False ,True)
