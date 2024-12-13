@@ -109,7 +109,6 @@ def edgeDistance(edge1, edge2):
 
 def lineMatrixToPairs(lines):
     if np.array(lines[0]).shape != (1, 4):
-        print("Error: lines must be a matrix of shape (1, 4)", np.array(lines[0]).shape)
         return lines
     return [(np.array(line[0][0:2]), np.array(line[0][2:4])) for line in lines]
 

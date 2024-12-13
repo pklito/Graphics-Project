@@ -198,7 +198,6 @@ def _overlayIntersections(image, intersections):
 #
 
 def lsd(image, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th = 22.5, log_eps = 0.0, density_th = 0.7, n_bins = 1024):
-    print(image.dtype)
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     lsd = cv.createLineSegmentDetector(detector, scale=scale, sigma_scale=sigma_scale, quant=quant, ang_th=ang_th, log_eps=log_eps, density_th=density_th, n_bins=n_bins)
     lines = lsd.detect(gray)[0]
@@ -209,7 +208,6 @@ def prob(image):
     # Get Probabilistic Hough Lines from the image
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     edges = cv.Canny(gray, 5, 150, apertureSize=3)
-    cv.imshow("canny",edges)
     lines = cv.HoughLinesP(edges, 1, np.pi/180, threshold=30, minLineLength=50, maxLineGap=10)
     lines = lineMatrixToPairs(lines)
     return lines
@@ -309,8 +307,6 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
     mats, excluded_mats = alignTrans(trans)
     # cubes = matsToCubes(mats)
 
-    print(trans)
-
     camera_matrix = getIntrinsicsMatrix()
 
     if doGraph:
@@ -318,7 +314,6 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
     
     if doFaces:
         for face in faces:
-            print(np.asarray(face,dtype=np.int32))
             cv.fillPoly(image, [np.asarray(face,dtype=np.int32)], (0,0,100))
             cv.polylines(image, [np.asarray(face,dtype=np.int32)], True, (0,0,255), 3)
     
@@ -336,11 +331,11 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
         for mat, tvec in excluded_mats:
             pass
             # drawFrameAxesMat(image, mat, tvec, camera_matrix, 0.5, 3)
-
+    
+    cv.imshow("drawPipeline" + str(np.random.randint(0,99)), image)
     if doCubes:
         points = matsToCubes(mats)
         plot_cubes(points)
-    cv.imshow("drawPipeline" + str(np.random.randint(0,99)), image)
 
 def drawEdges(image, edges, color = (255,255,255), width = 1):
     for edge in edges:

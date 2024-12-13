@@ -10,7 +10,6 @@ parser.add_argument('-d', '--detector')      # option that takes a value
 parser.add_argument('-v', '--verbose',
                     action='store_true')  # on/off flag
 
-print("trying")
 try:
     args = parser.parse_args()
     image_name = args.image_name
@@ -18,6 +17,8 @@ try:
     verbose = args.verbose
 except:
     print("<Warning> No file provided, using a default 'generated_cubes/sc_pres.png")
+    print("<Warning> Additional parameters will also not be processed.")
+
     image_name = 'generated_images/demo_scarce.png'
     detector = 'lsd'
     verbose = False
@@ -28,7 +29,7 @@ if image is None:
     print("[Error] Could not open or find the image ", image_name)
     exit()
 
-drawGraphPipeline(image.copy(), lsd(image), False, False, True, False ,True)
-
-cv.waitKey(0)
-cv.destroyAllWindows()
+if verbose:
+    drawGraphPipeline(image.copy(), lsd(image), True, True, True, True ,True)
+else:
+    drawGraphPipeline(image.copy(), lsd(image), False, False, True, False ,True)

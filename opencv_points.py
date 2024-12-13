@@ -108,8 +108,8 @@ def alignCubesStochastic(points, iterations = 100):
             if loss < best_losses[axis]:
                 best_losses[axis] = loss
                 best_fracts[axis] = average_fract[axis]
-    print("best fractions:", best_fracts)
-    print("best losses:", best_losses)
+    # print("best fractions:", best_fracts)
+    # print("best losses:", best_losses)
     return [[i+j for i, j in zip(p,best_fracts)] for p in points]
 
 
@@ -181,10 +181,10 @@ def plot_cubes(points):
     ax.set_ylabel('Y Label')
     ax.set_zlabel('Z Label')
 
-
-    fig2 = plt.figure()
-    ax2 = fig2.add_subplot(111)
-    ax2.scatter(screen_points[:,0],screen_points[:,1], c='g')
+    # Screen points
+        # fig2 = plt.figure()
+        # ax2 = fig2.add_subplot(111)
+        # ax2.scatter(screen_points[:,0],screen_points[:,1], c='g')
     # plt.ion()
     plt.show()
     plt.pause(.001)
