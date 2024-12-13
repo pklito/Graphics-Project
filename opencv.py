@@ -204,10 +204,12 @@ def lsd(image, detector = 0, scale = 0.8, sigma_scale = 0.6, quant = 2.0, ang_th
     lines = lineMatrixToPairs(lines)
     return lines
 
-def prob(image):
+def prob(image, display = False):
     # Get Probabilistic Hough Lines from the image
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
     edges = cv.Canny(gray, 5, 150, apertureSize=3)
+    if display:
+        cv.imshow("Canny filter for probabilistic Hough", edges)
     lines = cv.HoughLinesP(edges, 1, np.pi/180, threshold=30, minLineLength=50, maxLineGap=10)
     lines = lineMatrixToPairs(lines)
     return lines
@@ -310,7 +312,7 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
     camera_matrix = getIntrinsicsMatrix()
 
     if doGraph:
-        drawLinesColorful(image,lines, name = "detected edges")
+        drawLinesColorful(image,lines, name = "detected edges", weight=0.8)
 
         graph.draw_graph(image, edge_width=1,vertex_size=3)
         cv.imshow("Edges graph", image)
@@ -351,8 +353,8 @@ def drawLines(image, lines, color = (255,255,255), dim_screen = 0.5):
     drawEdges(image, lines, color)
     cv.imshow("lines", image)
 
-def drawLinesColorful(image, lines, name = "lines"):
-    image = cv.addWeighted(image, 0.5, np.zeros(image.shape, image.dtype), 0.5, 0)
+def drawLinesColorful(image, lines, name = "lines", weight = 0.5):
+    image = cv.addWeighted(image, 1-weight, np.zeros(image.shape, image.dtype), weight, 0)
     for line in lines:
         red = 255*np.random.random()
         blue = 255 - red

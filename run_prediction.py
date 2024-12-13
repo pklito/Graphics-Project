@@ -29,7 +29,12 @@ if image is None:
     print("[Error] Could not open or find the image ", image_name)
     exit()
 
+if detector.lower() == 'lsd':
+    lines = lsd(image)
+elif detector.lower() == 'hough' or detector.lower() == 'houghp'.lower() or detector == 'prob':
+    lines = prob(image, verbose)
+
 if verbose:
-    drawGraphPipeline(image.copy(), lsd(image), True, True, False, False ,True)
+    drawGraphPipeline(image.copy(), lines, True, True, False, False ,True)
 else:
-    drawGraphPipeline(image.copy(), lsd(image), False, False, True, False ,True)
+    drawGraphPipeline(image.copy(), lines, False, False, True, False ,True)
