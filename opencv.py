@@ -141,7 +141,7 @@ def postProcessCubesFbo(app, data_fbo = None, camera_trans = None, display = Fal
     #image = cv.blur(image, (3,3))
     trans = pipelineFunc(lsd(image, 2, scale=0.5))
     if display:
-        drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=False, doAxis=True, doFaces=True)
+        drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=False, doAxis=True, doFaces=False)
         drawGraphPipeline(image.copy(), lsd(image, 2, scale=0.5), doGraph=True, doAxis=False, doFaces=True)
         if DEBUG:
             print("trans:", trans)
@@ -271,7 +271,7 @@ def handleFaces(faces):
         if not ret:
             continue
         rvec, tvec = rvec[0], tvec[0]
-        
+
         rotation_matrix, _ = cv.Rodrigues(rvec)
         
         world_point1 = np.array([[0, 0, 0.5]], dtype=np.float32)
@@ -320,7 +320,7 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
         drawLinesColorful(image,lines, name = "detected edges", weight=0.8)
 
         graph.draw_graph(image, edge_width=1,vertex_size=3)
-        cv.imshow("Edges graph", image)
+
     
     if doFaces:
         for face in faces:
@@ -340,7 +340,10 @@ def drawGraphPipeline(image, lines, doGraph = True, doAxis = False, doFaces = Fa
             drawFrameAxesMat(image, mat, tvec, camera_matrix, 0.5, 3)
         for mat, tvec in excluded_mats:
             pass
-            # drawFrameAxesMat(image, mat, tvec, camera_matrix, 0.5, 3)
+            drawFrameAxesMat(image, mat, tvec, camera_matrix, 0.5, 3)
+
+    if doFaces or doAxis or doNewAxis or doGraph:
+        cv.imshow("Pipeline" + " - " + ("f" if doFaces else "") + ("a" if doAxis else "") + ("n" if doNewAxis else "") + ("+graph" if doGraph else ""), image)
 
     if doCubes:
         points = matsToCubes(mats)
