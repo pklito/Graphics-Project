@@ -1,7 +1,7 @@
 # Traditional cube detecting graphics project
 
 ## Writeup
-Read [here](present/graphics%20write%20up%20-%20Full.pdf) the full writeup, c
+Read [here](present/graphics%20write%20up%20-%20Full.pdf) the full writeup
 
 ## Installation
 
