@@ -3,6 +3,9 @@
 ## Writeup
 Read [here](present/graphics%20write%20up%20-%20Full.pdf) the full writeup
 
+## Video
+https://youtu.be/lJQKC-Njt0E
+
 ## Installation
 
 The project uses python 3. To install the libraries, enter the main directory and run
@@ -16,7 +19,9 @@ There are two seperate runnable files, the first is the simulator that can gener
 The second is the prediction that takes an image and guesses where the cubes are.
 
 ## Graphics simulator
-`py run_simulation.py`
+```sh
+py run_simulation.py
+```
 
 Controls:
 ESC - exit
@@ -41,13 +46,23 @@ This script processes an image to detect cubes using different detection methods
 #### Arguments:
 - `image_name`: The name of the image file to process.
 - `-d`, `--detector`: The edge detection method to use. Options are `lsd` (default), `hough`.
+- `-p`, `--pipeline` Which analysis will be run on the image.
+  - For the first faces and solvePNP solution, `graph`
+  - For the method which localizes edges individually using the vanishing points, `lines`
+  - For the mixture, which gets the edges from the vanishing points and uses solvePNP with faces of those edges, use `mixed`
 - `-v`, `--verbose`: If set, enables verbose mode for detailed images along with the result.
 
-#### Example usage:
+#### Example usages:
 ```sh
-py run_prediction.py generated_images/demo_scarce.png -d lsd -v
+py run_prediction.py generated_images/demo_scarce.png
+```
+```sh
+py run_prediction.py generated_images/demo_scarce.png --detector lsd --verbose --pipeline graph
 ```
 
+```sh
+py run_prediction.py generated_images/demo_scarce.png --pipeline lines
+```
 If no image is provided, the script defaults to `generated_images/demo_scarce.png` with the `lsd` detector and non-verbose mode.
 
 #### Detection Methods:
