@@ -267,10 +267,11 @@ def handleFaces(faces):
             face = face[::-1]
         image_points = np.array(face, dtype=np.float32)
         ret, rvec, tvec = cv.solveP3P(object_points, image_points, camera_matrix, None, flags=cv.SOLVEPNP_P3P)
-        rvec, tvec = rvec[0], tvec[0]
+
         if not ret:
             continue
-
+        rvec, tvec = rvec[0], tvec[0]
+        
         rotation_matrix, _ = cv.Rodrigues(rvec)
         
         world_point1 = np.array([[0, 0, 0.5]], dtype=np.float32)

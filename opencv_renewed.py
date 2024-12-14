@@ -269,6 +269,59 @@ def getCubesVP(edges):
     centers = facesToTrans(xfaces, yfaces, zfaces, phi, theta)
     return centers
 
+from opencv import handleFaces
+def getCubesMixed(edges):
+    x_edges, y_edges, z_edges, phi, theta = classifyEdges(edges, 1.2)
+    x_edges, y_edges, z_edges = smoothEdges(x_edges, y_edges, z_edges)
+    zfaces=get_faces_from_pairs(x_edges, y_edges)
+    yfaces=get_faces_from_pairs(x_edges, z_edges)
+    xfaces=get_faces_from_pairs(z_edges, y_edges)
+    trans = handleFaces([np.array(face,dtype=np.float32) for face in xfaces + yfaces + zfaces])
+    return trans
+
+def drawMixedPipeline(image, edges):
+    
+    original_image = image.copy()
+    # # # Colored edges drawing # # #
+    x_edges, y_edges, z_edges, phi, theta = classifyEdges(edges, 1.2)
+
+    #image = cv.addWeighted(image, 0.5, np.zeros(image.shape, image.dtype), 0.5, 0)
+    drawEdges(image, x_edges, (0, 0, 200),1)
+    drawEdges(image, y_edges, (0, 100, 0),1)
+    drawEdges(image, z_edges, (100, 0, 0),1)
+    
+    cv.imshow("Focal points", image)
+
+
+    image = original_image.copy()
+    # # # Connected graph drawing # # #
+    x_edges, y_edges, z_edges = smoothEdges(x_edges, y_edges, z_edges)
+    drawEdges(image, x_edges, (0, 0, 255),3)
+    drawEdges(image, y_edges, (0, 255, 0),3)
+    drawEdges(image, z_edges, (255, 0, 0),3)
+    drawLinesColorful(original_image.copy(), x_edges + y_edges + z_edges, "colorful")
+
+    threshold = 0.1
+    x_edges, y_edges, z_edges = splitEdges(x_edges, y_edges, z_edges, threshold)   
+    drawLinesColorful(original_image.copy(), x_edges + y_edges + z_edges, "colorful_split")
+    
+    zfaces=get_faces_from_pairs(x_edges, y_edges)
+    yfaces=get_faces_from_pairs(z_edges, x_edges)
+    xfaces=get_faces_from_pairs(y_edges, z_edges)
+    
+    drawFaces(image, xfaces, (0, 0, 255))
+    drawFaces(image, yfaces, (0, 255, 0))
+    drawFaces(image, zfaces, (255, 0, 0))
+    cv.imshow("Connected Edges", image)
+
+    
+    trans = handleFaces([np.array(face,dtype=np.float32) for face in xfaces + yfaces + zfaces])
+    mats, excluded_mats = alignTrans(trans)
+
+    points = matsToCubes(mats)
+    plot_cubes(points)
+    
+
 
 # # # NEW METHOD # # #
 def pixelToPlane(pixel,camera_intrinsics = None, projection_matrix = None):
