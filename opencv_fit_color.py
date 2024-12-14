@@ -179,7 +179,7 @@ def draw_vanishing_points_plots(lines, phi, theta, show = True):
     if show:
         plt.show()
 
-def draw_vanishing_waves(image, phi, theta):
+def draw_vanishing_waves(image, phi, theta, show = True):
     # Load the image
     # Flip the image along the x and y axis
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
@@ -224,7 +224,8 @@ def draw_vanishing_waves(image, phi, theta):
 
     show_points_on_image(image, fc, lines2, phi, theta)
     #cv.waitKey(0)
-    plt.show()
+    if show:
+        plt.show()
 
 if __name__ == "__main__":
     file = 'generated_images/demo_rgb.png'

@@ -154,7 +154,9 @@ def drawFocalPointsPipeline(image, edges):
     drawEdges(image, y_edges, (0, 100, 0),1)
     drawEdges(image, z_edges, (100, 0, 0),1)
     
-    cv.imshow("Focal points", image)
+    # cv.imshow("Focal points", image)
+    loss = get_camera_angles(image, iterations = 500, method="lsd")
+    draw_vanishing_waves(image, *loss, show=False)
 
     # # # MatPlotLib sine wave drawing # # #
     # draw_vanishing_points_plots(edges_to_polar_lines(edges), phi, theta, show=False)
@@ -162,14 +164,14 @@ def drawFocalPointsPipeline(image, edges):
     image = original_image.copy()
     # # # Connected graph drawing # # #
     x_edges, y_edges, z_edges = smoothEdges(x_edges, y_edges, z_edges)
-    drawEdges(image, x_edges, (0, 0, 255),3)
-    drawEdges(image, y_edges, (0, 255, 0),3)
-    drawEdges(image, z_edges, (255, 0, 0),3)
-    drawLinesColorful(original_image.copy(), x_edges + y_edges + z_edges, "colorful")
+    # drawEdges(image, x_edges, (0, 0, 255),3)
+    # drawEdges(image, y_edges, (0, 255, 0),3)
+    # drawEdges(image, z_edges, (255, 0, 0),3)
+    # drawLinesColorful(original_image.copy(), x_edges + y_edges + z_edges, "colorful")
 
     threshold = 0.1
     x_edges, y_edges, z_edges = splitEdges(x_edges, y_edges, z_edges, threshold)   
-    drawLinesColorful(original_image.copy(), x_edges + y_edges + z_edges, "colorful_split")
+    drawLinesColorful(original_image.copy(), x_edges + y_edges + z_edges, "Detected edges in image")
     
     zfaces=get_faces_from_pairs(x_edges, y_edges)
     yfaces=get_faces_from_pairs(z_edges, x_edges)
@@ -178,7 +180,7 @@ def drawFocalPointsPipeline(image, edges):
     # drawFaces(image, xfaces, (0, 0, 255))
     # drawFaces(image, yfaces, (0, 255, 0))
     # drawFaces(image, zfaces, (255, 0, 0))
-    cv.imshow("Connected Edges", image)
+    # cv.imshow("Connected Edges", image)
     
     edges_3d = edgesTo3D(phi, theta, x_edges, y_edges, z_edges)
     # d1, _ = edgesTo3D(phi, 0, x_edges, y_edges, z_edges)
