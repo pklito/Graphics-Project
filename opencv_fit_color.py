@@ -60,7 +60,7 @@ def which_line(focal_points, line, threshold = 700):
     
 def which_color(line_type):
     if line_type == None:
-        return (255,255,255)
+        return (0,0,0)
     if line_type == "x":
         return (0, 0, 100)
     elif line_type == "y":
@@ -68,10 +68,8 @@ def which_color(line_type):
     else:
         return (100, 20, 20)
 
-def get_camera_angles(file, iterations = 1000, method = 'hough', refinement_iterations = 500):
+def get_camera_angles(image, iterations = 1000, method = 'hough', refinement_iterations = 500):
     if method == 'hough':
-        # Load the image
-        image = cv.imread(file, cv.IMREAD_COLOR)
         # Flip the image along the x and y axis
         gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
@@ -86,7 +84,6 @@ def get_camera_angles(file, iterations = 1000, method = 'hough', refinement_iter
         lines = lines[:,0,:]
     elif method == "lsd":
         
-        image = cv.imread(file, cv.IMREAD_COLOR)
         lines = lsd(image)
         lines = [(np.sign(np.arctan2(b[0] - a[0], b[1] - a[1]))*(a[1]*b[0]-b[1]*a[0])/np.linalg.norm(b-a), np.fmod(-np.arctan2(b[0] - a[0], b[1] - a[1]) + np.pi,np.pi)) for a, b in lines if np.linalg.norm(b-a) > 10]
         lines = np.array(lines)
@@ -113,11 +110,12 @@ def get_focal_points_projection(phi, theta):
 def show_points_on_image(image, points, lines, cam_phi, cam_theta):
     print("focal points: ", points)
     
-    boundary = 350
+    boundary = min(200, max(max([abs(point[0] - WIDTH/2) for point in points]) - WIDTH/2, max([abs(point[1] - HEIGHT/2) for point in points])- HEIGHT/2, 0))
+    boundary = int(boundary)
     def convert_coords(point):
         return (int(point[0] + boundary), int(point[1] + boundary))
     
-    image = cv.copyMakeBorder(image, boundary, boundary, boundary, boundary, cv.BORDER_CONSTANT, value=(255, 0, 0))
+    image = cv.copyMakeBorder(image, boundary, boundary, boundary, boundary, cv.BORDER_CONSTANT, value=(50, 50, 50))
     for rho, phi in lines:
         line_type = which_line(points, (rho, phi))
         color = which_color(line_type)
@@ -135,17 +133,21 @@ def show_points_on_image(image, points, lines, cam_phi, cam_theta):
     cv.circle(image, convert_coords(points[1]), 10, (0, 255, 0), -1)
     cv.circle(image, convert_coords(points[2]), 10, (200, 0, 0), -1)
 
-    lookat_matrix = getCameraTransformationMatrix(cam_phi, cam_theta)
-    camera_matrix = getIntrinsicsMatrix()
-    focal_points = get_focal_points(cam_phi, cam_theta)
+    cv.circle(image, convert_coords(points[0]), 3, (255, 255, 255), -1)
+    cv.circle(image, convert_coords(points[1]), 3, (255, 255, 255), -1)
+    cv.circle(image, convert_coords(points[2]), 3, (255, 255, 255), -1)
 
-    projected_focal_points = [camera_matrix @ vec3ToEuclidian((lookat_matrix @ np.array([1000000,0,0,1]))), camera_matrix @ vec3ToEuclidian((lookat_matrix @ np.array([0,1000000,0,1]))),camera_matrix @ vec3ToEuclidian((lookat_matrix @ np.array([0,0,1000000,1])))]
-    projected_focal_points = [[int(p[0]), int(p[1])] for p in projected_focal_points]
-    focal_points = [[int(p[0]), int(p[1])] for p in focal_points] 
+    # lookat_matrix = getCameraTransformationMatrix(cam_phi, cam_theta)
+    # camera_matrix = getIntrinsicsMatrix()
+    # focal_points = get_focal_points(cam_phi, cam_theta)
+
+    # projected_focal_points = [camera_matrix @ vec3ToEuclidian((lookat_matrix @ np.array([1000000,0,0,1]))), camera_matrix @ vec3ToEuclidian((lookat_matrix @ np.array([0,1000000,0,1]))),camera_matrix @ vec3ToEuclidian((lookat_matrix @ np.array([0,0,1000000,1])))]
+    # projected_focal_points = [[int(p[0]), int(p[1])] for p in projected_focal_points]
+    # focal_points = [[int(p[0]), int(p[1])] for p in focal_points] 
     
-    cv.circle(image, convert_coords(projected_focal_points[0]), 15, (0, 0, 200), -1)
-    cv.circle(image, convert_coords(projected_focal_points[1]), 15, (0, 200, 0), -1)
-    cv.circle(image, convert_coords(projected_focal_points[2]), 15, (200, 0, 0), -1)
+    # cv.circle(image, convert_coords(projected_focal_points[0]), 15, (0, 0, 200), -1)
+    # cv.circle(image, convert_coords(projected_focal_points[1]), 15, (0, 200, 0), -1)
+    # cv.circle(image, convert_coords(projected_focal_points[2]), 15, (200, 0, 0), -1)
 
 
     scale_percent = 80  # percent of original size
@@ -177,9 +179,8 @@ def draw_vanishing_points_plots(lines, phi, theta, show = True):
     if show:
         plt.show()
 
-def draw_vanishing_waves(file, phi, theta):
+def draw_vanishing_waves(image, phi, theta):
     # Load the image
-    image = cv.imread(file, cv.IMREAD_COLOR)
     # Flip the image along the x and y axis
     gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
 
@@ -227,6 +228,6 @@ def draw_vanishing_waves(file, phi, theta):
 
 if __name__ == "__main__":
     file = 'generated_images/demo_rgb.png'
-    loss = get_camera_angles(file, iterations = 500, method="lsd")
-    print(loss)
-    draw_vanishing_waves(file, *loss)
+    image = cv.imread(file, cv.IMREAD_COLOR)
+    loss = get_camera_angles(image, iterations = 500, method="lsd")
+    draw_vanishing_waves(image, *loss)
