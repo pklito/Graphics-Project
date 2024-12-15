@@ -1,4 +1,18 @@
 # Traditional cube detecting graphics project
+This project's goal is to recognize and locate cubes in images with traditional edge detecting methods and graphics fundamentals.
+In these images, the position and orientation of the camera isn't known, however the FOV is constant.
+
+There are several different approaches I explored in order to achieve decent results:
+#### Finding faces and using Perspective N-Point solvers.
+The first method consisted of constructing a planar graph out of the edges of the image, finding cube faces by searching for loops in the graph,
+applying the PNP solver on these faces, and consolidating the results.
+#### Finding the vanishing points of the image
+I've explored modelling the vanishing points for an image of a voxel world (grid aligned cubes) in order to find the camera parameters,
+and then applying the previous face localizing method, but also finding the distance and angle to each detected edge manually.
+
+A graphics engine based in modernGL was also used in order to generate simple testing images for this problem.
+
+Read the writeup below for more in-detail explanations about the process.
 
 ## Writeup
 Read [here](present/graphics%20write%20up%20-%20Full.pdf) the full writeup
@@ -27,7 +41,7 @@ Controls:
 ESC - exit
 P - Pause
 WASD - move around
-Q/E - move down/up
+SPACE/SHIFT - move down/up
 Mouse - turn camera
 T - export current frame as 'generated_images/output.png'
 Y - Print camera matrix and cube positions
@@ -67,6 +81,4 @@ If no image is provided, the script defaults to `generated_images/demo_scarce.pn
 
 #### Detection Methods:
 - `lsd`: Line Segment Detector.
-- `hough`: Standard Hough Transform.
-- `houghp`: Probabilistic Hough Transform.
-- `prob`: Alias for Probabilistic Hough Transform.
+- `prob` / `hough` / `houghp`: Alias for Probabilistic Hough Transform.
