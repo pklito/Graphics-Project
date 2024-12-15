@@ -117,7 +117,6 @@ body {
 .split .small-image {
     background-color: gray;
     height: 250px;
-    width: 500px;
 }
 .info { 
     display: flex;
