@@ -20,29 +20,94 @@
             <img class="small-image">
             <img class="small-image">
         </div>
-        <div class="info">
+        <div class="synopsis">
             <h2>Synopsis</h2>
             <p>This project's goal is to recognize and locate cubes in images with traditional edge detecting methods and graphics fundamentals.</p>
             <p>In these images, the position and orientation of the camera isn't known, however the FOV is constant.
 
                 There are several different approaches I explored in order to achieve decent results.</p>
+        </div>
+        <div class="split">
+        <div class="synopsis">
             <h3>Finding faces and using Perspective N-Point solvers.</h3>
             <p>
             The first method consisted of constructing a planar graph out of the edges of the image, finding cube faces by searching for loops in the graph, applying the PNP solver on these faces, and consolidating the results.
             </p>
-            <h3>
-            Finding the vanishing points of the image
-            </h3><p>
-            I've explored modelling the vanishing points for an image of a voxel world (grid aligned cubes) in order to find the camera parameters, and then applying the previous face localizing method, but also finding the distance and angle to each detected edge manually.
-            
-            A graphics engine based in modernGL was also used in order to generate simple testing images for this problem.
-            
-            Read the writeup below for more in-detail explanations about the process.</p>
         </div>
+        <img class="small-image" src="../generated_images/demo_scarce.png" alt="Demo Image">
+        </div>
+        <div class="split">
+            <div class="synopsis">
+                <h3>
+                    Finding the vanishing points of the image
+                    </h3><p>
+                    I've explored modelling the vanishing points for an image of a voxel world (grid aligned cubes) in order to find the camera parameters, and then applying the previous face localizing method, but also finding the distance and angle to each detected edge manually.
+                    
+                    A graphics engine based in modernGL was also used in order to generate simple testing images for this problem.
+                    
+                    Read the writeup below for more in-detail explanations about the process.</p>
+            </div>
+            <img class="small-image" src="../generated_images/demo_scarce.png" alt="Demo Image">
+            </div>
+        
         <div class="info">
             <h2>Links</h2>
             <p><strong>Write-up</strong>: <a href="writeup.pdf">Click here</a> for the write-up for the project which details the process, the results, and the conclusions.</p>
             <p><strong>Video</strong>: <a href="https://www.youtube.com/watch?v=lJQKC-Njt0E">Click here</a> for a video demonstrating how to run the various pipelines of the project.</p>       
+        </div>
+        <div class="info">
+            <h2>Installation</h2>
+            <p>The project uses python 3. To install the libraries, enter the main directory and run</p>
+            <pre><code>pip install -r requirements.txt</code></pre>
+            <p>or alternatively</p>
+            <pre><code>pip install pygame opencv-python numpy moderngl matplotlib</code></pre>
+        </div>
+        <div class="info">
+            <h2>Running the code</h2>
+            <p>There are two separate runnable files, the first is the simulator that can generate cubes for you. The second is the prediction that takes an image and guesses where the cubes are.</p>
+            <h3>Graphics simulator</h3>
+            <pre><code>py run_simulation.py</code></pre>
+            <p>Controls:</p>
+            <ul>
+                <li>ESC - exit</li>
+                <li>P - Pause</li>
+                <li>WASD - move around</li>
+                <li>SPACE/SHIFT - move down/up</li>
+                <li>Mouse - turn camera</li>
+                <li>T - export current frame as 'generated_images/output.png'</li>
+                <li>Y - Print camera matrix and cube positions</li>
+                <li>G - Process the current frame directly</li>
+            </ul>
+            <p>The area has some randomly placed cubes I used to test out different configurations for the image. Pressing G does the LSD graph method of finding cubes without having to run <code>run_prediction.py</code>. <em>Note</em>: To continue, you may have to close the result MatPlotLib provides.</p>
+        </div>
+        <div class="info">
+            <h3>Predictor</h3>
+            <pre><code>py run_prediction.py &lt;image_name&gt; [-d DETECTOR] [-v]</code></pre>
+            <p>This script processes an image to detect cubes using different detection methods.</p>
+            <h4>Arguments:</h4>
+            <ul>
+                <li><code>image_name</code>: The name of the image file to process.</li>
+                <li><code>-d</code>, <code>--detector</code>: The edge detection method to use. Options are <code>lsd</code> (default), <code>hough</code>.</li>
+                <li><code>-p</code>, <code>--pipeline</code>: Which analysis will be run on the image.
+                    <ul>
+                        <li>For the first faces and solvePNP solution, <code>graph</code></li>
+                        <li>For the method which localizes edges individually using the vanishing points, <code>lines</code></li>
+                        <li>For the mixture, which gets the edges from the vanishing points and uses solvePNP with faces of those edges, use <code>mixed</code></li>
+                    </ul>
+                </li>
+                <li><code>-v</code>, <code>--verbose</code>: If set, enables verbose mode for detailed images along with the result.</li>
+            </ul>
+            <h4>Example usages:</h4>
+            <pre><code>py run_prediction.py generated_images/demo_scarce.png</code></pre>
+            <pre><code>py run_prediction.py generated_images/demo_scarce.png --detector lsd --verbose --pipeline graph</code></pre>
+            <pre><code>py run_prediction.py generated_images/demo_scarce.png --pipeline lines</code></pre>
+            <p>If no image is provided, the script defaults to <code>generated_images/demo_scarce.png</code> with the <code>lsd</code> detector and non-verbose mode.</p>
+            <h4>Detection Methods:</h4>
+            <ul>
+                <li><code>lsd</code>: Line Segment Detector.</li>
+                <li><code>prob</code> / <code>hough</code> / <code>houghp</code>: Alias for Probabilistic Hough Transform.</li>
+            </ul>
+        </div>
     </div>
 </body>
 
