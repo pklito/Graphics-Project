@@ -11,43 +11,38 @@
 
 <body>
     <nav class="header">
-        <h2 class="logo">Header Logo</h2>
-        <ul>
-            <li><a href="#" class="link">header link one</a></li>
-            <li><a href="#" class="link">header link two</a></li>
-            <li><a href="#" class="link">header link three</a></li>
-        </ul>
+        <h2 class="logo">Traditional cube detecting project</h2>
+        <h2 class="logo">Paulo Khayat</h2>
     </nav>
     <div class="content">
         <div class="title">
-            <div class="left-part">
-                <h1>This is a website</h1>
-                <p>Website is on the webternet on the internet so it should be good.</p>
-                <a href="#"><button class="link">Sign up</button></a>
-            </div>
-            <img class="right-part">
+            <img class="small-image" src="solution.png" alt="Solution Image">
+            <img class="small-image">
+            <img class="small-image">
         </div>
         <div class="info">
-            <h2>Some random information</h2>
-            <div class="cards">
-                <div class="card">
-                    <div class="illu"></div>
-                    <p>info about box</p>
-                </div>
-                <div class="card">
-                    <div class="illu"></div>
-                    <p>info about box</p>
-                </div>
-                <div class="card">
-                    <div class="illu"></div>
-                    <p>info about box</p>
-                </div>
-                <div class="card">
-                    <div class="illu"></div>
-                    <p>info about box</p>
-                </div>
-            </div>
+            <h2>Synopsis</h2>
+            <p>This project's goal is to recognize and locate cubes in images with traditional edge detecting methods and graphics fundamentals.</p>
+            <p>In these images, the position and orientation of the camera isn't known, however the FOV is constant.
+
+                There are several different approaches I explored in order to achieve decent results.</p>
+            <h3>Finding faces and using Perspective N-Point solvers.</h3>
+            <p>
+            The first method consisted of constructing a planar graph out of the edges of the image, finding cube faces by searching for loops in the graph, applying the PNP solver on these faces, and consolidating the results.
+            </p>
+            <h3>
+            Finding the vanishing points of the image
+            </h3><p>
+            I've explored modelling the vanishing points for an image of a voxel world (grid aligned cubes) in order to find the camera parameters, and then applying the previous face localizing method, but also finding the distance and angle to each detected edge manually.
+            
+            A graphics engine based in modernGL was also used in order to generate simple testing images for this problem.
+            
+            Read the writeup below for more in-detail explanations about the process.</p>
         </div>
+        <div class="info">
+            <h2>Writeup</h2>
+            <p><a href="writeup.pdf">Click here</a> for the write-up for the project which details the process, the results, and the conclusions.</p>
+            
         <div class="quote">
             <p>"quote is a quote on quote, but sometimes quotes
                 can quote and not be quoted. thus, a quote is sometimes
@@ -65,9 +60,6 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div class="footer">
-        <p>Copyright © The Odin project</p>
     </div>
 </body>
 
