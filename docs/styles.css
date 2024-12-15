@@ -151,3 +151,32 @@ body {
     border: black solid 3px;
     margin-bottom: 8px;
 }
+
+.code { 
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    padding-left: 32px;
+    padding-right: 16px;
+    gap: 32px;
+    background-color: rgb(214, 211, 211);
+}
+
+.code p {
+    font-size: 20px;
+    font-weight: lighter;
+    color: #1F2937;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+.code .code {
+    background-color: #1F2937;
+    color: #F9FAF8;
+    padding: 16px;
+    border-radius: 8px;
+}

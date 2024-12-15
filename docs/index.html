@@ -35,6 +35,7 @@
             </p>
         </div>
         <img class="small-image" src="../generated_images/demo_scarce.png" alt="Demo Image">
+        <img class="small-image" src="../generated_images/demo_scarce.png" alt="Demo Image">
         </div>
         <div class="split">
             <div class="synopsis">
@@ -55,19 +56,20 @@
             <p><strong>Write-up</strong>: <a href="writeup.pdf">Click here</a> for the write-up for the project which details the process, the results, and the conclusions.</p>
             <p><strong>Video</strong>: <a href="https://www.youtube.com/watch?v=lJQKC-Njt0E">Click here</a> for a video demonstrating how to run the various pipelines of the project.</p>       
         </div>
-        <div class="info">
+        <div class="code">
+            <h1>Running the code</h1>
             <h2>Installation</h2>
             <p>The project uses python 3. To install the libraries, enter the main directory and run</p>
             <pre><code>pip install -r requirements.txt</code></pre>
             <p>or alternatively</p>
             <pre><code>pip install pygame opencv-python numpy moderngl matplotlib</code></pre>
         </div>
-        <div class="info">
-            <h2>Running the code</h2>
+        <div class="code">
+            <h2>CMD instructions</h2>
             <p>There are two separate runnable files, the first is the simulator that can generate cubes for you. The second is the prediction that takes an image and guesses where the cubes are.</p>
             <h3>Graphics simulator</h3>
             <pre><code>py run_simulation.py</code></pre>
-            <p>Controls:</p>
+            <p><u>Controls:</u></p>
             <ul>
                 <li>ESC - exit</li>
                 <li>P - Pause</li>
@@ -80,7 +82,7 @@
             </ul>
             <p>The area has some randomly placed cubes I used to test out different configurations for the image. Pressing G does the LSD graph method of finding cubes without having to run <code>run_prediction.py</code>. <em>Note</em>: To continue, you may have to close the result MatPlotLib provides.</p>
         </div>
-        <div class="info">
+        <div class="code">
             <h3>Predictor</h3>
             <pre><code>py run_prediction.py &lt;image_name&gt; [-d DETECTOR] [-v]</code></pre>
             <p>This script processes an image to detect cubes using different detection methods.</p>
