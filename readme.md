@@ -15,7 +15,7 @@ A graphics engine based in modernGL was also used in order to generate simple te
 Read the writeup below for more in-detail explanations about the process.
 
 ## Writeup
-Read [here](present/writeup.pdf) the full writeup
+Read [here](docs/writeup.pdf) the full writeup
 
 ## Video
 https://youtu.be/lJQKC-Njt0E
