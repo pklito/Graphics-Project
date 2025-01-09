@@ -83,3 +83,9 @@ If no image is provided, the script defaults to `generated_images/demo_scarce.pn
 #### Detection Methods:
 - `lsd`: Line Segment Detector.
 - `prob` / `hough` / `houghp`: Alias for Probabilistic Hough Transform.
+
+# Previews:
+![](docs/solution.png)
+![](docs/solution_graph.png)
+![](docs/fitting.png)
+<img src="docs/color_faces.png" alt="Alt Text" height="300"> <img src="docs/edges.png" alt="Alt Text" height="300"> 
