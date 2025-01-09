@@ -1,4 +1,5 @@
 # Traditional cube detecting graphics project
+_(website version: https://pklito.github.io/Graphics-Project/)_  
 This project's goal is to recognize and locate cubes in images with traditional edge detecting methods and graphics fundamentals.
 In these images, the position and orientation of the camera isn't known, however the FOV is constant.
 
